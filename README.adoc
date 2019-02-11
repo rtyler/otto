@@ -1,0 +1,60 @@
+= Otto
+
+Meet Otto, your friendly continuous delivery companion. Otto does not aim to be
+the center of the entire continuous delivery process, but rather seeks to
+interoperate seamlessly with all the various components which make CD work for
+you.
+
+
+== Problems to Solve
+
+Below is an incomplete listing of the problems Otto aims to solve for:
+
+* **Existing tools to not model the entire continuous delivery process.** Using
+  an external tool such as Puppet, or relying on an external provider such as
+  AWS ECS, there can be a "black hole" in the deployment. A point where control
+  is delegated to an external system, and the orchestration tool (Otto), loses
+  sight of what is happening.
+* **Expecting "one single instance" to be the hub is unrealistic.** Many
+  deployment processes have "development" operated components, and "ops"
+  operated components, with little to no automated hand-off of control between
+  the two.
+* **Mixing of management and execution contexts causes a myriad of issues.**
+  Many tools allow the management/orchestrator process to run user-defined
+  workloads. This allows breaches of isolation between user-defined workloads
+  and administrator configuration and data.
+* **Non-deterministic runtime behavior adds instability.** Without being able to
+  "explain" a set of operations which should occur before runtime, it is
+  impossible to determine whether or not a given delivery pipeline is correctly
+  constructed.
+* **Blending runtime data and logic with process definition confuses users.** Related to the
+  problem above, Providing runtime data about the process in a manner which is
+  only accessible in the delivery process itself, overly complicates the parsing
+  and execution of a defined continuous delivery process.
+* **Modeling of the delivery process is blurred with build tooling.** Without a
+  clear separation of concerns between the responsibility of build tools like
+  GNU/Make, Maven, Gradle, etc and the continuous delivery process definition,
+  logic invariably bleeds between the two.
+* **Opinionated platform requirements prevent easy usage across different
+  environments.** Forcing a reliance on containers, or a runtime like the Java
+  Virtual Machine results in burdensome system configuration before starting to
+  do the real work of defining a continuous delivery process. Without gracefully
+  degrading in functionality depending on the system requirements which are
+  present, users are forced to hack around the platform requirements, or spent
+  significant worrying about and maintaining pre-requisites.
+* **Nany tools are difficult to configure  by default.** For most application
+  stacks, there are common conventions which can be easily prescriped for the
+  80% use-case.  Ruby on Rails applications will almost all look identical, and
+  should require zero additional configuration.
+* **Secrets and credentials can be inadvertently leaked.** Many tools provide
+  some ability to configure secrets for the continuous delivery process, but
+  expose them to the process itself in insecure ways, which allow for leakage.
+* **Extensibility must not come at the expense of system integrity.** Systems
+  which allow for administrator, or user-injected code at runtime cannot avoid
+  system reliability and security problems. Extensibility is an important
+  characteristic to support, but secondary to system integrity.
+* **Usage cannot grow across an organization without user-defined extension**.
+  The operators of the system will not be able to provide for every eventual
+  requirement from users. Some mechanism for extending or consolidating aspects
+  of a continuous delivery process must exist.
+
