@@ -1,0 +1,28 @@
+/*
+ * This is a description of a simple continuous delivery process for a Rubygem.
+ *  Assuming there is a blueprint defined for the typical steps needed to
+ *  build. test, and deploy a Rubygem.
+ */
+
+use {
+  'blueprints/rubygem'
+}
+
+
+pipeline {
+  /*
+   * Incorporate all of the stages, steps, etc defined in the Rubygem
+   * blueprint.
+   *
+   * Not yet clear what the ideal syntax would be for passing static parameters
+   * into the blueprint.
+   */
+  from 'blueprints/rubygem'
+
+  /*
+   * Optionally I could add additional post-deployment configuration here,
+   * which would be ordered after the blueprint's stages have completed
+   */
+}
+
+// vim: ts=2 sw=2 et ai

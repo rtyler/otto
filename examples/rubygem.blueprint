@@ -1,0 +1,56 @@
+/*
+ * This is a blueprint to model a re-usable continuous delivery process for a
+ * Rubygem.
+ */
+
+
+use {
+  stdlib;
+}
+
+blueprint {
+  vars {
+    rubyVersion {
+      description 'Specify the Ruby container'
+      default 'ruby'
+      type string
+    }
+
+    deploy {
+      description 'Push to rubygems.oorg'
+      default true
+      type boolean
+    }
+  }
+
+  stages {
+    stage('Build') {
+      runtime {
+        docker {
+          image = vars.rubyVersion
+        }
+      }
+
+      steps {
+        sh 'bundle install'
+        sh 'bundle exec rake build'
+      }
+    }
+
+    stage('Test') {
+      runtime { from 'Build' }
+      steps {
+        sh 'bundle exec rake test'
+      }
+    }
+
+    stage('Deploy') {
+      when { vars.deploy }
+      runtime { from 'Build' }
+      steps {
+        sh 'bundle exec rake push'
+      }
+    }
+  }
+}
+// vim: ts=2 sw=2 et ai
