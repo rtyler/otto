@@ -58,3 +58,36 @@ Below is an incomplete listing of the problems Otto aims to solve for:
   requirement from users. Some mechanism for extending or consolidating aspects
   of a continuous delivery process must exist.
 
+== Modeling Continuous Delivery
+
+Some characteristics of a continuous delivery process model which Otto must ensure:
+
+* **Deterministic ahead-of-time**. Without executing the full process, it must
+  be possible to "explain" what will happen.
+* **External interactions must be model-able.** Deferring control to an
+  external system must be accounted for in a user-defined model. For example,
+  submitting a deployment request, and then waiting for some external condition
+  to be made to indicate that the deployment has completed and the service is now
+  online. This should support both an evented model, wherein the external service
+  "calls back" and a polling model, where the process waits until some external
+  condition can be verified.
+* **Branching logic**, a user must be able to easily define branching logic.
+  For example, a web application's delivery may be different depending on
+  whether this is a production or a staging deployment.
+* **Describe, though not fully, environments.** All applications have at least
+  some concept of environments, whether it is a web application's concept of
+  staging/production, or a compiled asset's concept of debug/release builds.
+* **Safe credentials access**, credentials should not be exposed to in a way
+  which might allow the user-defined code to inadvertently leak the credential.
+* **Caching data between runs** must be describable in some form or fashion.
+  Taking Maven projects as an example, where successive runs of `mvn` on a
+  cold-cache will result in significant downloads of data, whereas caching
+  `~/.m2` will result in more acceptable performance.
+* **Refactor/extensibility support in-repo or externally.** Depending on
+  whether the source repository is a monorepo, or something more modular.
+  Common aspects of the process must be able to be templatized/parameterized in
+  some form, and shared within the repository or via an external repository.
+* **Scale down to near zero-configuration.** the simplest model possible should
+  simply define what platform's conventions to use. With Rails applications,
+  many applications are functionally in the same with their use of Bundler,
+  Rake, and RSpec.

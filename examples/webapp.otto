@@ -1,0 +1,180 @@
+/*
+ * This is a description for an Otto-managed continuous delivery process for a
+ * "typical" web application. In this case, let us imagine that the application
+ * is a simple Rails "Hello World" application, with both unit tests and
+ * database migrations. Additionally, imagine there is a pre-production and a
+ * production environment defined in Heroku.
+ /
+
+/*
+ * Incorporate some libraries which define useful things
+ */
+use {
+  stdlib
+  './common/slack'
+}
+
+/*
+ * Configure our libraries.
+ */
+configure {
+  slack {
+    channel = '#otto'
+  }
+}
+
+/*
+ * Declare the environments wherein this application will be delivered to at
+ * some point. For our simple Heroku example, we only have two
+ */
+environments {
+  preprod {
+    settings {
+      HOSTNAME = "preprod-ottoapp.herokuapp.com"
+    }
+  }
+
+  production {
+    settings {
+      HOSTNAME = "ottoapp.herokuapp.com"
+      RAILS_ENV = "production"
+    }
+  }
+}
+
+
+pipeline {
+  stages {
+    stage('Build') {
+      runtime {
+        docker {
+          image = 'ruby'
+        }
+      }
+
+      cache {
+        // Create a cache named "gems", immutable for the rest of the Pipeline
+        gems = ['vendor/']
+        assets = ['dist/css/', 'dist/js/']
+      }
+
+      steps {
+        sh 'bundle install --path=vendor'
+        sh 'bundle exec rake assets:prepare'
+      }
+    }
+
+    stage('Test') {
+      runtime {
+        from 'Build'
+      }
+
+      cache {
+        from 'gems'
+      }
+
+      steps {
+        sh 'bundle exec rake spec'
+      }
+    }
+
+    stage('Deploy') {
+      stage('Pre-production') {
+        when { branch == 'master' }
+
+        environment -> preprod
+
+        runtime {
+          from 'Build'
+        }
+
+        cache {
+          from 'assets'
+        }
+
+        steps {
+          // Grab our cached dist directory and commit it for push
+          sh 'git ci -am "Latest assets" dist'
+          // This is contrived and incorrect, but irrelevant to the example
+          sh 'git push heroku staging'
+        }
+
+        notify {
+          success {
+            slack 'Successfully pushed to preprod'
+          }
+          failure {
+            slack 'Fire on warlock mountain!'
+          }
+        }
+
+        /*
+         * The feedback block is where external stimuli back into the system
+         * should be modeled, providing some means of holding back the pipeline
+         * until the feedback condition has been met
+         */
+        feedback {
+          input 'Does staging look good to you?'
+        }
+      }
+
+      stage('Production') {
+        when {
+          // Re-use our same conditions
+          from 'Pre-production'
+        }
+
+        environment -> production
+
+        /*
+         * Allow the starting of this stage based on some other condition.
+         *
+         * NOTE: it is unclear if this is useful, or confusing, but the
+         * use-case is to allow for some guarding logic before allocating the
+         * runtime environment for this stage.
+         */
+        before {
+          input 'Are you extra sure that staging looks good to you?'
+        }
+
+        runtime {
+          from 'Build'
+        }
+
+        cache {
+          from 'assets'
+        }
+
+        steps {
+          // Grab our cached dist directory and commit it for push
+          sh 'git ci -am "Latest assets" dist'
+          // This is contrived and incorrect, but irrelevant to the example
+          sh 'git push heroku production'
+        }
+
+        notify {
+          failure {
+            slack 'Failed to ship it'
+          }
+          complete {
+            slack 'New changes are live in production'
+          }
+        }
+
+        feedback {
+          /*
+           * Ideally the system has some form of tagging of this specific run,
+           * to allow an external system to call back and say "this is good and
+           * finished"
+           */
+          webhook {
+            description 'Pingdom health check'
+          }
+        }
+      }
+    }
+  }
+}
+
+
+// vim: ts=2 sw=2 et ai
