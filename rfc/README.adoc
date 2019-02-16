@@ -1,0 +1,8 @@
+= Otto RFCs
+
+This directory contains design documents related to the design and
+implementation of Otto.
+
+It loosely follows the process used for
+link:https://www.python.org/dev/peps/[Python Enhancement Proposals].
+
