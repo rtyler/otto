@@ -1,0 +1,12 @@
+/*
+ * This is a description of a custom step which can be easily used in any other
+ * otto file
+ */
+
+
+step {
+  vars {
+  }
+}
+
+// vim: ts=2 sw=2 et ai

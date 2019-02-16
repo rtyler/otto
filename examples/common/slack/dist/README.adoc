@@ -1,0 +1,5 @@
+= dist
+
+This directory contains files which should be downloaded wherever the `slack` step must execute.
+
+
