@@ -1,0 +1,7 @@
+[package]
+name = "bus"
+version = "0.1.0"
+authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
+edition = "2018"
+
+[dependencies]
