@@ -11,19 +11,17 @@ ok() {
     printf '\e[0m \n'
 }
 
-which wget &> /dev/null
-if [ $? -ne 0 ]; then
-    err "Please ensure that \`wget\` is in your PATH"
-    exit 1;
-else
-    ok "wget is present"
-fi;
+check_bin() {
+    which $1 &> /dev/null
+    if [ $? -ne 0 ]; then
+        err "Please ensure that \`${1}\` is in your PATH"
+        exit 1;
+    else
+        ok "${1} is present"
+    fi;
+}
 
-which java &> /dev/null
-if [ $? -ne 0 ]; then
-    err "Please ensure that \`java\` is in your PATH"
-    exit 1;
-else
-    ok "Java is present"
-fi;
-
+check_bin 'wget'
+check_bin 'java'
+check_bin 'rustc'
+check_bin 'cargo'
