@@ -6,9 +6,11 @@ err() {
     printf '\e[0m \n'
 }
 ok() {
-    printf '\e[48;5;%dm' 034
-    echo -n ">> ${1}"
-    printf '\e[0m \n'
+    if [ ! -z "${VERBOSE}" ]; then
+        printf '\e[48;5;%dm' 034
+        echo -n ">> ${1}"
+        printf '\e[0m \n'
+    fi;
 }
 
 check_bin() {
