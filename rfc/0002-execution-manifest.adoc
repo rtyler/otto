@@ -1,0 +1,412 @@
+= RFC-0002: Agent Execution Manifests
+:toc: preamble
+:toclevels: 3
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+.**RFC Template**
+
+.Metadata
+[cols="1h,1"]
+|===
+| RFC
+| 0002
+
+| Title
+| Agent Execution Manifests
+
+| Sponsor
+| link:https://github.com/rtyler/[R Tyler Croy]
+
+| Status
+| Not Submitted :information_source:
+
+| Type
+| Standards
+
+| Created
+| 2019-02-23
+
+|===
+
+== Abstract
+
+Otto agents require a well-defined series of operations in order to statelessly
+execute the work which has been set aside for them. This RFC outlines the
+format of the execution manifest which agents request, and the expectations for
+their usage of the manifest.
+
+== Specification
+
+Otto execution primitives must be computed ahead of time, and basic enough to
+allow for simplistic agent programs to consume without needing excess context
+from the overall CI/CD process.
+
+=== Operations
+
+The discrete operations that each agent must be capable of executing are:
+
+==== `BEGINCTX`
+
+The begin context operation indicates to the agent that a user-specified
+execution context is starting. All subsequent operations will be recorded with
+the given context's identifier to allow for later correlation. The agent must
+store the context identifier until the `ENDCTX` operation is received.
+
+[source,json]
+----
+{
+  "op_id"    : "uuid",
+  "type"     : "BEGINCTX",
+  "data" : {
+    "name"          : "Build",
+    "context_type"  : "stage",
+    "parallel"      : false
+  }
+}
+----
+
+Properties:
+
+* **name**: the user-specified name of the context.
+* **context_type**: the type of context (e.g. `stage`).
+* **parallel**: hint that this context is being executed in parallel.
+
+==== `RUNPROC`
+
+The run process operation instructs the agent to launch a subprocess defined
+within the operation. The operation may include optionally defined environment
+variables, and a specified runtime limit.
+
+The subprocess will always be run as the same user as the agent itself.
+
+[source,json]
+----
+{
+  "op_id"    : "uuid",
+  "type"     : "RUNPROC",
+  "data" : {
+    "script"    : "echo \"Hello World\"",
+    "env"       : {},
+    "timeout_s" : "600"
+  }
+}
+----
+
+==== `EMIT`
+
+The emit operation sends an event into the Otto event bus. This operation is
+typically not expected to be directly user-defined, but rather represents some
+internal state change for which other components in the system must be
+notified.
+
+[source,json]
+----
+{
+"op_id"    : "uuid",
+"type"     : "EMIT",
+"data" : {
+  "event" : "slack-notification",
+  "props" : {
+    "channel" : "#infra",
+    "msg"     : "The deployment has completed!"
+  }
+}
+----
+
+==== `RECEIVE`
+
+The receive operation will block operations until a given event has been
+received from the Otto event bus. This operation is not expected to be directly
+user-defined, but rather encapsulated in higher level logic.
+
+Each receive operation must have a timeout specified.
+
+[source,json]
+----
+{
+  "op_id"    : "uuid",
+  "type"     : "RECEIVE",
+  "data" : {
+    "event"     : "user-input",
+    "vars"      : {
+      "message" : "message"
+    },
+    "timeout_s" : 120
+  }
+}
+----
+
+Properties:
+
+* **event**: the named event to wait for
+* **vars**: the mapping of event data to local variables to perform.
+* **timeout_s**: number of seconds to wait for the event before erroring.
+
+==== `SETVARS`
+
+The set variables operation adds the ability to set agent-local variables which
+can then be referenced in other operations. The specific semantics of variable
+interpolation are subject of another RFC.
+
+[source,json]
+----
+{
+  "op_id"    : "uuid",
+  "type"     : "SETVARS",
+  "data" : {
+    "vars" : [
+      {
+        "name"   : "github_user",
+        "value"  : "octocat",
+        "secret" : false
+      }
+    ]
+  }
+}
+----
+
+==== `STORE`
+
+The store operation will persist some specified pattern of files into the Otto object store.
+
+[source,json]
+----
+{
+  "op_id"    : "uuid",
+  "type"     : "STORE",
+  "data" : {
+    "pattern"   : "build/*.tar.gz",
+    "permanent" : true
+  }
+}
+----
+
+Properties:
+
+* **pattern**:
+* **permanent**: mark the files to persist past the termination of the CI/CD
+  process
+
+==== `ENDCTX`
+
+The end context operation indicates to the agent that the named context has
+been completed. Upon receipt of the end context operation, which must have an
+identical operation identifier as its corresponding `BEGINCTX`, the agent
+should discard its internally stored operation ID.
+
+[source,json]
+----
+{
+  "op_id"    : "uuid",
+  "type"     : "ENDCTX",
+  "data" : {
+    "name"          : "Build",
+    "context_type"  : "stage",
+    "parallel"      : false
+  }
+}
+----
+
+
+=== Manifest
+
+Every time an agent is initialized, it will be given a unique URL from which it
+can access its pre-determined execution manifest. An HTTP `GET` request to the
+specified URL will return the complete manifest with other important metadata
+for the agent's execution.
+
+Included in the manifest is a self identifier, and base URLs for all services
+relevant to the agent's execution. The agent is expected to construct the
+appropriate versioned URLs for all subsequent requests to the services's APIs.
+
+For demonstration purposes, the following `.otto` definition would result in the given example manifest:
+
+.example.otto
+[source]
+----
+use {
+  stdlib
+}
+
+pipeline {
+  stages {
+    stage('Build') {
+      runtime {
+        docker {
+          image = 'alpine'
+        }
+      }
+      steps {
+        sh 'echo "Hello World"'
+      }
+    }
+  }
+}
+----
+
+.Example Manifest
+[source,json]
+----
+{
+  "self" : "uuid",
+  "services" : {
+    "orchestrator" : "http://localhost:3030/",
+    "datastore"    : "http://localhost:3031/",
+    "objectstore"  : "http://localhost:3031/",
+    "eventbus"     : "http://localhost:3040/"
+  },
+  "ops" : [
+    {
+      "op_id"    : "uuid",
+      "type"     : "BEGINCTX",
+      "data" : {
+        "name"          : "Build",
+        "context_type"  : "stage",
+        "parallel"      : false
+      }
+    },
+    {
+      "op_id"    : "uuid2",
+      "type"     : "RUNPROC",
+      "data" : {
+        "script"    : "echo \"Hello World\"",
+        "env"       : {},
+        "timeout_s" : "600"
+      }
+    },
+    {
+      "op_id"    : "uuid3",
+      "type"     : "ENDCTX",
+      "data" : {
+        "name"          : "Build",
+        "context_type"  : "stage",
+        "parallel"      : false
+      }
+    }
+  ]
+}
+----
+
+Upon completion of the final given operation, the agent should ensure all
+outstanding requests have completed and then exit.
+
+
+== Motivation
+
+The systems design for Otto, as described in RFC-0001 focuses on discrete and
+simple components which work together in concert. This extends to the agents
+which ultimately execute the CI/CD workloads defined by users.
+
+In order to create an Otto agent which is as simple as possible, the agent
+itself must be as primitive as practical. To maintain that simplicity, the
+agent must not carry any substantive logic or functionality unto itself, but
+must act as a dumb conduit for compute and operations to be executed.
+
+== Reasoning
+
+With the specified operations above, it is possible to define _most_ common
+CI/CD workloads, as the majority of use-cases center around running scripts,
+and storing output. The execution manifest design allows for stateless
+pre-computation of runtime which will require agents which not only makes them
+quite simple, achieving a core goal of Otto, but also ensures that any
+pre-optimization can be done to assist with Otto's scalability or cost
+objectives.
+
+An alternative design would be to follow the model set forth by other CI/CD
+services which have fairly "intelligent" agents. This idea was rejected because
+there are numerous runtime challenges associated with this approach. The
+"intelligence" presence in the Jenkins agent requires the JVM, but also deeply
+couples the operation of the agent with the operation of the master process in
+the system. This introduces code/object synchronization issues between the
+master and agents as the life of the system progresses. The intelligence of the
+agent also necessitates the pushing of executable code down the channel from
+the master when new plugins are added to the master. A similar system design
+pattern can be observed in the Puppet ecosystem, where a Puppet agent and
+Puppet master must synchronize code and are deeply intertwined at runtime.
+
+In practice, "intelligent agent" distributed computing paradigm has led to strictly
+master/agent focused extensibility. By effectively dumbing down the agent, but
+tying it into the Otto event bus, extensibility must be achieved elsewhere, as
+additional composable services in the system, rather than loading more and more
+code into the master and agents directly.
+
+Another alternative considered was to effectively generate the execution
+manifest as a singular script or executable which could sent to the desired
+agent runtime environment, and simply executed. This idea was discarded as both
+too complex, but also because it requires the "orchestrator" to have too much
+up front knowledge of the agent runtime environment. The capabilities of the
+agent runtime environment with the execution manfiest are effectively
+irrelevant so long as it is capable of requesting the execution manifest and
+acting upon it. This enables different agents to be easily implemented for
+different computing environments, such as for Windows versus Linux, or other
+high-performance computing environments which might need to handle operations
+differently than conventional environments.
+
+== Security
+
+[TIP]
+====
+Describe the security impact of this proposal.
+Outline what was done to identify and evaluate security issues,
+discuss of potential security issues and how they are mitigated or prevented,
+and how the RFC interacts with existing permissions, authentication, authorization, etc.
+
+If this proposal will have no impact on security, this section may simply say:
+There are no security risks related to this proposal.
+====
+
+
+== Testing
+
+[TIP]
+====
+If the RFC involves any kind of behavioral change to code give a summary of how
+its correctness (and, if applicable, compatibility, security, etc.) can be
+tested.
+
+In the preferred case that automated tests can be developed to cover all
+significant changes, simply give a short summary of the nature of these tests.
+
+If some or all of changes will require human interaction to verify, explain why
+automated tests are considered impractical.  Then summarize what kinds of test
+cases might be required: user scenarios with action steps and expected
+outcomes.  Might behavior vary by platform (operating system, servlet
+container, web browser, etc.)?  Are there foreseeable interactions between
+different permissible versions of components?
+Are any special tools, proprietary software, or online service accounts
+required to exercise a related code path (Active Directory server, GitHub
+login, etc.)?  When will testing take place relative to merging code changes,
+and might retesting be required if other changes are made to this area in the
+future?
+
+If this proposal requires no testing, this section may simply say:
+There are no testing issues related to this proposal.
+====
+
+== Prototype Implementation
+
+[TIP]
+====
+Link to any open source reference implementation of code changes for this proposal.
+The implementation need not be completed before the RFC is accepted
+but must be completed before the RFC is given "final" status.
+
+RFCs which will not include code changes may omit this section.
+====
+
+== References
+
+[TIP]
+====
+Provide links to any related documents.  This will include links to discussions
+on the mailing list, pull requests, and meeting notes.
+====
+
+
+
