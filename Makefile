@@ -7,6 +7,9 @@ GRAMMAR=Otto.g4
 ## Phony targets
 all: help
 
+build: ## Build all components
+	cargo build
+
 check: ## Run validation tests
 
 depends: prereqs $(ANTLR) ## Download all dependencies
@@ -39,4 +42,4 @@ $(ANTLR): ## Download the latest ANTLR4 binary
 help: ## Display this help text
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: all check clean depends
+.PHONY: all build check clean depends

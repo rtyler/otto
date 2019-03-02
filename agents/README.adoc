@@ -1,0 +1,4 @@
+= Otto Agents
+
+This directory contains a number of agent implementations with varying levels
+of functionality.

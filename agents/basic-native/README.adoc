@@ -1,0 +1,4 @@
+= Otto Basic Agent
+
+The basic agent is the simplest reference implementation of an Otto agent, and
+supports no streaming or other advanced functionalities.
