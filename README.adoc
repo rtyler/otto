@@ -42,8 +42,8 @@ Below is an incomplete listing of the problems Otto aims to solve for:
   degrading in functionality depending on the system requirements which are
   present, users are forced to hack around the platform requirements, or spent
   significant worrying about and maintaining pre-requisites.
-* **Nany tools are difficult to configure  by default.** For most application
-  stacks, there are common conventions which can be easily prescriped for the
+* **Many tools are difficult to configure  by default.** For most application
+  stacks, there are common conventions which can be easily prescribed for the
   80% use-case.  Ruby on Rails applications will almost all look identical, and
   should require zero additional configuration.
 * **Secrets and credentials can be inadvertently leaked.** Many tools provide
