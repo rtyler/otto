@@ -5,9 +5,9 @@ export default createLogger({
   level: 'info',
   format: format.combine(
     format.splat(),
-    format.simple()
+    format.simple(),
   ),
   transports: [
-    new transports.Console()
+    new transports.Console(),
   ],
 });
