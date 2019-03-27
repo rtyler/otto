@@ -4,14 +4,14 @@ use std::collections::HashMap;
 pub struct Manifest {
     #[serde(rename(deserialize = "self"))]
     pub agent   : String,
-    services: HashMap<String, String>,
-    ops     : Vec<Operation>,
+    pub services: HashMap<String, String>,
+    pub ops     : Vec<Operation>,
 }
 
 #[derive(Deserialize, Debug)]
-struct Operation {
-    op_id: String,
+pub struct Operation {
+    pub op_id: String,
     #[serde(rename(deserialize = "type"))]
-    op_type : String,
-    data    : serde_json::Map<String, serde_json::Value>,
+    pub op_type : String,
+    pub data    : serde_json::Map<String, serde_json::Value>,
 }

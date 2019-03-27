@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "agents/basic-native",
+    "agents/rust-basic",
     "bus",
     "data-store",
 ]

@@ -5,11 +5,27 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 
+
+extern crate tempfile;
+use tempfile::NamedTempFile;
+use std::io::Write;
+
+use std::process::Command;
+
 use hyper::Client;
 use hyper::rt::{self, Future, Stream};
 
 mod manifest;
-use manifest::Manifest;
+use manifest::{Manifest, Operation};
+
+fn run_process(op: Operation) {
+    let mut tmpfile = NamedTempFile::new().unwrap();
+    write!(tmpfile, "#!/bin/sh\n{}", op.data["script"].as_str().unwrap()).unwrap();
+    let mut proc = Command::new("sh");
+    proc.arg(tmpfile.path().to_str().unwrap());
+    let output = proc.output().expect("Failed to run subprocess");
+    println!("executed ({}):\n{}", output.status, String::from_utf8(output.stdout).unwrap());
+}
 
 fn main() {
     println!("Starting agent");
@@ -26,7 +42,13 @@ fn main() {
             .from_err::<FetchError>()
             .and_then(|body| {
                 let manifest: Manifest = serde_json::from_slice(&body)?;
-                println!("okie doke {}", manifest.agent);
+                println!("okie doke {}, let's get started", manifest.agent);
+                for operation in manifest.ops {
+                    println!("op: {}", operation.op_type);
+                    if operation.op_type == "RUNPROC" {
+                        run_process(operation);
+                    }
+                }
                 Ok(())
             })
             .map_err(|e| {
