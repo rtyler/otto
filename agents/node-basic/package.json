@@ -1,0 +1,23 @@
+{
+  "name": "otto-agent",
+  "version": "1.0.0",
+  "description": "A basic Otto agent implemented in Node",
+  "repository": "git://git.brokenco.de/otto.git",
+  "bin": "build/agent.js",
+  "scripts": {
+    "build": "tsc && pkg --out-path build .",
+    "test": "jest"
+  },
+  "author": "R Tyler Croy",
+  "license": "AGPL-3.0",
+  "devDependencies": {
+    "jest": "^24.5.0",
+    "pkg": "^4.3.7",
+    "typescript": "^3.3.4000"
+  },
+  "dependencies": {
+    "@feathersjs/client": "^3.7.8",
+    "tslib": "^1.9.3",
+    "winston": "^3.2.1"
+  }
+}
