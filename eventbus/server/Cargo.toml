@@ -5,7 +5,7 @@ authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
 [dependencies]
-eventbus-api = { version = "1.0.0" , path = "../eventbus-api" }
+eventbus-api = { version = "1.0.0" , path = "../api" }
 chrono = { version = "0.4", features = ["serde"] }
 futures = "0.1"
 hyper = "0.11"

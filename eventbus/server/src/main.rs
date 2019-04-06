@@ -66,6 +66,7 @@ fn main() {
         TcpServer::new(tokio_tls::proto::Server::new(Http::new(), tls_acceptor), addr).serve(service_fn);
     } else {
         // Using HTTP
+        println!("Listening on {}", addr);
         TcpServer::new(Http::new(), addr).serve(service_fn);
     }
 }

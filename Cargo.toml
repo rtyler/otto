@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "agents/rust-basic",
-    "eventbus",
-    "eventbus-api",
+    "eventbus/server",
+    "eventbus/api",
     "data-store",
 ]

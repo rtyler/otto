@@ -16,7 +16,7 @@ check: ## Run validation tests
 swagger: depends ## Generate the swagger stubs based on apispecs
 	# It may be useful to read
 	# https://github.com/swagger-api/swagger-codegen/pull/6613
-	./scripts/swagger-codegen generate -l rust-server -i ./apispec/eventbus.yml -o eventbus-api -DpackageName=eventbus-api
+	./scripts/swagger-codegen generate -l rust-server -i ./apispec/eventbus.yml -o eventbus/api -DpackageName=eventbus-api
 
 depends: prereqs $(ANTLR) ## Download all dependencies
 
