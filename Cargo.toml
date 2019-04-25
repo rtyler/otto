@@ -3,5 +3,4 @@ members = [
     "agents/rust-basic",
     "eventbus/server",
     "eventbus/api",
-    "data-store",
 ]
