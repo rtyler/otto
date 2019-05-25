@@ -28,7 +28,7 @@ impl<C> NewService<C>{
     }
 }
 
-impl<C> hyper::server::NewService for NewService<C> where C: Has<XSpanIdString>  + Clone + 'static {
+impl<C> hyper::server::Service for NewService<C> where C: Has<XSpanIdString>  + Clone + 'static {
     type Request = (hyper::Request, C);
     type Response = hyper::Response;
     type Error = hyper::Error;
