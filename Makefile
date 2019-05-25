@@ -1,6 +1,7 @@
 
 
 ANTLR_BIN=antlr-4.7.2-complete.jar
+DREDD=./node_modules/.bin/dredd
 ANTLR=contrib/$(ANTLR_BIN)
 GRAMMAR=Otto.g4
 ################################################################################
@@ -12,14 +13,13 @@ build: ## Build all components
 
 check: ## Run validation tests
 
-
 swagger: depends ## Generate the swagger stubs based on apispecs
 	# It may be useful to read
 	# https://github.com/swagger-api/swagger-codegen/pull/6613
 	./scripts/swagger-codegen generate -l rust-server -i ./apispec/eventbus.yml -o eventbus/api -DpackageName=eventbus-api
 	./scripts/swagger-codegen generate -l rust-server -i ./apispec/orchestrator.yml -o orchestrator/api -D packageName=orchestrator-api
 
-depends: prereqs $(ANTLR) ## Download all dependencies
+depends: prereqs $(ANTLR) $(DREDD) ## Download all dependencies
 
 prereqs: scripts/prereqs.sh ## Check that this system has the necessary tools to build otto
 	@sh scripts/prereqs.sh
@@ -27,6 +27,8 @@ prereqs: scripts/prereqs.sh ## Check that this system has the necessary tools to
 clean: ## Clean all temporary/working files
 	rm -f $(ANTLR)
 
+dredd: $(DREDD)
+	$(DREDD)
 
 parser: depends $(GRAMMAR) ## Generate the parser code
 	@for target in JavaScript Go Cpp; do \
@@ -41,6 +43,9 @@ parser: depends $(GRAMMAR) ## Generate the parser code
 ## Non-phony targets
 $(ANTLR): ## Download the latest ANTLR4 binary
 	(cd contrib && wget https://www.antlr.org/download/$(ANTLR_BIN))
+
+$(DREDD):
+	npm i dredd
 
 ################################################################################
 

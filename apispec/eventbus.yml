@@ -14,7 +14,6 @@ externalDocs:
   description: 'Find out more about Otto'
   url: 'https://github.com/rtyler/otto'
 basePath: '/v1'
-tags:
 schemes:
 - 'https'
 - 'http'
@@ -24,15 +23,21 @@ parameters:
     name: name
     description: 'The named identifier of an event channel'
     in: path
-    type: string
     required: true
+    schema:
+      type: string
+    examples:
+      valid: 'inbound-webhooks'
 
   channelConsumer:
     name: consumer
     description: 'The named identifier of an event consumer'
     in: path
-    type: string
     required: true
+    schema:
+      type: string
+    examples:
+      valid: 'orchestrator-0a'
 
 produces:
   - 'application/json'
@@ -47,7 +52,7 @@ paths:
       operationId: 'listChannels'
       responses:
         200:
-          description: 'Successful enumeration'
+          description: 'Channels successfully listed'
           schema:
             type: 'array'
             items:
@@ -109,7 +114,6 @@ paths:
         404:
           description: 'Could not find the named channel'
 
-
   /channel/{name}/{offset}:
     get:
       summary: 'Fetch an item from the channel'
@@ -118,9 +122,21 @@ paths:
         - name: offset
           description: 'The offset at which the item is located in the channel'
           in: path
-          type: integer
-          format: int64
           required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 0
+          examples:
+            valid: 1
+            invalid: -1
+      responses:
+        200:
+          description: 'Successful fetch of the item'
+        404:
+          description: 'Could not find the named channel'
+        416:
+          description: 'Could not find an item at the given offset'
 
   /offset/{consumer}:
     get:
@@ -164,8 +180,6 @@ paths:
           description: 'User is not authorized to modify this consumer'
         404:
           description: 'Could not find the named consumer'
-
-securityDefinitions:
 definitions:
   Channel:
     type: 'object'
