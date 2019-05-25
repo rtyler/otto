@@ -1,0 +1,108 @@
+---
+swagger: "2.0"
+info:
+  description: "This specification describes the Otto orchestrator"
+  version: "1.0.0"
+  title: "Otto Orchestrator"
+  contact:
+    email: "rtyler@brokenco.de"
+  license:
+    name: "GNU AGPL 3.0"
+    url: "https://www.gnu.org/licenses/agpl-3.0.en.html"
+host: "ottodeploys.us"
+basePath: "/v1"
+schemes:
+- "https"
+- "http"
+paths:
+  /manifest/{agentId}:
+    get:
+      summary: "Fetch manifest for execution by the given agent"
+      description: "Return the full execution manifest for the given agent to execute.\n"
+      operationId: "fetchManifest"
+      produces:
+      - "application/xml"
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "Successful enumeration"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Channel"
+          x-responseId: "SuccessfulEnumeration"
+          x-uppercaseResponseId: "SUCCESSFUL_ENUMERATION"
+          uppercase_operation_id: "FETCH_MANIFEST"
+          uppercase_data_type: "VEC<CHANNEL>"
+          producesXml: true
+        400:
+          description: "Invalid request"
+          x-responseId: "InvalidRequest"
+          x-uppercaseResponseId: "INVALID_REQUEST"
+          uppercase_operation_id: "FETCH_MANIFEST"
+      operation_id: "fetch_manifest"
+      uppercase_operation_id: "FETCH_MANIFEST"
+      path: "/manifest/:agentId"
+      PATH_ID: "MANIFEST_AGENTID"
+      hasPathParams: false
+      HttpMethod: "Get"
+definitions:
+  Manifest:
+    type: "object"
+    properties:
+      self:
+        type: "string"
+        description: "The identifier of the agent"
+      services:
+        type: "object"
+        additionalProperties:
+          $ref: "#/definitions/Service"
+      ops:
+        type: "array"
+        items:
+          $ref: "#/definitions/Operation"
+    xml:
+      name: "Manifest"
+    upperCaseName: "MANIFEST"
+  Service:
+    type: "object"
+    properties:
+      identifier:
+        type: "string"
+        description: "Key to identify the different services"
+      url:
+        type: "string"
+        description: "Resolvable URL to access APIs for the given service"
+    xml:
+      name: "Service"
+    upperCaseName: "SERVICE"
+  Operation:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+        description: "Globally unique ID to identify this specific operation in data\
+          \ stores, etc"
+      context:
+        type: "string"
+        description: "Generally unique context ID to group different operations in\
+          \ the same context"
+      type:
+        description: "Type of operation"
+        $ref: "#/definitions/OperationType"
+      data:
+        type: "object"
+        description: "Operation type-specific data for the agent to use"
+        properties: {}
+    upperCaseName: "OPERATION"
+  OperationType:
+    type: "string"
+    enum:
+    - "BEGINCTX"
+    - "ENDCTX"
+    - "RUNPROC"
+    upperCaseName: "OPERATIONTYPE"
+externalDocs:
+  description: "Find out more about Otto"
+  url: "https://github.com/rtyler/otto"
