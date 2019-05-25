@@ -18,6 +18,26 @@ tags:
 schemes:
 - 'https'
 - 'http'
+
+parameters:
+  channelName:
+    name: name
+    description: 'The named identifier of an event channel'
+    in: path
+    type: string
+    required: true
+
+  channelConsumer:
+    name: consumer
+    description: 'The named identifier of an event consumer'
+    in: path
+    type: string
+    required: true
+
+produces:
+  - 'application/json'
+  - 'application/xml'
+
 paths:
   /channel:
     get:
@@ -25,10 +45,6 @@ paths:
       description: |
         Enumerate all the channels visible and available to the current client's permission scope
       operationId: 'listChannels'
-      produces:
-      - 'application/xml'
-      - 'application/json'
-      parameters:
       responses:
         200:
           description: 'Successful enumeration'
@@ -38,6 +54,117 @@ paths:
               $ref: '#/definitions/Channel'
         400:
           description: 'Invalid request'
+
+  /channel/{name}:
+    get:
+      summary: 'Fetch the metadata about a specific channel'
+      parameters:
+        - $ref: '#/parameters/channelName'
+      responses:
+        200:
+          description: 'Successful retrieval of metadata'
+        400:
+          description: 'Invalid formatted channel name or request'
+        403:
+          description: 'User is not authorized to access the channel'
+        404:
+          description: 'Could not find the named channel'
+
+
+    put:
+      summary: 'Publish an item to the channel'
+      parameters:
+        - $ref: '#/parameters/channelName'
+      responses:
+        201:
+          description: 'Successful publish of the item'
+        403:
+          description: 'User is not authorized to publish to the channel'
+        404:
+          description: 'Could not find the named channel'
+
+    post:
+      summary: 'Create a channel'
+      parameters:
+        - $ref: '#/parameters/channelName'
+      responses:
+        200:
+          description: 'Channel created successfully'
+        400:
+          description: 'Suggested channel configuration was invalid'
+        403:
+          description: 'User is not authorized to create a channel'
+
+    patch:
+      summary: 'Modify the channel configuration'
+      parameters:
+        - $ref: '#/parameters/channelName'
+      responses:
+        200:
+          description: 'Successful update of the channel'
+        400:
+          description: 'Suggested channel configuration was invalid'
+        403:
+          description: 'User is not authorized to modify the channel'
+        404:
+          description: 'Could not find the named channel'
+
+
+  /channel/{name}/{offset}:
+    get:
+      summary: 'Fetch an item from the channel'
+      parameters:
+        - $ref: '#/parameters/channelName'
+        - name: offset
+          description: 'The offset at which the item is located in the channel'
+          in: path
+          type: integer
+          format: int64
+          required: true
+
+  /offset/{consumer}:
+    get:
+      summary: 'List offset metadata about a named consumer'
+      parameters:
+        - $ref: '#/parameters/channelConsumer'
+      responses:
+        200:
+          description: 'Successful access of the consumer metadata'
+        400:
+          description: 'Improperly formatted consumer name'
+        403:
+          description: 'User is not authorized to access this consumer'
+        404:
+          description: 'Could not find the named consumer'
+
+    post:
+      summary: 'Create a named consumer to store metadata'
+      parameters:
+        - $ref: '#/parameters/channelConsumer'
+      responses:
+        200:
+          description: 'Successful creation of the named consumer'
+        400:
+          description: 'Improperly formatted consumer metadata'
+        403:
+          description: 'User is not authorized to create a consumer'
+        409:
+          description: 'The named consumer already exists and is in use'
+
+    patch:
+      summary: 'Update the offset for the named consumer'
+      parameters:
+        - $ref: '#/parameters/channelConsumer'
+      responses:
+        200:
+          description: 'Successful modification of the consumer metadata'
+        400:
+          description: 'Improperly formatted metadata'
+        403:
+          description: 'User is not authorized to modify this consumer'
+        404:
+          description: 'Could not find the named consumer'
+
 securityDefinitions:
 definitions:
   Channel:
