@@ -57,6 +57,9 @@ mod paths {
         ]).unwrap();
     }
     pub static ID_MANIFEST_AGENTID: usize = 0;
+    lazy_static! {
+        pub static ref REGEX_MANIFEST_AGENTID: regex::Regex = regex::Regex::new(r"^/v1/manifest/(?P<agentId>[^/?#]*)$").unwrap();
+    }
 }
 
 pub struct NewService<T, C> {
@@ -123,6 +126,22 @@ where
             &hyper::Method::Get if path.matched(paths::ID_MANIFEST_AGENTID) => {
 
 
+                // Path parameters
+                let path = uri.path().to_string();
+                let path_params =
+                    paths::REGEX_MANIFEST_AGENTID
+                    .captures(&path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE MANIFEST_AGENTID in set but failed match against \"{}\"", path, paths::REGEX_MANIFEST_AGENTID.as_str())
+                    );
+
+                let param_agent_id = match percent_encoding::percent_decode(path_params["agentId"].as_bytes()).decode_utf8() {
+                    Ok(param_agent_id) => match param_agent_id.parse::<String>() {
+                        Ok(param_agent_id) => param_agent_id,
+                        Err(e) => return Box::new(future::ok(Response::new().with_status(StatusCode::BadRequest).with_body(format!("Couldn't parse path parameter agentId: {}", e)))),
+                    },
+                    Err(_) => return Box::new(future::ok(Response::new().with_status(StatusCode::BadRequest).with_body(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["agentId"]))))
+                };
 
 
 
@@ -131,14 +150,14 @@ where
                 Box::new({
                         {{
 
-                                Box::new(api_impl.fetch_manifest(&context)
+                                Box::new(api_impl.fetch_manifest(param_agent_id, &context)
                                     .then(move |result| {
                                         let mut response = Response::new();
                                         response.headers_mut().set(XSpanId((&context as &Has<XSpanIdString>).get().0.to_string()));
 
                                         match result {
                                             Ok(rsp) => match rsp {
-                                                FetchManifestResponse::SuccessfulEnumeration
+                                                FetchManifestResponse::AgentIDFoundAndManifestGenerated
 
                                                     (body)
 
@@ -146,7 +165,7 @@ where
                                                 => {
                                                     response.set_status(StatusCode::try_from(200).unwrap());
 
-                                                    response.headers_mut().set(ContentType(mimetypes::responses::FETCH_MANIFEST_SUCCESSFUL_ENUMERATION.clone()));
+                                                    response.headers_mut().set(ContentType(mimetypes::responses::FETCH_MANIFEST_AGENT_ID_FOUND_AND_MANIFEST_GENERATED.clone()));
 
 
                                                     let body = serde_xml_rs::to_string(&body).expect("impossible to fail to serialize");

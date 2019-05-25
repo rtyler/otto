@@ -62,7 +62,7 @@ fn main() {
             )
         );
 
-    let addr = "127.0.0.1:8080".parse().expect("Failed to parse bind address");
+    let addr = "127.0.0.1:3030".parse().expect("Failed to parse bind address");
     if matches.is_present("https") {
         let ssl = ssl().expect("Failed to load SSL keys");
         let builder: native_tls::TlsAcceptorBuilder = native_tls::backend::openssl::TlsAcceptorBuilderExt::from_openssl(ssl);

@@ -10,6 +10,7 @@ use models;
 use swagger;
 
 
+/// Agent execution manifest
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename = "Manifest")]
 pub struct Manifest {
@@ -20,7 +21,7 @@ pub struct Manifest {
 
     #[serde(rename = "services")]
     #[serde(skip_serializing_if="Option::is_none")]
-    pub services: Option<HashMap<String, models::Service>>,
+    pub services: Option<models::Service>,
 
     #[serde(rename = "ops")]
     #[serde(skip_serializing_if="Option::is_none")]
@@ -38,6 +39,7 @@ impl Manifest {
     }
 }
 
+/// A discrete idempotent operation
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Operation {
     /// Globally unique ID to identify this specific operation in data stores, etc
@@ -73,6 +75,7 @@ impl Operation {
     }
 }
 
+/// Specific type of the given operation, implies different `data` fields
 /// Enumeration of values.
 /// Since this enum's variants do not hold data, we can easily define them them as `#[repr(C)]`
 /// which helps with FFI.
@@ -110,6 +113,7 @@ impl ::std::str::FromStr for OperationType {
     }
 }
 
+/// A service ID to URl mapping
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename = "Service")]
 pub struct Service {

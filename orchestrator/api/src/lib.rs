@@ -38,8 +38,8 @@ pub const API_VERSION: &'static str = "1.0.0";
 
 #[derive(Debug, PartialEq)]
 pub enum FetchManifestResponse {
-    /// Successful enumeration
-    SuccessfulEnumeration ( Vec<models::Channel> ) ,
+    /// Agent ID found and manifest generated
+    AgentIDFoundAndManifestGenerated ( models::Manifest ) ,
     /// Invalid request
     InvalidRequest ,
 }
@@ -49,7 +49,7 @@ pub enum FetchManifestResponse {
 pub trait Api<C> {
 
     /// Fetch manifest for execution by the given agent
-    fn fetch_manifest(&self, context: &C) -> Box<Future<Item=FetchManifestResponse, Error=ApiError>>;
+    fn fetch_manifest(&self, agent_id: String, context: &C) -> Box<Future<Item=FetchManifestResponse, Error=ApiError>>;
 
 }
 
@@ -57,7 +57,7 @@ pub trait Api<C> {
 pub trait ApiNoContext {
 
     /// Fetch manifest for execution by the given agent
-    fn fetch_manifest(&self) -> Box<Future<Item=FetchManifestResponse, Error=ApiError>>;
+    fn fetch_manifest(&self, agent_id: String) -> Box<Future<Item=FetchManifestResponse, Error=ApiError>>;
 
 }
 
@@ -76,8 +76,8 @@ impl<'a, T: Api<C> + Sized, C> ContextWrapperExt<'a, C> for T {
 impl<'a, T: Api<C>, C> ApiNoContext for ContextWrapper<'a, T, C> {
 
     /// Fetch manifest for execution by the given agent
-    fn fetch_manifest(&self) -> Box<Future<Item=FetchManifestResponse, Error=ApiError>> {
-        self.api().fetch_manifest(&self.context())
+    fn fetch_manifest(&self, agent_id: String) -> Box<Future<Item=FetchManifestResponse, Error=ApiError>> {
+        self.api().fetch_manifest(agent_id, &self.context())
     }
 
 }

@@ -37,6 +37,54 @@ pub const API_VERSION: &'static str = "1.0.0";
 
 
 #[derive(Debug, PartialEq)]
+pub enum ChannelNameGetResponse {
+    /// Successful retrieval of metadata
+    SuccessfulRetrievalOfMetadata ,
+    /// Invalid formatted channel name or request
+    InvalidFormattedChannelNameOrRequest ,
+    /// User is not authorized to access the channel
+    UserIsNotAuthorizedToAccessTheChannel ,
+    /// Could not find the named channel
+    CouldNotFindTheNamedChannel ,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum ChannelNameOffsetGetResponse {
+}
+
+#[derive(Debug, PartialEq)]
+pub enum ChannelNamePatchResponse {
+    /// Successful update of the channel
+    SuccessfulUpdateOfTheChannel ,
+    /// Suggested channel configuration was invalid
+    SuggestedChannelConfigurationWasInvalid ,
+    /// User is not authorized to modify the channel
+    UserIsNotAuthorizedToModifyTheChannel ,
+    /// Could not find the named channel
+    CouldNotFindTheNamedChannel ,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum ChannelNamePostResponse {
+    /// Channel created successfully
+    ChannelCreatedSuccessfully ,
+    /// Suggested channel configuration was invalid
+    SuggestedChannelConfigurationWasInvalid ,
+    /// User is not authorized to create a channel
+    UserIsNotAuthorizedToCreateAChannel ,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum ChannelNamePutResponse {
+    /// Successful publish of the item
+    SuccessfulPublishOfTheItem ,
+    /// User is not authorized to publish to the channel
+    UserIsNotAuthorizedToPublishToTheChannel ,
+    /// Could not find the named channel
+    CouldNotFindTheNamedChannel ,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum ListChannelsResponse {
     /// Successful enumeration
     SuccessfulEnumeration ( Vec<models::Channel> ) ,
@@ -44,20 +92,104 @@ pub enum ListChannelsResponse {
     InvalidRequest ,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum OffsetConsumerGetResponse {
+    /// Successful access of the consumer metadata
+    SuccessfulAccessOfTheConsumerMetadata ,
+    /// Improperly formatted consumer name
+    ImproperlyFormattedConsumerName ,
+    /// User is not authorized to access this consumer
+    UserIsNotAuthorizedToAccessThisConsumer ,
+    /// Could not find the named consumer
+    CouldNotFindTheNamedConsumer ,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum OffsetConsumerPatchResponse {
+    /// Successful modification of the consumer metadata
+    SuccessfulModificationOfTheConsumerMetadata ,
+    /// Improperly formatted metadata
+    ImproperlyFormattedMetadata ,
+    /// User is not authorized to modify this consumer
+    UserIsNotAuthorizedToModifyThisConsumer ,
+    /// Could not find the named consumer
+    CouldNotFindTheNamedConsumer ,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum OffsetConsumerPostResponse {
+    /// Successful creation of the named consumer
+    SuccessfulCreationOfTheNamedConsumer ,
+    /// Improperly formatted consumer metadata
+    ImproperlyFormattedConsumerMetadata ,
+    /// User is not authorized to create a consumer
+    UserIsNotAuthorizedToCreateAConsumer ,
+    /// The named consumer already exists and is in use
+    TheNamedConsumerAlreadyExistsAndIsInUse ,
+}
+
 
 /// API
 pub trait Api<C> {
 
+    /// Fetch the metadata about a specific channel
+    fn channel_name_get(&self, name: String, context: &C) -> Box<Future<Item=ChannelNameGetResponse, Error=ApiError>>;
+
+    /// Fetch an item from the channel
+    fn channel_name_offset_get(&self, name: String, offset: i64, context: &C) -> Box<Future<Item=ChannelNameOffsetGetResponse, Error=ApiError>>;
+
+    /// Modify the channel configuration
+    fn channel_name_patch(&self, name: String, context: &C) -> Box<Future<Item=ChannelNamePatchResponse, Error=ApiError>>;
+
+    /// Create a channel
+    fn channel_name_post(&self, name: String, context: &C) -> Box<Future<Item=ChannelNamePostResponse, Error=ApiError>>;
+
+    /// Publish an item to the channel
+    fn channel_name_put(&self, name: String, context: &C) -> Box<Future<Item=ChannelNamePutResponse, Error=ApiError>>;
+
     /// List existing channels in the event bus
     fn list_channels(&self, context: &C) -> Box<Future<Item=ListChannelsResponse, Error=ApiError>>;
+
+    /// List offset metadata about a named consumer
+    fn offset_consumer_get(&self, consumer: String, context: &C) -> Box<Future<Item=OffsetConsumerGetResponse, Error=ApiError>>;
+
+    /// Update the offset for the named consumer
+    fn offset_consumer_patch(&self, consumer: String, context: &C) -> Box<Future<Item=OffsetConsumerPatchResponse, Error=ApiError>>;
+
+    /// Create a named consumer to store metadata
+    fn offset_consumer_post(&self, consumer: String, context: &C) -> Box<Future<Item=OffsetConsumerPostResponse, Error=ApiError>>;
 
 }
 
 /// API without a `Context`
 pub trait ApiNoContext {
 
+    /// Fetch the metadata about a specific channel
+    fn channel_name_get(&self, name: String) -> Box<Future<Item=ChannelNameGetResponse, Error=ApiError>>;
+
+    /// Fetch an item from the channel
+    fn channel_name_offset_get(&self, name: String, offset: i64) -> Box<Future<Item=ChannelNameOffsetGetResponse, Error=ApiError>>;
+
+    /// Modify the channel configuration
+    fn channel_name_patch(&self, name: String) -> Box<Future<Item=ChannelNamePatchResponse, Error=ApiError>>;
+
+    /// Create a channel
+    fn channel_name_post(&self, name: String) -> Box<Future<Item=ChannelNamePostResponse, Error=ApiError>>;
+
+    /// Publish an item to the channel
+    fn channel_name_put(&self, name: String) -> Box<Future<Item=ChannelNamePutResponse, Error=ApiError>>;
+
     /// List existing channels in the event bus
     fn list_channels(&self) -> Box<Future<Item=ListChannelsResponse, Error=ApiError>>;
+
+    /// List offset metadata about a named consumer
+    fn offset_consumer_get(&self, consumer: String) -> Box<Future<Item=OffsetConsumerGetResponse, Error=ApiError>>;
+
+    /// Update the offset for the named consumer
+    fn offset_consumer_patch(&self, consumer: String) -> Box<Future<Item=OffsetConsumerPatchResponse, Error=ApiError>>;
+
+    /// Create a named consumer to store metadata
+    fn offset_consumer_post(&self, consumer: String) -> Box<Future<Item=OffsetConsumerPostResponse, Error=ApiError>>;
 
 }
 
@@ -75,9 +207,49 @@ impl<'a, T: Api<C> + Sized, C> ContextWrapperExt<'a, C> for T {
 
 impl<'a, T: Api<C>, C> ApiNoContext for ContextWrapper<'a, T, C> {
 
+    /// Fetch the metadata about a specific channel
+    fn channel_name_get(&self, name: String) -> Box<Future<Item=ChannelNameGetResponse, Error=ApiError>> {
+        self.api().channel_name_get(name, &self.context())
+    }
+
+    /// Fetch an item from the channel
+    fn channel_name_offset_get(&self, name: String, offset: i64) -> Box<Future<Item=ChannelNameOffsetGetResponse, Error=ApiError>> {
+        self.api().channel_name_offset_get(name, offset, &self.context())
+    }
+
+    /// Modify the channel configuration
+    fn channel_name_patch(&self, name: String) -> Box<Future<Item=ChannelNamePatchResponse, Error=ApiError>> {
+        self.api().channel_name_patch(name, &self.context())
+    }
+
+    /// Create a channel
+    fn channel_name_post(&self, name: String) -> Box<Future<Item=ChannelNamePostResponse, Error=ApiError>> {
+        self.api().channel_name_post(name, &self.context())
+    }
+
+    /// Publish an item to the channel
+    fn channel_name_put(&self, name: String) -> Box<Future<Item=ChannelNamePutResponse, Error=ApiError>> {
+        self.api().channel_name_put(name, &self.context())
+    }
+
     /// List existing channels in the event bus
     fn list_channels(&self) -> Box<Future<Item=ListChannelsResponse, Error=ApiError>> {
         self.api().list_channels(&self.context())
+    }
+
+    /// List offset metadata about a named consumer
+    fn offset_consumer_get(&self, consumer: String) -> Box<Future<Item=OffsetConsumerGetResponse, Error=ApiError>> {
+        self.api().offset_consumer_get(consumer, &self.context())
+    }
+
+    /// Update the offset for the named consumer
+    fn offset_consumer_patch(&self, consumer: String) -> Box<Future<Item=OffsetConsumerPatchResponse, Error=ApiError>> {
+        self.api().offset_consumer_patch(consumer, &self.context())
+    }
+
+    /// Create a named consumer to store metadata
+    fn offset_consumer_post(&self, consumer: String) -> Box<Future<Item=OffsetConsumerPostResponse, Error=ApiError>> {
+        self.api().offset_consumer_post(consumer, &self.context())
     }
 
 }

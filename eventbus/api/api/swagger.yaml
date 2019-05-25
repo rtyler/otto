@@ -14,6 +14,9 @@ basePath: "/v1"
 schemes:
 - "https"
 - "http"
+produces:
+- "application/json"
+- "application/xml"
 paths:
   /channel:
     get:
@@ -21,9 +24,6 @@ paths:
       description: "Enumerate all the channels visible and available to the current\
         \ client's permission scope\n"
       operationId: "listChannels"
-      produces:
-      - "application/xml"
-      - "application/json"
       parameters: []
       responses:
         200:
@@ -48,6 +48,282 @@ paths:
       PATH_ID: "CHANNEL"
       hasPathParams: false
       HttpMethod: "Get"
+  /channel/{name}:
+    get:
+      summary: "Fetch the metadata about a specific channel"
+      parameters:
+      - name: "name"
+        in: "path"
+        description: "The named identifier of an event channel"
+        required: true
+        type: "string"
+        formatString: "\\\"{}\\\""
+        example: "\"name_example\".to_string()"
+      responses:
+        200:
+          description: "Successful retrieval of metadata"
+          x-responseId: "SuccessfulRetrievalOfMetadata"
+          x-uppercaseResponseId: "SUCCESSFUL_RETRIEVAL_OF_METADATA"
+          uppercase_operation_id: "CHANNEL_NAME_GET"
+        400:
+          description: "Invalid formatted channel name or request"
+          x-responseId: "InvalidFormattedChannelNameOrRequest"
+          x-uppercaseResponseId: "INVALID_FORMATTED_CHANNEL_NAME_OR_REQUEST"
+          uppercase_operation_id: "CHANNEL_NAME_GET"
+        403:
+          description: "User is not authorized to access the channel"
+          x-responseId: "UserIsNotAuthorizedToAccessTheChannel"
+          x-uppercaseResponseId: "USER_IS_NOT_AUTHORIZED_TO_ACCESS_THE_CHANNEL"
+          uppercase_operation_id: "CHANNEL_NAME_GET"
+        404:
+          description: "Could not find the named channel"
+          x-responseId: "CouldNotFindTheNamedChannel"
+          x-uppercaseResponseId: "COULD_NOT_FIND_THE_NAMED_CHANNEL"
+          uppercase_operation_id: "CHANNEL_NAME_GET"
+      operation_id: "channel_name_get"
+      uppercase_operation_id: "CHANNEL_NAME_GET"
+      path: "/channel/:name"
+      PATH_ID: "CHANNEL_NAME"
+      hasPathParams: true
+      HttpMethod: "Get"
+    post:
+      summary: "Create a channel"
+      parameters:
+      - name: "name"
+        in: "path"
+        description: "The named identifier of an event channel"
+        required: true
+        type: "string"
+        formatString: "\\\"{}\\\""
+        example: "\"name_example\".to_string()"
+      responses:
+        200:
+          description: "Channel created successfully"
+          x-responseId: "ChannelCreatedSuccessfully"
+          x-uppercaseResponseId: "CHANNEL_CREATED_SUCCESSFULLY"
+          uppercase_operation_id: "CHANNEL_NAME_POST"
+        400:
+          description: "Suggested channel configuration was invalid"
+          x-responseId: "SuggestedChannelConfigurationWasInvalid"
+          x-uppercaseResponseId: "SUGGESTED_CHANNEL_CONFIGURATION_WAS_INVALID"
+          uppercase_operation_id: "CHANNEL_NAME_POST"
+        403:
+          description: "User is not authorized to create a channel"
+          x-responseId: "UserIsNotAuthorizedToCreateAChannel"
+          x-uppercaseResponseId: "USER_IS_NOT_AUTHORIZED_TO_CREATE_A_CHANNEL"
+          uppercase_operation_id: "CHANNEL_NAME_POST"
+      operation_id: "channel_name_post"
+      uppercase_operation_id: "CHANNEL_NAME_POST"
+      path: "/channel/:name"
+      PATH_ID: "CHANNEL_NAME"
+      hasPathParams: true
+      HttpMethod: "Post"
+    put:
+      summary: "Publish an item to the channel"
+      parameters:
+      - name: "name"
+        in: "path"
+        description: "The named identifier of an event channel"
+        required: true
+        type: "string"
+        formatString: "\\\"{}\\\""
+        example: "\"name_example\".to_string()"
+      responses:
+        201:
+          description: "Successful publish of the item"
+          x-responseId: "SuccessfulPublishOfTheItem"
+          x-uppercaseResponseId: "SUCCESSFUL_PUBLISH_OF_THE_ITEM"
+          uppercase_operation_id: "CHANNEL_NAME_PUT"
+        403:
+          description: "User is not authorized to publish to the channel"
+          x-responseId: "UserIsNotAuthorizedToPublishToTheChannel"
+          x-uppercaseResponseId: "USER_IS_NOT_AUTHORIZED_TO_PUBLISH_TO_THE_CHANNEL"
+          uppercase_operation_id: "CHANNEL_NAME_PUT"
+        404:
+          description: "Could not find the named channel"
+          x-responseId: "CouldNotFindTheNamedChannel"
+          x-uppercaseResponseId: "COULD_NOT_FIND_THE_NAMED_CHANNEL"
+          uppercase_operation_id: "CHANNEL_NAME_PUT"
+      operation_id: "channel_name_put"
+      uppercase_operation_id: "CHANNEL_NAME_PUT"
+      path: "/channel/:name"
+      PATH_ID: "CHANNEL_NAME"
+      hasPathParams: true
+      HttpMethod: "Put"
+    patch:
+      summary: "Modify the channel configuration"
+      parameters:
+      - name: "name"
+        in: "path"
+        description: "The named identifier of an event channel"
+        required: true
+        type: "string"
+        formatString: "\\\"{}\\\""
+        example: "\"name_example\".to_string()"
+      responses:
+        200:
+          description: "Successful update of the channel"
+          x-responseId: "SuccessfulUpdateOfTheChannel"
+          x-uppercaseResponseId: "SUCCESSFUL_UPDATE_OF_THE_CHANNEL"
+          uppercase_operation_id: "CHANNEL_NAME_PATCH"
+        400:
+          description: "Suggested channel configuration was invalid"
+          x-responseId: "SuggestedChannelConfigurationWasInvalid"
+          x-uppercaseResponseId: "SUGGESTED_CHANNEL_CONFIGURATION_WAS_INVALID"
+          uppercase_operation_id: "CHANNEL_NAME_PATCH"
+        403:
+          description: "User is not authorized to modify the channel"
+          x-responseId: "UserIsNotAuthorizedToModifyTheChannel"
+          x-uppercaseResponseId: "USER_IS_NOT_AUTHORIZED_TO_MODIFY_THE_CHANNEL"
+          uppercase_operation_id: "CHANNEL_NAME_PATCH"
+        404:
+          description: "Could not find the named channel"
+          x-responseId: "CouldNotFindTheNamedChannel"
+          x-uppercaseResponseId: "COULD_NOT_FIND_THE_NAMED_CHANNEL"
+          uppercase_operation_id: "CHANNEL_NAME_PATCH"
+      operation_id: "channel_name_patch"
+      uppercase_operation_id: "CHANNEL_NAME_PATCH"
+      path: "/channel/:name"
+      PATH_ID: "CHANNEL_NAME"
+      hasPathParams: true
+      HttpMethod: "Patch"
+  /channel/{name}/{offset}:
+    get:
+      summary: "Fetch an item from the channel"
+      parameters:
+      - name: "name"
+        in: "path"
+        description: "The named identifier of an event channel"
+        required: true
+        type: "string"
+        formatString: "\\\"{}\\\""
+        example: "\"name_example\".to_string()"
+      - name: "offset"
+        in: "path"
+        description: "The offset at which the item is located in the channel"
+        required: true
+        type: "integer"
+        format: "int64"
+        formatString: "{}"
+        example: "789"
+      operation_id: "channel_name_offset_get"
+      uppercase_operation_id: "CHANNEL_NAME_OFFSET_GET"
+      path: "/channel/:name/:offset"
+      PATH_ID: "CHANNEL_NAME_OFFSET"
+      hasPathParams: true
+      HttpMethod: "Get"
+  /offset/{consumer}:
+    get:
+      summary: "List offset metadata about a named consumer"
+      parameters:
+      - name: "consumer"
+        in: "path"
+        description: "The named identifier of an event consumer"
+        required: true
+        type: "string"
+        formatString: "\\\"{}\\\""
+        example: "\"consumer_example\".to_string()"
+      responses:
+        200:
+          description: "Successful access of the consumer metadata"
+          x-responseId: "SuccessfulAccessOfTheConsumerMetadata"
+          x-uppercaseResponseId: "SUCCESSFUL_ACCESS_OF_THE_CONSUMER_METADATA"
+          uppercase_operation_id: "OFFSET_CONSUMER_GET"
+        400:
+          description: "Improperly formatted consumer name"
+          x-responseId: "ImproperlyFormattedConsumerName"
+          x-uppercaseResponseId: "IMPROPERLY_FORMATTED_CONSUMER_NAME"
+          uppercase_operation_id: "OFFSET_CONSUMER_GET"
+        403:
+          description: "User is not authorized to access this consumer"
+          x-responseId: "UserIsNotAuthorizedToAccessThisConsumer"
+          x-uppercaseResponseId: "USER_IS_NOT_AUTHORIZED_TO_ACCESS_THIS_CONSUMER"
+          uppercase_operation_id: "OFFSET_CONSUMER_GET"
+        404:
+          description: "Could not find the named consumer"
+          x-responseId: "CouldNotFindTheNamedConsumer"
+          x-uppercaseResponseId: "COULD_NOT_FIND_THE_NAMED_CONSUMER"
+          uppercase_operation_id: "OFFSET_CONSUMER_GET"
+      operation_id: "offset_consumer_get"
+      uppercase_operation_id: "OFFSET_CONSUMER_GET"
+      path: "/offset/:consumer"
+      PATH_ID: "OFFSET_CONSUMER"
+      hasPathParams: true
+      HttpMethod: "Get"
+    post:
+      summary: "Create a named consumer to store metadata"
+      parameters:
+      - name: "consumer"
+        in: "path"
+        description: "The named identifier of an event consumer"
+        required: true
+        type: "string"
+        formatString: "\\\"{}\\\""
+        example: "\"consumer_example\".to_string()"
+      responses:
+        200:
+          description: "Successful creation of the named consumer"
+          x-responseId: "SuccessfulCreationOfTheNamedConsumer"
+          x-uppercaseResponseId: "SUCCESSFUL_CREATION_OF_THE_NAMED_CONSUMER"
+          uppercase_operation_id: "OFFSET_CONSUMER_POST"
+        400:
+          description: "Improperly formatted consumer metadata"
+          x-responseId: "ImproperlyFormattedConsumerMetadata"
+          x-uppercaseResponseId: "IMPROPERLY_FORMATTED_CONSUMER_METADATA"
+          uppercase_operation_id: "OFFSET_CONSUMER_POST"
+        403:
+          description: "User is not authorized to create a consumer"
+          x-responseId: "UserIsNotAuthorizedToCreateAConsumer"
+          x-uppercaseResponseId: "USER_IS_NOT_AUTHORIZED_TO_CREATE_A_CONSUMER"
+          uppercase_operation_id: "OFFSET_CONSUMER_POST"
+        409:
+          description: "The named consumer already exists and is in use"
+          x-responseId: "TheNamedConsumerAlreadyExistsAndIsInUse"
+          x-uppercaseResponseId: "THE_NAMED_CONSUMER_ALREADY_EXISTS_AND_IS_IN_USE"
+          uppercase_operation_id: "OFFSET_CONSUMER_POST"
+      operation_id: "offset_consumer_post"
+      uppercase_operation_id: "OFFSET_CONSUMER_POST"
+      path: "/offset/:consumer"
+      PATH_ID: "OFFSET_CONSUMER"
+      hasPathParams: true
+      HttpMethod: "Post"
+    patch:
+      summary: "Update the offset for the named consumer"
+      parameters:
+      - name: "consumer"
+        in: "path"
+        description: "The named identifier of an event consumer"
+        required: true
+        type: "string"
+        formatString: "\\\"{}\\\""
+        example: "\"consumer_example\".to_string()"
+      responses:
+        200:
+          description: "Successful modification of the consumer metadata"
+          x-responseId: "SuccessfulModificationOfTheConsumerMetadata"
+          x-uppercaseResponseId: "SUCCESSFUL_MODIFICATION_OF_THE_CONSUMER_METADATA"
+          uppercase_operation_id: "OFFSET_CONSUMER_PATCH"
+        400:
+          description: "Improperly formatted metadata"
+          x-responseId: "ImproperlyFormattedMetadata"
+          x-uppercaseResponseId: "IMPROPERLY_FORMATTED_METADATA"
+          uppercase_operation_id: "OFFSET_CONSUMER_PATCH"
+        403:
+          description: "User is not authorized to modify this consumer"
+          x-responseId: "UserIsNotAuthorizedToModifyThisConsumer"
+          x-uppercaseResponseId: "USER_IS_NOT_AUTHORIZED_TO_MODIFY_THIS_CONSUMER"
+          uppercase_operation_id: "OFFSET_CONSUMER_PATCH"
+        404:
+          description: "Could not find the named consumer"
+          x-responseId: "CouldNotFindTheNamedConsumer"
+          x-uppercaseResponseId: "COULD_NOT_FIND_THE_NAMED_CONSUMER"
+          uppercase_operation_id: "OFFSET_CONSUMER_PATCH"
+      operation_id: "offset_consumer_patch"
+      uppercase_operation_id: "OFFSET_CONSUMER_PATCH"
+      path: "/offset/:consumer"
+      PATH_ID: "OFFSET_CONSUMER"
+      hasPathParams: true
+      HttpMethod: "Patch"
 definitions:
   Channel:
     type: "object"
@@ -79,6 +355,23 @@ definitions:
       updatedAt: "2000-01-23T04:56:07.000+00:00"
       status: "ready"
     upperCaseName: "CHANNEL"
+parameters:
+  channelName:
+    name: "name"
+    in: "path"
+    description: "The named identifier of an event channel"
+    required: true
+    type: "string"
+    formatString: "\\\"{}\\\""
+    example: "\"name_example\".to_string()"
+  channelConsumer:
+    name: "consumer"
+    in: "path"
+    description: "The named identifier of an event consumer"
+    required: true
+    type: "string"
+    formatString: "\\\"{}\\\""
+    example: "\"consumer_example\".to_string()"
 externalDocs:
   description: "Find out more about Otto"
   url: "https://github.com/rtyler/otto"

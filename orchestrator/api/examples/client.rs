@@ -38,12 +38,12 @@ fn main() {
         .arg(Arg::with_name("host")
             .long("host")
             .takes_value(true)
-            .default_value("ottodeploys.us")
+            .default_value("localhost")
             .help("Hostname to contact"))
         .arg(Arg::with_name("port")
             .long("port")
             .takes_value(true)
-            .default_value("8080")
+            .default_value("3030")
             .help("Port to contact"))
         .get_matches();
 
@@ -70,7 +70,7 @@ fn main() {
     match matches.value_of("operation") {
 
         Some("FetchManifest") => {
-            let result = core.run(client.fetch_manifest());
+            let result = core.run(client.fetch_manifest("agent_id_example".to_string()));
             println!("{:?} (X-Span-ID: {:?})", result, (client.context() as &Has<XSpanIdString>).get().clone());
          },
 

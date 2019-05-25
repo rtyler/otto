@@ -31,9 +31,9 @@ impl<C> Server<C> {
 impl<C> Api<C> for Server<C> where C: Has<XSpanIdString>{
 
     /// Fetch manifest for execution by the given agent
-    fn fetch_manifest(&self, context: &C) -> Box<Future<Item=FetchManifestResponse, Error=ApiError>> {
+    fn fetch_manifest(&self, agent_id: String, context: &C) -> Box<Future<Item=FetchManifestResponse, Error=ApiError>> {
         let context = context.clone();
-        println!("fetch_manifest() - X-Span-ID: {:?}", context.get().0.clone());
+        println!("fetch_manifest(\"{}\") - X-Span-ID: {:?}", agent_id, context.get().0.clone());
         Box::new(futures::failed("Generic failure".into()))
     }
 

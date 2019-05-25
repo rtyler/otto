@@ -19,7 +19,15 @@ use tokio_core::reactor;
 #[allow(unused_imports)]
 use eventbus_api::{ApiNoContext, ContextWrapperExt,
                       ApiError,
-                      ListChannelsResponse
+                      ChannelNameGetResponse,
+                      ChannelNameOffsetGetResponse,
+                      ChannelNamePatchResponse,
+                      ChannelNamePostResponse,
+                      ChannelNamePutResponse,
+                      ListChannelsResponse,
+                      OffsetConsumerGetResponse,
+                      OffsetConsumerPatchResponse,
+                      OffsetConsumerPostResponse
                      };
 use clap::{App, Arg};
 
@@ -28,7 +36,15 @@ fn main() {
         .arg(Arg::with_name("operation")
             .help("Sets the operation to run")
             .possible_values(&[
+    "ChannelNameGet",
+    "ChannelNameOffsetGet",
+    "ChannelNamePatch",
+    "ChannelNamePost",
+    "ChannelNamePut",
     "ListChannels",
+    "OffsetConsumerGet",
+    "OffsetConsumerPatch",
+    "OffsetConsumerPost",
 ])
             .required(true)
             .index(1))
@@ -69,8 +85,48 @@ fn main() {
 
     match matches.value_of("operation") {
 
+        Some("ChannelNameGet") => {
+            let result = core.run(client.channel_name_get("name_example".to_string()));
+            println!("{:?} (X-Span-ID: {:?})", result, (client.context() as &Has<XSpanIdString>).get().clone());
+         },
+
+        Some("ChannelNameOffsetGet") => {
+            let result = core.run(client.channel_name_offset_get("name_example".to_string(), 789));
+            println!("{:?} (X-Span-ID: {:?})", result, (client.context() as &Has<XSpanIdString>).get().clone());
+         },
+
+        Some("ChannelNamePatch") => {
+            let result = core.run(client.channel_name_patch("name_example".to_string()));
+            println!("{:?} (X-Span-ID: {:?})", result, (client.context() as &Has<XSpanIdString>).get().clone());
+         },
+
+        Some("ChannelNamePost") => {
+            let result = core.run(client.channel_name_post("name_example".to_string()));
+            println!("{:?} (X-Span-ID: {:?})", result, (client.context() as &Has<XSpanIdString>).get().clone());
+         },
+
+        Some("ChannelNamePut") => {
+            let result = core.run(client.channel_name_put("name_example".to_string()));
+            println!("{:?} (X-Span-ID: {:?})", result, (client.context() as &Has<XSpanIdString>).get().clone());
+         },
+
         Some("ListChannels") => {
             let result = core.run(client.list_channels());
+            println!("{:?} (X-Span-ID: {:?})", result, (client.context() as &Has<XSpanIdString>).get().clone());
+         },
+
+        Some("OffsetConsumerGet") => {
+            let result = core.run(client.offset_consumer_get("consumer_example".to_string()));
+            println!("{:?} (X-Span-ID: {:?})", result, (client.context() as &Has<XSpanIdString>).get().clone());
+         },
+
+        Some("OffsetConsumerPatch") => {
+            let result = core.run(client.offset_consumer_patch("consumer_example".to_string()));
+            println!("{:?} (X-Span-ID: {:?})", result, (client.context() as &Has<XSpanIdString>).get().clone());
+         },
+
+        Some("OffsetConsumerPost") => {
+            let result = core.run(client.offset_consumer_post("consumer_example".to_string()));
             println!("{:?} (X-Span-ID: {:?})", result, (client.context() as &Has<XSpanIdString>).get().clone());
          },
 

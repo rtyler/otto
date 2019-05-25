@@ -2,6 +2,6 @@
 
 exec docker run --rm -ti \
     -p 8080:8080 \
-    -e SWAGGER_JSON=/data/apispec/orchestrator.yml \
+    -e SWAGGER_JSON=/data/apispec/$1.yml \
     -v $PWD:/data \
     swaggerapi/swagger-ui:latest

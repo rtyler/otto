@@ -41,7 +41,15 @@ use swagger;
 use swagger::{ApiError, XSpanId, XSpanIdString, Has, AuthData};
 
 use {Api,
-     ListChannelsResponse
+     ChannelNameGetResponse,
+     ChannelNameOffsetGetResponse,
+     ChannelNamePatchResponse,
+     ChannelNamePostResponse,
+     ChannelNamePutResponse,
+     ListChannelsResponse,
+     OffsetConsumerGetResponse,
+     OffsetConsumerPatchResponse,
+     OffsetConsumerPostResponse
      };
 use models;
 
@@ -206,6 +214,382 @@ impl Client {
 
 impl<C> Api<C> for Client where C: Has<XSpanIdString> {
 
+    fn channel_name_get(&self, param_name: String, context: &C) -> Box<Future<Item=ChannelNameGetResponse, Error=ApiError>> {
+
+
+        let uri = format!(
+            "{}/v1/channel/{name}",
+            self.base_path, name=utf8_percent_encode(&param_name.to_string(), PATH_SEGMENT_ENCODE_SET)
+        );
+
+        let uri = match Uri::from_str(&uri) {
+            Ok(uri) => uri,
+            Err(err) => return Box::new(futures::done(Err(ApiError(format!("Unable to build URI: {}", err))))),
+        };
+
+        let mut request = hyper::Request::new(hyper::Method::Get, uri);
+
+
+
+        request.headers_mut().set(XSpanId((context as &Has<XSpanIdString>).get().0.clone()));
+
+
+
+
+        Box::new(self.hyper_client.call(request)
+                             .map_err(|e| ApiError(format!("No response received: {}", e)))
+                             .and_then(|mut response| {
+            match response.status().as_u16() {
+                200 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelNameGetResponse::SuccessfulRetrievalOfMetadata
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                400 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelNameGetResponse::InvalidFormattedChannelNameOrRequest
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                403 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelNameGetResponse::UserIsNotAuthorizedToAccessTheChannel
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                404 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelNameGetResponse::CouldNotFindTheNamedChannel
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                code => {
+                    let headers = response.headers().clone();
+                    Box::new(response.body()
+                            .take(100)
+                            .concat2()
+                            .then(move |body|
+                                future::err(ApiError(format!("Unexpected response code {}:\n{:?}\n\n{}",
+                                    code,
+                                    headers,
+                                    match body {
+                                        Ok(ref body) => match str::from_utf8(body) {
+                                            Ok(body) => Cow::from(body),
+                                            Err(e) => Cow::from(format!("<Body was not UTF8: {:?}>", e)),
+                                        },
+                                        Err(e) => Cow::from(format!("<Failed to read body: {}>", e)),
+                                    })))
+                            )
+                    ) as Box<Future<Item=_, Error=_>>
+                }
+            }
+        }))
+
+    }
+
+    fn channel_name_offset_get(&self, param_name: String, param_offset: i64, context: &C) -> Box<Future<Item=ChannelNameOffsetGetResponse, Error=ApiError>> {
+
+
+        let uri = format!(
+            "{}/v1/channel/{name}/{offset}",
+            self.base_path, name=utf8_percent_encode(&param_name.to_string(), PATH_SEGMENT_ENCODE_SET), offset=utf8_percent_encode(&param_offset.to_string(), PATH_SEGMENT_ENCODE_SET)
+        );
+
+        let uri = match Uri::from_str(&uri) {
+            Ok(uri) => uri,
+            Err(err) => return Box::new(futures::done(Err(ApiError(format!("Unable to build URI: {}", err))))),
+        };
+
+        let mut request = hyper::Request::new(hyper::Method::Get, uri);
+
+
+
+        request.headers_mut().set(XSpanId((context as &Has<XSpanIdString>).get().0.clone()));
+
+
+
+
+        Box::new(self.hyper_client.call(request)
+                             .map_err(|e| ApiError(format!("No response received: {}", e)))
+                             .and_then(|mut response| {
+            match response.status().as_u16() {
+                code => {
+                    let headers = response.headers().clone();
+                    Box::new(response.body()
+                            .take(100)
+                            .concat2()
+                            .then(move |body|
+                                future::err(ApiError(format!("Unexpected response code {}:\n{:?}\n\n{}",
+                                    code,
+                                    headers,
+                                    match body {
+                                        Ok(ref body) => match str::from_utf8(body) {
+                                            Ok(body) => Cow::from(body),
+                                            Err(e) => Cow::from(format!("<Body was not UTF8: {:?}>", e)),
+                                        },
+                                        Err(e) => Cow::from(format!("<Failed to read body: {}>", e)),
+                                    })))
+                            )
+                    ) as Box<Future<Item=_, Error=_>>
+                }
+            }
+        }))
+
+    }
+
+    fn channel_name_patch(&self, param_name: String, context: &C) -> Box<Future<Item=ChannelNamePatchResponse, Error=ApiError>> {
+
+
+        let uri = format!(
+            "{}/v1/channel/{name}",
+            self.base_path, name=utf8_percent_encode(&param_name.to_string(), PATH_SEGMENT_ENCODE_SET)
+        );
+
+        let uri = match Uri::from_str(&uri) {
+            Ok(uri) => uri,
+            Err(err) => return Box::new(futures::done(Err(ApiError(format!("Unable to build URI: {}", err))))),
+        };
+
+        let mut request = hyper::Request::new(hyper::Method::Patch, uri);
+
+
+
+        request.headers_mut().set(XSpanId((context as &Has<XSpanIdString>).get().0.clone()));
+
+
+
+
+        Box::new(self.hyper_client.call(request)
+                             .map_err(|e| ApiError(format!("No response received: {}", e)))
+                             .and_then(|mut response| {
+            match response.status().as_u16() {
+                200 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelNamePatchResponse::SuccessfulUpdateOfTheChannel
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                400 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelNamePatchResponse::SuggestedChannelConfigurationWasInvalid
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                403 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelNamePatchResponse::UserIsNotAuthorizedToModifyTheChannel
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                404 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelNamePatchResponse::CouldNotFindTheNamedChannel
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                code => {
+                    let headers = response.headers().clone();
+                    Box::new(response.body()
+                            .take(100)
+                            .concat2()
+                            .then(move |body|
+                                future::err(ApiError(format!("Unexpected response code {}:\n{:?}\n\n{}",
+                                    code,
+                                    headers,
+                                    match body {
+                                        Ok(ref body) => match str::from_utf8(body) {
+                                            Ok(body) => Cow::from(body),
+                                            Err(e) => Cow::from(format!("<Body was not UTF8: {:?}>", e)),
+                                        },
+                                        Err(e) => Cow::from(format!("<Failed to read body: {}>", e)),
+                                    })))
+                            )
+                    ) as Box<Future<Item=_, Error=_>>
+                }
+            }
+        }))
+
+    }
+
+    fn channel_name_post(&self, param_name: String, context: &C) -> Box<Future<Item=ChannelNamePostResponse, Error=ApiError>> {
+
+
+        let uri = format!(
+            "{}/v1/channel/{name}",
+            self.base_path, name=utf8_percent_encode(&param_name.to_string(), PATH_SEGMENT_ENCODE_SET)
+        );
+
+        let uri = match Uri::from_str(&uri) {
+            Ok(uri) => uri,
+            Err(err) => return Box::new(futures::done(Err(ApiError(format!("Unable to build URI: {}", err))))),
+        };
+
+        let mut request = hyper::Request::new(hyper::Method::Post, uri);
+
+
+
+        request.headers_mut().set(XSpanId((context as &Has<XSpanIdString>).get().0.clone()));
+
+
+
+
+        Box::new(self.hyper_client.call(request)
+                             .map_err(|e| ApiError(format!("No response received: {}", e)))
+                             .and_then(|mut response| {
+            match response.status().as_u16() {
+                200 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelNamePostResponse::ChannelCreatedSuccessfully
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                400 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelNamePostResponse::SuggestedChannelConfigurationWasInvalid
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                403 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelNamePostResponse::UserIsNotAuthorizedToCreateAChannel
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                code => {
+                    let headers = response.headers().clone();
+                    Box::new(response.body()
+                            .take(100)
+                            .concat2()
+                            .then(move |body|
+                                future::err(ApiError(format!("Unexpected response code {}:\n{:?}\n\n{}",
+                                    code,
+                                    headers,
+                                    match body {
+                                        Ok(ref body) => match str::from_utf8(body) {
+                                            Ok(body) => Cow::from(body),
+                                            Err(e) => Cow::from(format!("<Body was not UTF8: {:?}>", e)),
+                                        },
+                                        Err(e) => Cow::from(format!("<Failed to read body: {}>", e)),
+                                    })))
+                            )
+                    ) as Box<Future<Item=_, Error=_>>
+                }
+            }
+        }))
+
+    }
+
+    fn channel_name_put(&self, param_name: String, context: &C) -> Box<Future<Item=ChannelNamePutResponse, Error=ApiError>> {
+
+
+        let uri = format!(
+            "{}/v1/channel/{name}",
+            self.base_path, name=utf8_percent_encode(&param_name.to_string(), PATH_SEGMENT_ENCODE_SET)
+        );
+
+        let uri = match Uri::from_str(&uri) {
+            Ok(uri) => uri,
+            Err(err) => return Box::new(futures::done(Err(ApiError(format!("Unable to build URI: {}", err))))),
+        };
+
+        let mut request = hyper::Request::new(hyper::Method::Put, uri);
+
+
+
+        request.headers_mut().set(XSpanId((context as &Has<XSpanIdString>).get().0.clone()));
+
+
+
+
+        Box::new(self.hyper_client.call(request)
+                             .map_err(|e| ApiError(format!("No response received: {}", e)))
+                             .and_then(|mut response| {
+            match response.status().as_u16() {
+                201 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelNamePutResponse::SuccessfulPublishOfTheItem
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                403 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelNamePutResponse::UserIsNotAuthorizedToPublishToTheChannel
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                404 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelNamePutResponse::CouldNotFindTheNamedChannel
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                code => {
+                    let headers = response.headers().clone();
+                    Box::new(response.body()
+                            .take(100)
+                            .concat2()
+                            .then(move |body|
+                                future::err(ApiError(format!("Unexpected response code {}:\n{:?}\n\n{}",
+                                    code,
+                                    headers,
+                                    match body {
+                                        Ok(ref body) => match str::from_utf8(body) {
+                                            Ok(body) => Cow::from(body),
+                                            Err(e) => Cow::from(format!("<Body was not UTF8: {:?}>", e)),
+                                        },
+                                        Err(e) => Cow::from(format!("<Failed to read body: {}>", e)),
+                                    })))
+                            )
+                    ) as Box<Future<Item=_, Error=_>>
+                }
+            }
+        }))
+
+    }
+
     fn list_channels(&self, context: &C) -> Box<Future<Item=ListChannelsResponse, Error=ApiError>> {
 
 
@@ -260,6 +644,264 @@ impl<C> Api<C> for Client where C: Has<XSpanIdString> {
 
                         future::ok(
                             ListChannelsResponse::InvalidRequest
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                code => {
+                    let headers = response.headers().clone();
+                    Box::new(response.body()
+                            .take(100)
+                            .concat2()
+                            .then(move |body|
+                                future::err(ApiError(format!("Unexpected response code {}:\n{:?}\n\n{}",
+                                    code,
+                                    headers,
+                                    match body {
+                                        Ok(ref body) => match str::from_utf8(body) {
+                                            Ok(body) => Cow::from(body),
+                                            Err(e) => Cow::from(format!("<Body was not UTF8: {:?}>", e)),
+                                        },
+                                        Err(e) => Cow::from(format!("<Failed to read body: {}>", e)),
+                                    })))
+                            )
+                    ) as Box<Future<Item=_, Error=_>>
+                }
+            }
+        }))
+
+    }
+
+    fn offset_consumer_get(&self, param_consumer: String, context: &C) -> Box<Future<Item=OffsetConsumerGetResponse, Error=ApiError>> {
+
+
+        let uri = format!(
+            "{}/v1/offset/{consumer}",
+            self.base_path, consumer=utf8_percent_encode(&param_consumer.to_string(), PATH_SEGMENT_ENCODE_SET)
+        );
+
+        let uri = match Uri::from_str(&uri) {
+            Ok(uri) => uri,
+            Err(err) => return Box::new(futures::done(Err(ApiError(format!("Unable to build URI: {}", err))))),
+        };
+
+        let mut request = hyper::Request::new(hyper::Method::Get, uri);
+
+
+
+        request.headers_mut().set(XSpanId((context as &Has<XSpanIdString>).get().0.clone()));
+
+
+
+
+        Box::new(self.hyper_client.call(request)
+                             .map_err(|e| ApiError(format!("No response received: {}", e)))
+                             .and_then(|mut response| {
+            match response.status().as_u16() {
+                200 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            OffsetConsumerGetResponse::SuccessfulAccessOfTheConsumerMetadata
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                400 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            OffsetConsumerGetResponse::ImproperlyFormattedConsumerName
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                403 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            OffsetConsumerGetResponse::UserIsNotAuthorizedToAccessThisConsumer
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                404 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            OffsetConsumerGetResponse::CouldNotFindTheNamedConsumer
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                code => {
+                    let headers = response.headers().clone();
+                    Box::new(response.body()
+                            .take(100)
+                            .concat2()
+                            .then(move |body|
+                                future::err(ApiError(format!("Unexpected response code {}:\n{:?}\n\n{}",
+                                    code,
+                                    headers,
+                                    match body {
+                                        Ok(ref body) => match str::from_utf8(body) {
+                                            Ok(body) => Cow::from(body),
+                                            Err(e) => Cow::from(format!("<Body was not UTF8: {:?}>", e)),
+                                        },
+                                        Err(e) => Cow::from(format!("<Failed to read body: {}>", e)),
+                                    })))
+                            )
+                    ) as Box<Future<Item=_, Error=_>>
+                }
+            }
+        }))
+
+    }
+
+    fn offset_consumer_patch(&self, param_consumer: String, context: &C) -> Box<Future<Item=OffsetConsumerPatchResponse, Error=ApiError>> {
+
+
+        let uri = format!(
+            "{}/v1/offset/{consumer}",
+            self.base_path, consumer=utf8_percent_encode(&param_consumer.to_string(), PATH_SEGMENT_ENCODE_SET)
+        );
+
+        let uri = match Uri::from_str(&uri) {
+            Ok(uri) => uri,
+            Err(err) => return Box::new(futures::done(Err(ApiError(format!("Unable to build URI: {}", err))))),
+        };
+
+        let mut request = hyper::Request::new(hyper::Method::Patch, uri);
+
+
+
+        request.headers_mut().set(XSpanId((context as &Has<XSpanIdString>).get().0.clone()));
+
+
+
+
+        Box::new(self.hyper_client.call(request)
+                             .map_err(|e| ApiError(format!("No response received: {}", e)))
+                             .and_then(|mut response| {
+            match response.status().as_u16() {
+                200 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            OffsetConsumerPatchResponse::SuccessfulModificationOfTheConsumerMetadata
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                400 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            OffsetConsumerPatchResponse::ImproperlyFormattedMetadata
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                403 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            OffsetConsumerPatchResponse::UserIsNotAuthorizedToModifyThisConsumer
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                404 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            OffsetConsumerPatchResponse::CouldNotFindTheNamedConsumer
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                code => {
+                    let headers = response.headers().clone();
+                    Box::new(response.body()
+                            .take(100)
+                            .concat2()
+                            .then(move |body|
+                                future::err(ApiError(format!("Unexpected response code {}:\n{:?}\n\n{}",
+                                    code,
+                                    headers,
+                                    match body {
+                                        Ok(ref body) => match str::from_utf8(body) {
+                                            Ok(body) => Cow::from(body),
+                                            Err(e) => Cow::from(format!("<Body was not UTF8: {:?}>", e)),
+                                        },
+                                        Err(e) => Cow::from(format!("<Failed to read body: {}>", e)),
+                                    })))
+                            )
+                    ) as Box<Future<Item=_, Error=_>>
+                }
+            }
+        }))
+
+    }
+
+    fn offset_consumer_post(&self, param_consumer: String, context: &C) -> Box<Future<Item=OffsetConsumerPostResponse, Error=ApiError>> {
+
+
+        let uri = format!(
+            "{}/v1/offset/{consumer}",
+            self.base_path, consumer=utf8_percent_encode(&param_consumer.to_string(), PATH_SEGMENT_ENCODE_SET)
+        );
+
+        let uri = match Uri::from_str(&uri) {
+            Ok(uri) => uri,
+            Err(err) => return Box::new(futures::done(Err(ApiError(format!("Unable to build URI: {}", err))))),
+        };
+
+        let mut request = hyper::Request::new(hyper::Method::Post, uri);
+
+
+
+        request.headers_mut().set(XSpanId((context as &Has<XSpanIdString>).get().0.clone()));
+
+
+
+
+        Box::new(self.hyper_client.call(request)
+                             .map_err(|e| ApiError(format!("No response received: {}", e)))
+                             .and_then(|mut response| {
+            match response.status().as_u16() {
+                200 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            OffsetConsumerPostResponse::SuccessfulCreationOfTheNamedConsumer
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                400 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            OffsetConsumerPostResponse::ImproperlyFormattedConsumerMetadata
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                403 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            OffsetConsumerPostResponse::UserIsNotAuthorizedToCreateAConsumer
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                409 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            OffsetConsumerPostResponse::TheNamedConsumerAlreadyExistsAndIsInUse
                         )
                     ) as Box<Future<Item=_, Error=_>>
                 },

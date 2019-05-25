@@ -9,10 +9,9 @@ info:
   license:
     name: "GNU AGPL 3.0"
     url: "https://www.gnu.org/licenses/agpl-3.0.en.html"
-host: "ottodeploys.us"
+host: "localhost:3030"
 basePath: "/v1"
 schemes:
-- "https"
 - "http"
 paths:
   /manifest/{agentId}:
@@ -21,20 +20,24 @@ paths:
       description: "Return the full execution manifest for the given agent to execute.\n"
       operationId: "fetchManifest"
       produces:
-      - "application/xml"
       - "application/json"
-      parameters: []
+      - "application/xml"
+      parameters:
+      - name: "agentId"
+        in: "path"
+        required: true
+        type: "string"
+        formatString: "\\\"{}\\\""
+        example: "\"agent_id_example\".to_string()"
       responses:
         200:
-          description: "Successful enumeration"
+          description: "Agent ID found and manifest generated"
           schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/Channel"
-          x-responseId: "SuccessfulEnumeration"
-          x-uppercaseResponseId: "SUCCESSFUL_ENUMERATION"
+            $ref: "#/definitions/Manifest"
+          x-responseId: "AgentIDFoundAndManifestGenerated"
+          x-uppercaseResponseId: "AGENT_ID_FOUND_AND_MANIFEST_GENERATED"
           uppercase_operation_id: "FETCH_MANIFEST"
-          uppercase_data_type: "VEC<CHANNEL>"
+          uppercase_data_type: "MANIFEST"
           producesXml: true
         400:
           description: "Invalid request"
@@ -45,7 +48,7 @@ paths:
       uppercase_operation_id: "FETCH_MANIFEST"
       path: "/manifest/:agentId"
       PATH_ID: "MANIFEST_AGENTID"
-      hasPathParams: false
+      hasPathParams: true
       HttpMethod: "Get"
 definitions:
   Manifest:
@@ -55,15 +58,31 @@ definitions:
         type: "string"
         description: "The identifier of the agent"
       services:
-        type: "object"
-        additionalProperties:
-          $ref: "#/definitions/Service"
+        $ref: "#/definitions/Service"
       ops:
         type: "array"
         items:
           $ref: "#/definitions/Operation"
     xml:
       name: "Manifest"
+    description: "Agent execution manifest"
+    example:
+      ops:
+      - id: "0xdeadbeef"
+        context: "0x1"
+        type: "RUNPROC"
+        data:
+          script: "echo \"Hello World\""
+          timeout_s: 600
+      - id: "0xdeadbeef"
+        context: "0x1"
+        type: "RUNPROC"
+        data:
+          script: "echo \"Hello World\""
+          timeout_s: 600
+      self: "self"
+      services:
+        datastore: "http://localhost:3031/"
     upperCaseName: "MANIFEST"
   Service:
     type: "object"
@@ -76,6 +95,9 @@ definitions:
         description: "Resolvable URL to access APIs for the given service"
     xml:
       name: "Service"
+    description: "A service ID to URl mapping"
+    example:
+      datastore: "http://localhost:3031/"
     upperCaseName: "SERVICE"
   Operation:
     type: "object"
@@ -95,9 +117,18 @@ definitions:
         type: "object"
         description: "Operation type-specific data for the agent to use"
         properties: {}
+    description: "A discrete idempotent operation"
+    example:
+      id: "0xdeadbeef"
+      context: "0x1"
+      type: "RUNPROC"
+      data:
+        script: "echo \"Hello World\""
+        timeout_s: 600
     upperCaseName: "OPERATION"
   OperationType:
     type: "string"
+    description: "Specific type of the given operation, implies different `data` fields"
     enum:
     - "BEGINCTX"
     - "ENDCTX"

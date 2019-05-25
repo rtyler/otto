@@ -206,12 +206,12 @@ impl Client {
 
 impl<C> Api<C> for Client where C: Has<XSpanIdString> {
 
-    fn fetch_manifest(&self, context: &C) -> Box<Future<Item=FetchManifestResponse, Error=ApiError>> {
+    fn fetch_manifest(&self, param_agent_id: String, context: &C) -> Box<Future<Item=FetchManifestResponse, Error=ApiError>> {
 
 
         let uri = format!(
             "{}/v1/manifest/{agentId}",
-            self.base_path
+            self.base_path, agentId=utf8_percent_encode(&param_agent_id.to_string(), PATH_SEGMENT_ENCODE_SET)
         );
 
         let uri = match Uri::from_str(&uri) {
@@ -245,12 +245,12 @@ impl<C> Api<C> for Client where C: Has<XSpanIdString> {
 
                                                  // ToDo: this will move to swagger-rs and become a standard From conversion trait
                                                  // once https://github.com/RReverser/serde-xml-rs/pull/45 is accepted upstream
-                                                 serde_xml_rs::from_str::<Vec<models::Channel>>(body)
+                                                 serde_xml_rs::from_str::<models::Manifest>(body)
                                                      .map_err(|e| ApiError(format!("Response body did not match the schema: {}", e)))
 
                                              ))
                         .map(move |body|
-                            FetchManifestResponse::SuccessfulEnumeration(body)
+                            FetchManifestResponse::AgentIDFoundAndManifestGenerated(body)
                         )
                     ) as Box<Future<Item=_, Error=_>>
                 },
