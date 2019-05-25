@@ -5,11 +5,8 @@ authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
 [dependencies]
-hyper        = "0.12.28"
+hyper        = "0.12"
 serde        = "1.0.38"
 serde_json   = "1.0.38"
 serde_derive = "1.0.38"
 tempfile     = "3"
-
-tower =  { git = "https://github.com/tower-rs/tower" }
-tower-hyper = { git = "https://github.com/tower-rs/tower-hyper" }
