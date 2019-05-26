@@ -2,3 +2,4 @@
 **/*.rs.bk
 *.sw*
 node_modules/
+.cargo/

@@ -2,7 +2,7 @@
 extern crate chrono;
 extern crate uuid;
 
-use serde_xml_rs;
+
 use serde::ser::Serializer;
 
 use std::collections::HashMap;
@@ -17,6 +17,7 @@ pub struct Channel {
     #[serde(skip_serializing_if="Option::is_none")]
     pub id: Option<i64>,
 
+    /// Name for the channel
     #[serde(rename = "name")]
     #[serde(skip_serializing_if="Option::is_none")]
     pub name: Option<String>,
@@ -26,11 +27,12 @@ pub struct Channel {
     #[serde(skip_serializing_if="Option::is_none")]
     pub consumers: Option<i64>,
 
+    /// Last time the channel metadata was updated
     #[serde(rename = "updatedAt")]
     #[serde(skip_serializing_if="Option::is_none")]
     pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
 
-    /// Channel Status
+    /// The channel's status
     // Note: inline enums are not fully supported by swagger-codegen
     #[serde(rename = "status")]
     #[serde(skip_serializing_if="Option::is_none")]

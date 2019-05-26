@@ -4,7 +4,7 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 
-extern crate serde_xml_rs;
+
 extern crate futures;
 extern crate chrono;
 #[macro_use]
@@ -37,9 +37,17 @@ pub const API_VERSION: &'static str = "1.0.0";
 
 
 #[derive(Debug, PartialEq)]
+pub enum ChannelGetResponse {
+    /// Channels successfully listed
+    ChannelsSuccessfullyListed ( Vec<models::Channel> ) ,
+    /// Invalid request
+    InvalidRequest ,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum ChannelNameGetResponse {
     /// Successful retrieval of metadata
-    SuccessfulRetrievalOfMetadata ,
+    SuccessfulRetrievalOfMetadata ( models::Channel ) ,
     /// Invalid formatted channel name or request
     InvalidFormattedChannelNameOrRequest ,
     /// User is not authorized to access the channel
@@ -50,6 +58,12 @@ pub enum ChannelNameGetResponse {
 
 #[derive(Debug, PartialEq)]
 pub enum ChannelNameOffsetGetResponse {
+    /// Successful fetch of the item
+    SuccessfulFetchOfTheItem ,
+    /// Could not find the named channel
+    CouldNotFindTheNamedChannel ,
+    /// Could not find an item at the given offset
+    CouldNotFindAnItemAtTheGivenOffset ,
 }
 
 #[derive(Debug, PartialEq)]
@@ -82,14 +96,6 @@ pub enum ChannelNamePutResponse {
     UserIsNotAuthorizedToPublishToTheChannel ,
     /// Could not find the named channel
     CouldNotFindTheNamedChannel ,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum ListChannelsResponse {
-    /// Successful enumeration
-    SuccessfulEnumeration ( Vec<models::Channel> ) ,
-    /// Invalid request
-    InvalidRequest ,
 }
 
 #[derive(Debug, PartialEq)]
@@ -132,6 +138,9 @@ pub enum OffsetConsumerPostResponse {
 /// API
 pub trait Api<C> {
 
+    /// List existing channels in the event bus
+    fn channel_get(&self, context: &C) -> Box<Future<Item=ChannelGetResponse, Error=ApiError>>;
+
     /// Fetch the metadata about a specific channel
     fn channel_name_get(&self, name: String, context: &C) -> Box<Future<Item=ChannelNameGetResponse, Error=ApiError>>;
 
@@ -147,9 +156,6 @@ pub trait Api<C> {
     /// Publish an item to the channel
     fn channel_name_put(&self, name: String, context: &C) -> Box<Future<Item=ChannelNamePutResponse, Error=ApiError>>;
 
-    /// List existing channels in the event bus
-    fn list_channels(&self, context: &C) -> Box<Future<Item=ListChannelsResponse, Error=ApiError>>;
-
     /// List offset metadata about a named consumer
     fn offset_consumer_get(&self, consumer: String, context: &C) -> Box<Future<Item=OffsetConsumerGetResponse, Error=ApiError>>;
 
@@ -163,6 +169,9 @@ pub trait Api<C> {
 
 /// API without a `Context`
 pub trait ApiNoContext {
+
+    /// List existing channels in the event bus
+    fn channel_get(&self) -> Box<Future<Item=ChannelGetResponse, Error=ApiError>>;
 
     /// Fetch the metadata about a specific channel
     fn channel_name_get(&self, name: String) -> Box<Future<Item=ChannelNameGetResponse, Error=ApiError>>;
@@ -178,9 +187,6 @@ pub trait ApiNoContext {
 
     /// Publish an item to the channel
     fn channel_name_put(&self, name: String) -> Box<Future<Item=ChannelNamePutResponse, Error=ApiError>>;
-
-    /// List existing channels in the event bus
-    fn list_channels(&self) -> Box<Future<Item=ListChannelsResponse, Error=ApiError>>;
 
     /// List offset metadata about a named consumer
     fn offset_consumer_get(&self, consumer: String) -> Box<Future<Item=OffsetConsumerGetResponse, Error=ApiError>>;
@@ -207,6 +213,11 @@ impl<'a, T: Api<C> + Sized, C> ContextWrapperExt<'a, C> for T {
 
 impl<'a, T: Api<C>, C> ApiNoContext for ContextWrapper<'a, T, C> {
 
+    /// List existing channels in the event bus
+    fn channel_get(&self) -> Box<Future<Item=ChannelGetResponse, Error=ApiError>> {
+        self.api().channel_get(&self.context())
+    }
+
     /// Fetch the metadata about a specific channel
     fn channel_name_get(&self, name: String) -> Box<Future<Item=ChannelNameGetResponse, Error=ApiError>> {
         self.api().channel_name_get(name, &self.context())
@@ -230,11 +241,6 @@ impl<'a, T: Api<C>, C> ApiNoContext for ContextWrapper<'a, T, C> {
     /// Publish an item to the channel
     fn channel_name_put(&self, name: String) -> Box<Future<Item=ChannelNamePutResponse, Error=ApiError>> {
         self.api().channel_name_put(name, &self.context())
-    }
-
-    /// List existing channels in the event bus
-    fn list_channels(&self) -> Box<Future<Item=ListChannelsResponse, Error=ApiError>> {
-        self.api().list_channels(&self.context())
     }
 
     /// List offset metadata about a named consumer

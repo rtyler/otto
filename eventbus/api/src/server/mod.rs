@@ -23,7 +23,7 @@ use mimetypes;
 
 
 use serde_json;
-use serde_xml_rs;
+
 
 #[allow(unused_imports)]
 use std::collections::{HashMap, BTreeMap};
@@ -39,12 +39,12 @@ use swagger::{ApiError, XSpanId, XSpanIdString, Has};
 use swagger::auth::Scopes;
 
 use {Api,
+     ChannelGetResponse,
      ChannelNameGetResponse,
      ChannelNameOffsetGetResponse,
      ChannelNamePatchResponse,
      ChannelNamePostResponse,
      ChannelNamePutResponse,
-     ListChannelsResponse,
      OffsetConsumerGetResponse,
      OffsetConsumerPatchResponse,
      OffsetConsumerPostResponse
@@ -142,6 +142,67 @@ where
         let path = paths::GLOBAL_REGEX_SET.matches(uri.path());
         match &method {
 
+            // ChannelGet - GET /channel
+            &hyper::Method::Get if path.matched(paths::ID_CHANNEL) => {
+
+
+
+
+
+
+
+                Box::new({
+                        {{
+
+                                Box::new(api_impl.channel_get(&context)
+                                    .then(move |result| {
+                                        let mut response = Response::new();
+                                        response.headers_mut().set(XSpanId((&context as &Has<XSpanIdString>).get().0.to_string()));
+
+                                        match result {
+                                            Ok(rsp) => match rsp {
+                                                ChannelGetResponse::ChannelsSuccessfullyListed
+
+                                                    (body)
+
+
+                                                => {
+                                                    response.set_status(StatusCode::try_from(200).unwrap());
+
+                                                    response.headers_mut().set(ContentType(mimetypes::responses::CHANNEL_GET_CHANNELS_SUCCESSFULLY_LISTED.clone()));
+
+
+                                                    let body = serde_json::to_string(&body).expect("impossible to fail to serialize");
+
+                                                    response.set_body(body);
+                                                },
+                                                ChannelGetResponse::InvalidRequest
+
+
+                                                => {
+                                                    response.set_status(StatusCode::try_from(400).unwrap());
+
+                                                },
+                                            },
+                                            Err(_) => {
+                                                // Application code returned an error. This should not happen, as the implementation should
+                                                // return a valid response.
+                                                response.set_status(StatusCode::InternalServerError);
+                                                response.set_body("An internal error occurred");
+                                            },
+                                        }
+
+                                        future::ok(response)
+                                    }
+                                ))
+
+                        }}
+                }) as Box<Future<Item=Response, Error=Error>>
+
+
+            },
+
+
             // ChannelNameGet - GET /channel/{name}
             &hyper::Method::Get if path.matched(paths::ID_CHANNEL_NAME) => {
 
@@ -179,10 +240,18 @@ where
                                             Ok(rsp) => match rsp {
                                                 ChannelNameGetResponse::SuccessfulRetrievalOfMetadata
 
+                                                    (body)
+
 
                                                 => {
                                                     response.set_status(StatusCode::try_from(200).unwrap());
 
+                                                    response.headers_mut().set(ContentType(mimetypes::responses::CHANNEL_NAME_GET_SUCCESSFUL_RETRIEVAL_OF_METADATA.clone()));
+
+
+                                                    let body = serde_json::to_string(&body).expect("impossible to fail to serialize");
+
+                                                    response.set_body(body);
                                                 },
                                                 ChannelNameGetResponse::InvalidFormattedChannelNameOrRequest
 
@@ -267,6 +336,27 @@ where
 
                                         match result {
                                             Ok(rsp) => match rsp {
+                                                ChannelNameOffsetGetResponse::SuccessfulFetchOfTheItem
+
+
+                                                => {
+                                                    response.set_status(StatusCode::try_from(200).unwrap());
+
+                                                },
+                                                ChannelNameOffsetGetResponse::CouldNotFindTheNamedChannel
+
+
+                                                => {
+                                                    response.set_status(StatusCode::try_from(404).unwrap());
+
+                                                },
+                                                ChannelNameOffsetGetResponse::CouldNotFindAnItemAtTheGivenOffset
+
+
+                                                => {
+                                                    response.set_status(StatusCode::try_from(416).unwrap());
+
+                                                },
                                             },
                                             Err(_) => {
                                                 // Application code returned an error. This should not happen, as the implementation should
@@ -500,67 +590,6 @@ where
 
                                                 => {
                                                     response.set_status(StatusCode::try_from(404).unwrap());
-
-                                                },
-                                            },
-                                            Err(_) => {
-                                                // Application code returned an error. This should not happen, as the implementation should
-                                                // return a valid response.
-                                                response.set_status(StatusCode::InternalServerError);
-                                                response.set_body("An internal error occurred");
-                                            },
-                                        }
-
-                                        future::ok(response)
-                                    }
-                                ))
-
-                        }}
-                }) as Box<Future<Item=Response, Error=Error>>
-
-
-            },
-
-
-            // ListChannels - GET /channel
-            &hyper::Method::Get if path.matched(paths::ID_CHANNEL) => {
-
-
-
-
-
-
-
-                Box::new({
-                        {{
-
-                                Box::new(api_impl.list_channels(&context)
-                                    .then(move |result| {
-                                        let mut response = Response::new();
-                                        response.headers_mut().set(XSpanId((&context as &Has<XSpanIdString>).get().0.to_string()));
-
-                                        match result {
-                                            Ok(rsp) => match rsp {
-                                                ListChannelsResponse::SuccessfulEnumeration
-
-                                                    (body)
-
-
-                                                => {
-                                                    response.set_status(StatusCode::try_from(200).unwrap());
-
-                                                    response.headers_mut().set(ContentType(mimetypes::responses::LIST_CHANNELS_SUCCESSFUL_ENUMERATION.clone()));
-
-
-                                                    let body = serde_xml_rs::to_string(&body).expect("impossible to fail to serialize");
-
-                                                    response.set_body(body);
-                                                },
-                                                ListChannelsResponse::InvalidRequest
-
-
-                                                => {
-                                                    response.set_status(StatusCode::try_from(400).unwrap());
 
                                                 },
                                             },

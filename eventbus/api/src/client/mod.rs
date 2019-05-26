@@ -31,7 +31,7 @@ use std::str::FromStr;
 use mimetypes;
 
 use serde_json;
-use serde_xml_rs;
+
 
 #[allow(unused_imports)]
 use std::collections::{HashMap, BTreeMap};
@@ -41,12 +41,12 @@ use swagger;
 use swagger::{ApiError, XSpanId, XSpanIdString, Has, AuthData};
 
 use {Api,
+     ChannelGetResponse,
      ChannelNameGetResponse,
      ChannelNameOffsetGetResponse,
      ChannelNamePatchResponse,
      ChannelNamePostResponse,
      ChannelNamePutResponse,
-     ListChannelsResponse,
      OffsetConsumerGetResponse,
      OffsetConsumerPatchResponse,
      OffsetConsumerPostResponse
@@ -214,6 +214,85 @@ impl Client {
 
 impl<C> Api<C> for Client where C: Has<XSpanIdString> {
 
+    fn channel_get(&self, context: &C) -> Box<Future<Item=ChannelGetResponse, Error=ApiError>> {
+
+
+        let uri = format!(
+            "{}/v1/channel",
+            self.base_path
+        );
+
+        let uri = match Uri::from_str(&uri) {
+            Ok(uri) => uri,
+            Err(err) => return Box::new(futures::done(Err(ApiError(format!("Unable to build URI: {}", err))))),
+        };
+
+        let mut request = hyper::Request::new(hyper::Method::Get, uri);
+
+
+
+        request.headers_mut().set(XSpanId((context as &Has<XSpanIdString>).get().0.clone()));
+
+
+
+
+        Box::new(self.hyper_client.call(request)
+                             .map_err(|e| ApiError(format!("No response received: {}", e)))
+                             .and_then(|mut response| {
+            match response.status().as_u16() {
+                200 => {
+                    let body = response.body();
+                    Box::new(
+
+                        body
+                        .concat2()
+                        .map_err(|e| ApiError(format!("Failed to read response: {}", e)))
+                        .and_then(|body| str::from_utf8(&body)
+                                             .map_err(|e| ApiError(format!("Response was not valid UTF8: {}", e)))
+                                             .and_then(|body|
+
+                                                 serde_json::from_str::<Vec<models::Channel>>(body)
+                                                     .map_err(|e| e.into())
+
+                                             ))
+                        .map(move |body|
+                            ChannelGetResponse::ChannelsSuccessfullyListed(body)
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                400 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelGetResponse::InvalidRequest
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                code => {
+                    let headers = response.headers().clone();
+                    Box::new(response.body()
+                            .take(100)
+                            .concat2()
+                            .then(move |body|
+                                future::err(ApiError(format!("Unexpected response code {}:\n{:?}\n\n{}",
+                                    code,
+                                    headers,
+                                    match body {
+                                        Ok(ref body) => match str::from_utf8(body) {
+                                            Ok(body) => Cow::from(body),
+                                            Err(e) => Cow::from(format!("<Body was not UTF8: {:?}>", e)),
+                                        },
+                                        Err(e) => Cow::from(format!("<Failed to read body: {}>", e)),
+                                    })))
+                            )
+                    ) as Box<Future<Item=_, Error=_>>
+                }
+            }
+        }))
+
+    }
+
     fn channel_name_get(&self, param_name: String, context: &C) -> Box<Future<Item=ChannelNameGetResponse, Error=ApiError>> {
 
 
@@ -244,8 +323,19 @@ impl<C> Api<C> for Client where C: Has<XSpanIdString> {
                     let body = response.body();
                     Box::new(
 
-                        future::ok(
-                            ChannelNameGetResponse::SuccessfulRetrievalOfMetadata
+                        body
+                        .concat2()
+                        .map_err(|e| ApiError(format!("Failed to read response: {}", e)))
+                        .and_then(|body| str::from_utf8(&body)
+                                             .map_err(|e| ApiError(format!("Response was not valid UTF8: {}", e)))
+                                             .and_then(|body|
+
+                                                 serde_json::from_str::<models::Channel>(body)
+                                                     .map_err(|e| e.into())
+
+                                             ))
+                        .map(move |body|
+                            ChannelNameGetResponse::SuccessfulRetrievalOfMetadata(body)
                         )
                     ) as Box<Future<Item=_, Error=_>>
                 },
@@ -326,6 +416,33 @@ impl<C> Api<C> for Client where C: Has<XSpanIdString> {
                              .map_err(|e| ApiError(format!("No response received: {}", e)))
                              .and_then(|mut response| {
             match response.status().as_u16() {
+                200 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelNameOffsetGetResponse::SuccessfulFetchOfTheItem
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                404 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelNameOffsetGetResponse::CouldNotFindTheNamedChannel
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                416 => {
+                    let body = response.body();
+                    Box::new(
+
+                        future::ok(
+                            ChannelNameOffsetGetResponse::CouldNotFindAnItemAtTheGivenOffset
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
                 code => {
                     let headers = response.headers().clone();
                     Box::new(response.body()
@@ -563,87 +680,6 @@ impl<C> Api<C> for Client where C: Has<XSpanIdString> {
 
                         future::ok(
                             ChannelNamePutResponse::CouldNotFindTheNamedChannel
-                        )
-                    ) as Box<Future<Item=_, Error=_>>
-                },
-                code => {
-                    let headers = response.headers().clone();
-                    Box::new(response.body()
-                            .take(100)
-                            .concat2()
-                            .then(move |body|
-                                future::err(ApiError(format!("Unexpected response code {}:\n{:?}\n\n{}",
-                                    code,
-                                    headers,
-                                    match body {
-                                        Ok(ref body) => match str::from_utf8(body) {
-                                            Ok(body) => Cow::from(body),
-                                            Err(e) => Cow::from(format!("<Body was not UTF8: {:?}>", e)),
-                                        },
-                                        Err(e) => Cow::from(format!("<Failed to read body: {}>", e)),
-                                    })))
-                            )
-                    ) as Box<Future<Item=_, Error=_>>
-                }
-            }
-        }))
-
-    }
-
-    fn list_channels(&self, context: &C) -> Box<Future<Item=ListChannelsResponse, Error=ApiError>> {
-
-
-        let uri = format!(
-            "{}/v1/channel",
-            self.base_path
-        );
-
-        let uri = match Uri::from_str(&uri) {
-            Ok(uri) => uri,
-            Err(err) => return Box::new(futures::done(Err(ApiError(format!("Unable to build URI: {}", err))))),
-        };
-
-        let mut request = hyper::Request::new(hyper::Method::Get, uri);
-
-
-
-        request.headers_mut().set(XSpanId((context as &Has<XSpanIdString>).get().0.clone()));
-
-
-
-
-        Box::new(self.hyper_client.call(request)
-                             .map_err(|e| ApiError(format!("No response received: {}", e)))
-                             .and_then(|mut response| {
-            match response.status().as_u16() {
-                200 => {
-                    let body = response.body();
-                    Box::new(
-
-                        body
-                        .concat2()
-                        .map_err(|e| ApiError(format!("Failed to read response: {}", e)))
-                        .and_then(|body| str::from_utf8(&body)
-                                             .map_err(|e| ApiError(format!("Response was not valid UTF8: {}", e)))
-                                             .and_then(|body|
-
-                                                 // ToDo: this will move to swagger-rs and become a standard From conversion trait
-                                                 // once https://github.com/RReverser/serde-xml-rs/pull/45 is accepted upstream
-                                                 serde_xml_rs::from_str::<Vec<models::Channel>>(body)
-                                                     .map_err(|e| ApiError(format!("Response body did not match the schema: {}", e)))
-
-                                             ))
-                        .map(move |body|
-                            ListChannelsResponse::SuccessfulEnumeration(body)
-                        )
-                    ) as Box<Future<Item=_, Error=_>>
-                },
-                400 => {
-                    let body = response.body();
-                    Box::new(
-
-                        future::ok(
-                            ListChannelsResponse::InvalidRequest
                         )
                     ) as Box<Future<Item=_, Error=_>>
                 },

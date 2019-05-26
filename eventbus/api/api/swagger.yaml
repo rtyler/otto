@@ -9,41 +9,39 @@ info:
   license:
     name: "GNU AGPL 3.0"
     url: "https://www.gnu.org/licenses/agpl-3.0.en.html"
-host: "ottodeploys.us"
+host: "localhost:8080"
 basePath: "/v1"
 schemes:
 - "https"
 - "http"
 produces:
 - "application/json"
-- "application/xml"
 paths:
   /channel:
     get:
       summary: "List existing channels in the event bus"
       description: "Enumerate all the channels visible and available to the current\
         \ client's permission scope\n"
-      operationId: "listChannels"
       parameters: []
       responses:
         200:
-          description: "Successful enumeration"
+          description: "Channels successfully listed"
           schema:
             type: "array"
             items:
               $ref: "#/definitions/Channel"
-          x-responseId: "SuccessfulEnumeration"
-          x-uppercaseResponseId: "SUCCESSFUL_ENUMERATION"
-          uppercase_operation_id: "LIST_CHANNELS"
+          x-responseId: "ChannelsSuccessfullyListed"
+          x-uppercaseResponseId: "CHANNELS_SUCCESSFULLY_LISTED"
+          uppercase_operation_id: "CHANNEL_GET"
           uppercase_data_type: "VEC<CHANNEL>"
-          producesXml: true
+          producesJson: true
         400:
           description: "Invalid request"
           x-responseId: "InvalidRequest"
           x-uppercaseResponseId: "INVALID_REQUEST"
-          uppercase_operation_id: "LIST_CHANNELS"
-      operation_id: "list_channels"
-      uppercase_operation_id: "LIST_CHANNELS"
+          uppercase_operation_id: "CHANNEL_GET"
+      operation_id: "channel_get"
+      uppercase_operation_id: "CHANNEL_GET"
       path: "/channel"
       PATH_ID: "CHANNEL"
       hasPathParams: false
@@ -62,9 +60,13 @@ paths:
       responses:
         200:
           description: "Successful retrieval of metadata"
+          schema:
+            $ref: "#/definitions/Channel"
           x-responseId: "SuccessfulRetrievalOfMetadata"
           x-uppercaseResponseId: "SUCCESSFUL_RETRIEVAL_OF_METADATA"
           uppercase_operation_id: "CHANNEL_NAME_GET"
+          uppercase_data_type: "CHANNEL"
+          producesJson: true
         400:
           description: "Invalid formatted channel name or request"
           x-responseId: "InvalidFormattedChannelNameOrRequest"
@@ -206,6 +208,22 @@ paths:
         format: "int64"
         formatString: "{}"
         example: "789"
+      responses:
+        200:
+          description: "Successful fetch of the item"
+          x-responseId: "SuccessfulFetchOfTheItem"
+          x-uppercaseResponseId: "SUCCESSFUL_FETCH_OF_THE_ITEM"
+          uppercase_operation_id: "CHANNEL_NAME_OFFSET_GET"
+        404:
+          description: "Could not find the named channel"
+          x-responseId: "CouldNotFindTheNamedChannel"
+          x-uppercaseResponseId: "COULD_NOT_FIND_THE_NAMED_CHANNEL"
+          uppercase_operation_id: "CHANNEL_NAME_OFFSET_GET"
+        416:
+          description: "Could not find an item at the given offset"
+          x-responseId: "CouldNotFindAnItemAtTheGivenOffset"
+          x-uppercaseResponseId: "COULD_NOT_FIND_AN_ITEM_AT_THE_GIVEN_OFFSET"
+          uppercase_operation_id: "CHANNEL_NAME_OFFSET_GET"
       operation_id: "channel_name_offset_get"
       uppercase_operation_id: "CHANNEL_NAME_OFFSET_GET"
       path: "/channel/:name/:offset"
@@ -333,6 +351,8 @@ definitions:
         format: "int64"
       name:
         type: "string"
+        example: "inbound-hooks"
+        description: "Name for the channel"
       consumers:
         type: "integer"
         format: "int64"
@@ -340,16 +360,17 @@ definitions:
       updatedAt:
         type: "string"
         format: "date-time"
+        description: "Last time the channel metadata was updated"
       status:
         type: "string"
-        description: "Channel Status"
+        description: "The channel's status"
         enum:
         - "ready"
         - "unavailable"
     xml:
       name: "Channel"
     example:
-      name: "name"
+      name: "inbound-hooks"
       consumers: 6
       id: 0
       updatedAt: "2000-01-23T04:56:07.000+00:00"

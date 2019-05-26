@@ -19,12 +19,12 @@ use tokio_core::reactor;
 #[allow(unused_imports)]
 use eventbus_api::{ApiNoContext, ContextWrapperExt,
                       ApiError,
+                      ChannelGetResponse,
                       ChannelNameGetResponse,
                       ChannelNameOffsetGetResponse,
                       ChannelNamePatchResponse,
                       ChannelNamePostResponse,
                       ChannelNamePutResponse,
-                      ListChannelsResponse,
                       OffsetConsumerGetResponse,
                       OffsetConsumerPatchResponse,
                       OffsetConsumerPostResponse
@@ -36,12 +36,12 @@ fn main() {
         .arg(Arg::with_name("operation")
             .help("Sets the operation to run")
             .possible_values(&[
+    "ChannelGet",
     "ChannelNameGet",
     "ChannelNameOffsetGet",
     "ChannelNamePatch",
     "ChannelNamePost",
     "ChannelNamePut",
-    "ListChannels",
     "OffsetConsumerGet",
     "OffsetConsumerPatch",
     "OffsetConsumerPost",
@@ -54,7 +54,7 @@ fn main() {
         .arg(Arg::with_name("host")
             .long("host")
             .takes_value(true)
-            .default_value("ottodeploys.us")
+            .default_value("localhost")
             .help("Hostname to contact"))
         .arg(Arg::with_name("port")
             .long("port")
@@ -85,6 +85,11 @@ fn main() {
 
     match matches.value_of("operation") {
 
+        Some("ChannelGet") => {
+            let result = core.run(client.channel_get());
+            println!("{:?} (X-Span-ID: {:?})", result, (client.context() as &Has<XSpanIdString>).get().clone());
+         },
+
         Some("ChannelNameGet") => {
             let result = core.run(client.channel_name_get("name_example".to_string()));
             println!("{:?} (X-Span-ID: {:?})", result, (client.context() as &Has<XSpanIdString>).get().clone());
@@ -107,11 +112,6 @@ fn main() {
 
         Some("ChannelNamePut") => {
             let result = core.run(client.channel_name_put("name_example".to_string()));
-            println!("{:?} (X-Span-ID: {:?})", result, (client.context() as &Has<XSpanIdString>).get().clone());
-         },
-
-        Some("ListChannels") => {
-            let result = core.run(client.list_channels());
             println!("{:?} (X-Span-ID: {:?})", result, (client.context() as &Has<XSpanIdString>).get().clone());
          },
 

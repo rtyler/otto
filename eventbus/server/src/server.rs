@@ -13,12 +13,12 @@ use swagger;
 use swagger::{Has, XSpanIdString};
 
 use eventbus_api::{Api, ApiError,
+                      ChannelGetResponse,
                       ChannelNameGetResponse,
                       ChannelNameOffsetGetResponse,
                       ChannelNamePatchResponse,
                       ChannelNamePostResponse,
                       ChannelNamePutResponse,
-                      ListChannelsResponse,
                       OffsetConsumerGetResponse,
                       OffsetConsumerPatchResponse,
                       OffsetConsumerPostResponse
@@ -37,12 +37,25 @@ impl<C> Server<C> {
 }
 
 impl<C> Api<C> for Server<C> where C: Has<XSpanIdString>{
+    /// List existing channels in the event bus
+    fn channel_get(&self, context: &C) -> Box<Future<Item=ChannelGetResponse, Error=ApiError>> {
+        let context = context.clone();
+        println!("channel_get() - X-Span-ID: {:?}", context.get().0.clone());
+        Box::new(futures::failed("Generic failure".into()))
+    }
 
     /// Fetch the metadata about a specific channel
     fn channel_name_get(&self, name: String, context: &C) -> Box<Future<Item=ChannelNameGetResponse, Error=ApiError>> {
         let context = context.clone();
         println!("channel_name_get(\"{}\") - X-Span-ID: {:?}", name, context.get().0.clone());
-        Box::new(futures::failed("Generic failure".into()))
+        let channel = models::Channel {
+            id: Some(1337),
+            name: Some(name),
+            consumers: Some(0),
+            updated_at: Some(chrono::prelude::Utc::now()),
+            status: Some("ready".to_string()),
+        };
+        Box::new(futures::future::ok(ChannelNameGetResponse::SuccessfulRetrievalOfMetadata(channel)))
     }
 
     /// Fetch an item from the channel
@@ -70,13 +83,6 @@ impl<C> Api<C> for Server<C> where C: Has<XSpanIdString>{
     fn channel_name_put(&self, name: String, context: &C) -> Box<Future<Item=ChannelNamePutResponse, Error=ApiError>> {
         let context = context.clone();
         println!("channel_name_put(\"{}\") - X-Span-ID: {:?}", name, context.get().0.clone());
-        Box::new(futures::failed("Generic failure".into()))
-    }
-
-    /// List existing channels in the event bus
-    fn list_channels(&self, context: &C) -> Box<Future<Item=ListChannelsResponse, Error=ApiError>> {
-        let context = context.clone();
-        println!("list_channels() - X-Span-ID: {:?}", context.get().0.clone());
         Box::new(futures::failed("Generic failure".into()))
     }
 
