@@ -21,7 +21,6 @@ paths:
       operationId: "fetchManifest"
       produces:
       - "application/json"
-      - "application/xml"
       parameters:
       - name: "agentId"
         in: "path"
@@ -38,7 +37,7 @@ paths:
           x-uppercaseResponseId: "AGENT_ID_FOUND_AND_MANIFEST_GENERATED"
           uppercase_operation_id: "FETCH_MANIFEST"
           uppercase_data_type: "MANIFEST"
-          producesXml: true
+          producesJson: true
         400:
           description: "Invalid request"
           x-responseId: "InvalidRequest"

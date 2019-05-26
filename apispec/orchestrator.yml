@@ -26,7 +26,6 @@ paths:
       operationId: 'fetchManifest'
       produces:
       - 'application/json'
-      - 'application/xml'
       parameters:
         - name: agentId
           in: path

@@ -31,7 +31,7 @@ use std::str::FromStr;
 use mimetypes;
 
 use serde_json;
-use serde_xml_rs;
+
 
 #[allow(unused_imports)]
 use std::collections::{HashMap, BTreeMap};
@@ -243,10 +243,8 @@ impl<C> Api<C> for Client where C: Has<XSpanIdString> {
                                              .map_err(|e| ApiError(format!("Response was not valid UTF8: {}", e)))
                                              .and_then(|body|
 
-                                                 // ToDo: this will move to swagger-rs and become a standard From conversion trait
-                                                 // once https://github.com/RReverser/serde-xml-rs/pull/45 is accepted upstream
-                                                 serde_xml_rs::from_str::<models::Manifest>(body)
-                                                     .map_err(|e| ApiError(format!("Response body did not match the schema: {}", e)))
+                                                 serde_json::from_str::<models::Manifest>(body)
+                                                     .map_err(|e| e.into())
 
                                              ))
                         .map(move |body|

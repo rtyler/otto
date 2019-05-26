@@ -23,7 +23,7 @@ use mimetypes;
 
 
 use serde_json;
-use serde_xml_rs;
+
 
 #[allow(unused_imports)]
 use std::collections::{HashMap, BTreeMap};
@@ -168,7 +168,7 @@ where
                                                     response.headers_mut().set(ContentType(mimetypes::responses::FETCH_MANIFEST_AGENT_ID_FOUND_AND_MANIFEST_GENERATED.clone()));
 
 
-                                                    let body = serde_xml_rs::to_string(&body).expect("impossible to fail to serialize");
+                                                    let body = serde_json::to_string(&body).expect("impossible to fail to serialize");
 
                                                     response.set_body(body);
                                                 },
