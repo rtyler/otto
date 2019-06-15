@@ -25,14 +25,19 @@ use eventbus_api::{Api, ApiError,
 };
 use eventbus_api::models;
 
-#[derive(Copy, Clone)]
+//#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Server<C> {
     marker: PhantomData<C>,
+    channels: HashMap<String, models::Channel>,
 }
 
 impl<C> Server<C> {
     pub fn new() -> Self {
-        Server{marker: PhantomData}
+        Server {
+            marker: PhantomData,
+            channels: HashMap::new(),
+        }
     }
 }
 
@@ -48,14 +53,18 @@ impl<C> Api<C> for Server<C> where C: Has<XSpanIdString>{
     fn channel_name_get(&self, name: String, context: &C) -> Box<Future<Item=ChannelNameGetResponse, Error=ApiError>> {
         let context = context.clone();
         println!("channel_name_get(\"{}\") - X-Span-ID: {:?}", name, context.get().0.clone());
-        let channel = models::Channel {
-            id: Some(1337),
-            name: Some(name),
-            consumers: Some(0),
-            updated_at: Some(chrono::prelude::Utc::now()),
-            status: Some("ready".to_string()),
-        };
-        Box::new(futures::future::ok(ChannelNameGetResponse::SuccessfulRetrievalOfMetadata(channel)))
+
+        if !self.channels.contains_key(&name) {
+            println!("Channel does not exist");
+            return Box::new(
+                futures::future::ok(
+                    ChannelNameGetResponse::CouldNotFindTheNamedChannel));
+        }
+
+        Box::new(
+            futures::future::ok(
+                ChannelNameGetResponse::SuccessfulRetrievalOfMetadata(self.channels[&name].clone())
+                ))
     }
 
     /// Fetch an item from the channel
