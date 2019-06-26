@@ -1,0 +1,43 @@
+{
+  "name": "otto",
+  "version": "0.0.1",
+  "description": "Your friendly continuous delivery companion",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "dependencies": {
+    "@feathersjs/configuration": "^2.0.6",
+    "@feathersjs/express": "^1.3.1",
+    "@feathersjs/feathers": "^3.3.1",
+    "@types/feathersjs__configuration": "^1.0.3",
+    "@types/feathersjs__express": "^1.1.6",
+    "@types/jest": "^24.0.15",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "dredd": "^11.1.4",
+    "helmet": "^3.18.0",
+    "jest": "^24.8.0",
+    "nodemon": "^1.19.1",
+    "ts-jest": "^24.0.2",
+    "tslib": "^1.10.0",
+    "typescript": "^3.5.2",
+    "uuid": "^3.3.2",
+    "winston": "^3.2.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rtyler/otto.git"
+  },
+  "author": "R Tyler Croy",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/rtyler/otto/issues"
+  },
+  "homepage": "https://github.com/rtyler/otto#readme"
+}

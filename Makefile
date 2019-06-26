@@ -1,3 +1,6 @@
+
+export PATH:=./node_modules/.bin:${PATH}
+
 ANTLR_BIN=antlr-4.7.2-complete.jar
 DREDD=./node_modules/.bin/dredd
 ANTLR=contrib/$(ANTLR_BIN)
@@ -7,6 +10,7 @@ GRAMMAR=Otto.g4
 all: help
 
 build: ## Build all components
+	tsc
 
 check: ## Run validation tests
 

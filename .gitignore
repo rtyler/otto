@@ -3,3 +3,4 @@
 *.sw*
 node_modules/
 .cargo/
+build/
