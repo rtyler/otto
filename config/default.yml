@@ -1,0 +1,4 @@
+---
+orchestrator:
+  host: localhost
+  port: 3030
