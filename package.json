@@ -18,6 +18,7 @@
     "dredd": "^11.1.4",
     "helmet": "^3.18.0",
     "jest": "^24.8.0",
+    "module-alias": "^2.2.0",
     "nodemon": "^1.19.1",
     "ts-jest": "^24.0.2",
     "tslib": "^1.10.0",
@@ -39,5 +40,9 @@
   "bugs": {
     "url": "https://github.com/rtyler/otto/issues"
   },
-  "homepage": "https://github.com/rtyler/otto#readme"
+  "homepage": "https://github.com/rtyler/otto#readme",
+  "_moduleAliases" : {
+      "@root" : ".",
+      "@otto" : "build/lib/src/"
+  }
 }
