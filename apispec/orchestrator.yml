@@ -14,7 +14,6 @@ externalDocs:
   description: 'Find out more about Otto'
   url: 'https://github.com/rtyler/otto'
 basePath: '/v1'
-tags:
 schemes:
 - 'http'
 paths:
@@ -25,20 +24,25 @@ paths:
         Return the full execution manifest for the given agent to execute.
       operationId: 'fetchManifest'
       produces:
-      - 'application/json'
+        - 'application/json'
       parameters:
         - name: agentId
           in: path
-          type: string
           required: true
+          type: string
+          x-example: otto-agent-1
       responses:
         200:
           description: 'Agent ID found and manifest generated'
+          # https://github.com/apiaryio/dredd/issues/553#issuecomment-412265413
+          headers:
+            Content-Type:
+              type: string
+              default: application/json; charset=utf-8
           schema:
             $ref: '#/definitions/Manifest'
         400:
           description: 'Invalid request'
-securityDefinitions:
 definitions:
   Manifest:
     type: object
@@ -56,7 +60,7 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/Operation'
-    examples:
+    x-example:
       self: 'otto-agent-1'
       services:
         $ref: '#/definitions/Service'

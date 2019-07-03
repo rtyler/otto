@@ -19,4 +19,36 @@ app.configure((app) => {
   });
 });
 
+
+app.configure(express.rest());
+
+
+app.configure((app : feathers.Application) => {
+  const service = {
+    get: (id : feathers.Id) => {
+      logger.info(`Invoking get for ${id}`);
+      const response = {
+        self: id,
+        services: {
+          datastore: 'http://localhost:3031/',
+        },
+        ops: [
+          {
+            id: '0xdeadbeef',
+            context: '0x1',
+            type: 'RUNPROC',
+            data: {
+              script: 'echo "Hello World"',
+              env: {},
+              timeout_s: 600,
+            },
+          },
+        ],
+      };
+      return Promise.resolve(response);
+    },
+  };
+  app.use('/v1/manifest', service);
+});
+
 serveApp(app);

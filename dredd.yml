@@ -3,8 +3,8 @@ dry-run: null
 hookfiles: null
 language: nodejs
 require: null
-server: ./target/debug/eventbus
-server-wait: 3
+server: node build/services/orchestrator/src
+server-wait: 1
 init: false
 custom: {}
 names: false
@@ -17,7 +17,7 @@ user: null
 inline-errors: false
 details: false
 method: []
-loglevel: warning
+loglevel: error
 path: []
 hooks-worker-timeout: 5000
 hooks-worker-connect-timeout: 1500
@@ -28,5 +28,5 @@ hooks-worker-term-retry: 500
 hooks-worker-handler-host: 127.0.0.1
 hooks-worker-handler-port: 61321
 config: ./dredd.yml
-blueprint: apispec/eventbus.yml
-endpoint: 'http://127.0.0.1:8080'
+blueprint: ./apispec/orchestrator.yml
+endpoint: 'http://127.0.0.1:3030/'
