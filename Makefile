@@ -1,22 +1,32 @@
+##
+# This Makefile provides the main development interface for working with Otto,
+# and helps organize the various tasks for preparation, compilation, and
+# testing.
+#
+# Execute `make` to get help ffor the various targets
+################################################################################
 
+# Set the PATH so we can automatically include our node binstubs
 export PATH:=./node_modules/.bin:${PATH}
 
 ANTLR_BIN=antlr-4.7.2-complete.jar
-DREDD=./node_modules/.bin/dredd
 ANTLR=contrib/$(ANTLR_BIN)
-GRAMMAR=Otto.g4
+GRAMMAR=Otto.g4 OttoLexer.g4
+
 ################################################################################
 ## Phony targets
 all: help
 
-build: ## Build all components
+build: depends ## Build all components
 	tsc
 
-check: ## Run validation tests
+check: depends build ## Run validation tests
+	#dredd
+	node parse-test.js
 
 swagger: depends ## Generate the swagger stubs based on apispecs
 
-depends: prereqs $(ANTLR) $(DREDD) ## Download all dependencies
+depends: prereqs $(ANTLR) ## Download all dependencies
 
 prereqs: scripts/prereqs.sh ## Check that this system has the necessary tools to build otto
 	@sh scripts/prereqs.sh
@@ -24,14 +34,11 @@ prereqs: scripts/prereqs.sh ## Check that this system has the necessary tools to
 clean: ## Clean all temporary/working files
 	rm -f $(ANTLR)
 
-dredd: $(DREDD)
-	$(DREDD)
-
 parser: depends $(GRAMMAR) ## Generate the parser code
-	@for target in JavaScript Go Cpp; do \
+	@for target in Java JavaScript; do \
 		java -cp $(ANTLR) org.antlr.v4.Tool \
 			-Dlanguage=$$target \
-			-o build/$$target \
+			-o build/parser/$$target \
 			$(GRAMMAR); \
 		echo "--> Generated $$target stubs"; \
 	done;
@@ -41,9 +48,6 @@ parser: depends $(GRAMMAR) ## Generate the parser code
 $(ANTLR): ## Download the latest ANTLR4 binary
 	(cd contrib && wget https://www.antlr.org/download/$(ANTLR_BIN))
 
-$(DREDD):
-	npm i dredd
-
 ################################################################################
 
 # Cute hack thanks to:
@@ -51,4 +55,4 @@ $(DREDD):
 help: ## Display this help text
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: all build check clean depends
+.PHONY: all build check clean depends parser

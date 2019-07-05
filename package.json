@@ -18,16 +18,17 @@
     "cors": "^2.8.5",
     "dredd": "^11.2.9",
     "helmet": "^3.18.0",
-    "jest": "^24.8.0",
     "module-alias": "^2.2.0",
     "nodemon": "^1.19.1",
-    "ts-jest": "^24.0.2",
     "tslib": "^1.10.0",
     "typescript": "^3.5.2",
     "uuid": "^3.3.2",
     "winston": "^3.2.1"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "jest": "^24.8.0",
+    "ts-jest": "^24.0.2"
+  },
   "scripts": {
     "build": "tsc",
     "test": "jest"
