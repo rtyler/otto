@@ -1,3 +1,8 @@
+/*
+ * This file contains the parser for the Otto description language
+ *
+ * This is to be considered the reference grammar for all .otto files
+ */
 parser grammar Otto;
 
 options {

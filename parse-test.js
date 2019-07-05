@@ -46,5 +46,5 @@ class L extends OttoListener {
   }
 }
 
-tree.accept(new Visitor());
-//antlr.tree.ParseTreeWalker.DEFAULT.walk(new L(), tree);
+//tree.accept(new Visitor());
+antlr.tree.ParseTreeWalker.DEFAULT.walk(new L(), tree);
