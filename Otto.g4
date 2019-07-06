@@ -131,7 +131,7 @@ stageStatements
     | cache
     | gates
     | deployExpr
-    | notify
+    | notifyExpr
     | macro+
     // And finally, allow nesting our stages!
     | stages+
@@ -204,7 +204,7 @@ deployExpr
     ;
 
 
-notify
+notifyExpr
     : NOTIFY BEGIN
         (
         (SUCCESS | FAILURE | COMPLETE)
