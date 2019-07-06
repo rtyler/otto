@@ -145,9 +145,18 @@ cache
         (
         (setting+)
         | fromExpr
+        | cacheUseExpr
         )
      END
     ;
+/*
+ * cache {} `use` expressions allow stages to pull in cached entries from
+ * elsewhere
+ */
+cacheUseExpr
+    : USE ID
+    ;
+
 runtime
     : RUNTIME BEGIN 
         (
