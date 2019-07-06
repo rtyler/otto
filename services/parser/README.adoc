@@ -19,7 +19,6 @@ pipeline are as follows:
 * The path of execution must be numbered and trackable within the system. Other
   components will need to be able to refer back to the internal representation to
   determine where in the execution of the pipeline the process is currently.
-* Configuration data must be 
 
 === Example
 
@@ -48,6 +47,10 @@ pipeline {
         }
       }
 
+      cache {
+        gems = ['vendor/']
+      }
+
       steps {
         sh 'ruby --version'
       }
@@ -56,6 +59,9 @@ pipeline {
     stage('Test') {
       runtime {
         from 'Build'
+      }
+      cache {
+        use gems
       }
       steps {
         sh 'env'
@@ -102,6 +108,13 @@ stages:
       - type: 'sh'
         args:
           - 'ruby --version'
+    # `capture` and `restore` both would support archiving of artifacts and
+    # caching of files and directories between the different stages
+    capture:
+      gems:
+        - path: 'gems/'
+          type: 'directory'
+    restore:
   - name: 'Test'
     before:
     # Reference the stage by index
@@ -111,5 +124,8 @@ stages:
       - type: 'sh'
         args:
           - 'env'
+    capture:
+    restore:
+      - gems
 ----
 

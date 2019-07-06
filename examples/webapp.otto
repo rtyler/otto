@@ -70,7 +70,7 @@ pipeline {
       }
 
       cache {
-        from 'gems'
+        use gems
       }
 
       steps {

@@ -5,7 +5,7 @@
 
 
 use {
-  stdlib;
+  stdlib
 }
 
 blueprint {
