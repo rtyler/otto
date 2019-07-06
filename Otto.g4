@@ -121,12 +121,12 @@ stages_block
     : STAGES BEGIN stages+ END
     ;
 stages
-    : STAGE OPEN StringLiteral CLOSE BEGIN stageStatements* END
+    : STAGE BEGIN stageStatements* END
     ;
 
-
 stageStatements
-    : steps
+    : settings
+    | steps
     | runtime
     | cache
     | gates
