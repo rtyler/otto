@@ -1,0 +1,59 @@
+/*
+ * This is a description of an Otto-managed continuous delivery process which
+ * requires a matrix of variables in order to operate correctly.
+ *
+ * This is a fairly common use-case where multiple platforms need to be
+ * supported or tested against.
+ */
+
+use {
+  stdlib
+}
+
+pipeline {
+  stages {
+
+    stage {
+      name = 'Build'
+
+      runtime {
+        docker { image = 'maven' }
+      }
+
+      steps {
+        sh 'mvn -B package'
+      }
+    }
+
+    each('win10', 'macos', 'linux-jdk12', 'linux-jdk8') {
+      /*
+       * The `it` keyword is semantically important and represents the
+       * different strings above when the `each` macro is expanded
+       *
+       */
+      stage {
+        name = concat('Test', it)
+        runtime {
+          computer { label = it }
+        }
+
+        steps {
+          sh 'mvn test'
+        }
+      }
+    }
+
+    stage {
+      name = 'Depoy'
+      runtime {
+        from 'Build'
+      }
+      steps {
+        sh 'mvn deploy'
+      }
+    }
+  }
+}
+
+
+// vim: ts=2 sw=2 et ai
