@@ -80,16 +80,36 @@ pipeline {
 
     stage('Deploy') {
       stage('Pre-production') {
-        when { branch == 'master' }
-
+        /*
+         * Indicate that the stage is going to interact with the preprod stage
+         * and the preprod environment settings must be made available to steps
+         */
         environment -> preprod
+
+        /*
+         * gates define the criteria for entering and exiting the stage.
+         */
+        gates {
+          enter {
+            branch == 'master'
+          }
+
+          /*
+           * The exit block is where external stimuli back into the system
+           * should be modeled, providing some means of holding back the pipeline
+           * until the condition has been met
+           */
+          exit {
+            input 'Does staging look good to you?'
+          }
+        }
 
         runtime {
           from 'Build'
         }
 
         cache {
-          from 'assets'
+          use assets
         }
 
         steps {
@@ -107,42 +127,36 @@ pipeline {
             slack 'Fire on warlock mountain!'
           }
         }
-
-        /*
-         * The feedback block is where external stimuli back into the system
-         * should be modeled, providing some means of holding back the pipeline
-         * until the feedback condition has been met
-         */
-        feedback {
-          input 'Does staging look good to you?'
-        }
       }
 
       stage('Production') {
-        when {
-          // Re-use our same conditions
+        gates {
           from 'Pre-production'
-        }
 
+          enter {
+            input 'Are you extra sure that staging looks good to you?'
+          }
+
+          exit {
+            /*
+            * Ideally the system has some form of tagging of this specific run,
+            * to allow an external system to call back and say "this is good and
+            * finished"
+            */
+            webhook {
+              description = 'Pingdom health check'
+            }
+          }
+
+        }
         environment -> production
-
-        /*
-         * Allow the starting of this stage based on some other condition.
-         *
-         * NOTE: it is unclear if this is useful, or confusing, but the
-         * use-case is to allow for some guarding logic before allocating the
-         * runtime environment for this stage.
-         */
-        before {
-          input 'Are you extra sure that staging looks good to you?'
-        }
 
         runtime {
           from 'Build'
         }
 
         cache {
-          from 'assets'
+          use assets
         }
 
         steps {
@@ -158,17 +172,6 @@ pipeline {
           }
           complete {
             slack 'New changes are live in production'
-          }
-        }
-
-        feedback {
-          /*
-           * Ideally the system has some form of tagging of this specific run,
-           * to allow an external system to call back and say "this is good and
-           * finished"
-           */
-          webhook {
-            description = 'Pingdom health check'
           }
         }
       }

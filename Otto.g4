@@ -129,11 +129,9 @@ stageStatements
     : steps
     | runtime
     | cache
-    | when
+    | gates
     | deployExpr
     | notify
-    | feedback
-    | before
     // And finally, allow nesting our stages!
     | stages+
     ;
@@ -158,19 +156,41 @@ cacheUseExpr
     ;
 
 runtime
-    : RUNTIME BEGIN 
+    : RUNTIME BEGIN
         (
         setting_block
         | fromExpr
         )
     END
     ;
-when
-    : WHEN BEGIN whenExpr* END
-    ;
-whenExpr
-    : (BRANCH EQUALS StringLiteral)
+/*
+ * XXX: This syntax requires some test coverage to ensure that the grammar
+ * allows for order independence properly, while still restricting only a
+ * single enter block, for example
+ */
+gates
+    : GATES BEGIN
+    (
+    enter
+    | exit
     | fromExpr
+    )+
+    END
+    ;
+enter
+    : ENTER BEGIN enterExpr+ END
+    ;
+exit
+    : EXIT BEGIN exitExpr+ END
+    ;
+enterExpr
+    : (BRANCH EQUALS StringLiteral)
+    | statements
+    | setting_block
+    ;
+exitExpr
+    : statements
+    | setting_block
     ;
 
 /*
@@ -192,19 +212,6 @@ notify
         END
         )+
     END
-    ;
-
-feedback
-    : FEEDBACK BEGIN
-        (
-        statements
-        | setting_block
-        )+
-    END
-    ;
-
-before
-    : BEFORE BEGIN statements+ END
     ;
 
 
