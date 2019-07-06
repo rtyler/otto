@@ -12,7 +12,6 @@ use {
 
 pipeline {
   stages {
-
     stage {
       name = 'Build'
 

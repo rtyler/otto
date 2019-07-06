@@ -118,7 +118,7 @@ pipeline_block
     ;
 
 stages_block
-    : STAGES BEGIN stages+ macro* END
+    : STAGES BEGIN (macro? stages macro?)+ END
     ;
 stages
     : STAGE BEGIN stageStatements* END
