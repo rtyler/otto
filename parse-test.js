@@ -5,14 +5,6 @@ const Lexer = require('./build/parser/JavaScript/OttoLexer').OttoLexer;
 const Parser = require('./build/parser/JavaScript/Otto').Otto;
 const OttoListener = require('./build/parser/JavaScript/OttoListener').OttoListener;
 
-const input = fs.readFileSync('./examples/webapp.otto', 'utf8');
-let chars = new antlr.InputStream(input);
-let lexer = new Lexer(chars);
-let tokens = new antlr.CommonTokenStream(lexer);
-let parser = new Parser(tokens);
-parser.buildParseTrees = true;
-let tree = parser.pipeline();
-
 class Visitor {
   visitChildren(ctx) {
     if (!ctx) {
@@ -46,5 +38,18 @@ class L extends OttoListener {
   }
 }
 
-//tree.accept(new Visitor());
-antlr.tree.ParseTreeWalker.DEFAULT.walk(new L(), tree);
+[
+  './examples/webapp.otto',
+  './examples/matrix.otto',
+].map((filename) => {
+  console.log(`Processing ${filename}`);
+  const input = fs.readFileSync(filename, 'utf8');
+  let chars = new antlr.InputStream(input);
+  let lexer = new Lexer(chars);
+  let tokens = new antlr.CommonTokenStream(lexer);
+  let parser = new Parser(tokens);
+  parser.buildParseTrees = true;
+  let tree = parser.pipeline();
+  //tree.accept(new Visitor());
+  antlr.tree.ParseTreeWalker.DEFAULT.walk(new L(), tree);
+});
