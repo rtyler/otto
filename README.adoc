@@ -1,5 +1,7 @@
 = Otto
 
+**link:https://webchat.freenode.net/?channels=#otto[Chat on IRC]**
+
 Meet Otto, your friendly continuous delivery companion. Otto does not aim to be
 the center of the entire continuous delivery process, but rather seeks to
 interoperate seamlessly with all the various components which make CD work for
