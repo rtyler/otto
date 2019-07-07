@@ -45,6 +45,7 @@ ARRAY_END : ']';
 COMMA : ',';
 ASSIGN : '=';
 
+IT : 'it';
 
 StringLiteral: ('"' DoubleStringCharacter* '"'
              |  '\'' SingleStringCharacter* '\'')

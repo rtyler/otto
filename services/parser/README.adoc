@@ -40,7 +40,8 @@ configure {
 
 pipeline {
   stages {
-    stage('Build') {
+    stage {
+      name = 'Build'
       runtime {
         docker {
           image = 'ruby:latest'
@@ -56,7 +57,8 @@ pipeline {
       }
     }
 
-    stage('Test') {
+    stage {
+      name = 'Test'
       runtime {
         from 'Build'
       }

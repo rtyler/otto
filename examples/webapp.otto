@@ -45,7 +45,9 @@ environments {
 
 pipeline {
   stages {
-    stage('Build') {
+    stage {
+      name = 'Build'
+
       runtime {
         docker {
           image = 'ruby'
@@ -64,7 +66,9 @@ pipeline {
       }
     }
 
-    stage('Test') {
+    stage {
+      name = 'Test'
+
       runtime {
         from 'Build'
       }
@@ -78,8 +82,11 @@ pipeline {
       }
     }
 
-    stage('Deploy') {
-      stage('Pre-production') {
+    stage {
+      name = 'Deploy'
+
+      stage {
+        name = 'Pre-production'
         /*
          * Indicate that the stage is going to interact with the preprod stage
          * and the preprod environment settings must be made available to steps
@@ -129,7 +136,10 @@ pipeline {
         }
       }
 
-      stage('Production') {
+      stage {
+        name = 'Production'
+        environment -> production
+
         gates {
           from 'Pre-production'
 
@@ -149,7 +159,6 @@ pipeline {
           }
 
         }
-        environment -> production
 
         runtime {
           from 'Build'

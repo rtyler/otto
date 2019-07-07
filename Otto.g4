@@ -101,7 +101,7 @@ settings
     : setting+
     ;
 setting
-    : ID ASSIGN (StringLiteral | array)
+    : ID ASSIGN (StringLiteral | array | macro | macroKeywords)
     ;
 array
     : ARRAY_START (StringLiteral COMMA?)+ ARRAY_END
@@ -118,20 +118,21 @@ pipeline_block
     ;
 
 stages_block
-    : STAGES BEGIN stages+ END
+    : STAGES BEGIN (macro? stages macro?)+ END
     ;
 stages
-    : STAGE OPEN StringLiteral CLOSE BEGIN stageStatements* END
+    : STAGE BEGIN stageStatements* END
     ;
 
-
 stageStatements
-    : steps
+    : settings
+    | steps
     | runtime
     | cache
     | gates
     | deployExpr
-    | notify
+    | notifyExpr
+    | macro+
     // And finally, allow nesting our stages!
     | stages+
     ;
@@ -203,7 +204,7 @@ deployExpr
     ;
 
 
-notify
+notifyExpr
     : NOTIFY BEGIN
         (
         (SUCCESS | FAILURE | COMPLETE)
@@ -239,6 +240,28 @@ statement
 step
     : ID StringLiteral
     ;
+
+
+/*
+ * Macro expressions can be a single line, or a single line with a block
+ * attached
+ */
+macro
+    : ID OPEN macroArguments CLOSE
+    (BEGIN (stages+)? END)?
+    ;
+macroArguments
+    :
+    (
+        (StringLiteral | macroKeywords)
+    COMMA?
+    )+
+    ;
+macroKeywords
+    : IT
+    ;
+
+
 
 /*
  * Keywords are expected to be semantically important after parse time and
