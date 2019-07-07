@@ -1,0 +1,12 @@
+{
+    "extends": [
+        "tslint:recommended"
+    ],
+    "jsRules": {},
+    "rules": {
+        "semicolon" : false,
+        "quotemark" : false,
+        "interface-name" : false
+    },
+    "rulesDirectory": []
+}

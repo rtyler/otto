@@ -5,9 +5,7 @@
  * See the parser README for more information
  */
 
-
-import {Serialize, SerializeProperty, Serializable} from 'ts-serializer'
-
+// tslint:disable:max-classes-per-file
 enum LibraryType {
   Builtin,
   FileReference,
@@ -18,14 +16,12 @@ class Library {
   protected readonly libraryRef: string
 }
 
-
 class Setting {
   protected readonly encrypted: Boolean
   protected readonly value: any
 }
 
-
-class Configuration extends Serializable {
+class Configuration {
   protected readonly settings: Map<string, Setting>
 }
 
@@ -43,9 +39,9 @@ class Stage {
   protected before: Stage
   protected after: Stage
   protected runtime: Runtime
-  protected steps: Array<Step> = []
+  protected steps: Step[] = []
   protected capture: Map<string, FileCapture>
-  protected restore: Array<string>
+  protected restore: String[]
 }
 
 /**
@@ -58,7 +54,7 @@ export default class Orf {
   /**
    * An array of libraries which must be loaded at runtime
    */
-  protected libraries: Array<Library> = []
+  protected libraries: Library[] = []
 
   /**
    * A map of configuration objects for configuring arbitrary
@@ -69,13 +65,13 @@ export default class Orf {
   /**
    * An ordered array of runtimes which will be used throughout the process
    */
-  protected runtimes: Array<Runtime> = []
+  protected runtimes: Runtime[] = []
 
   /**
    * An ordered array of stages as they have been parsed, not necessary how
    * they will be executed which may be more of a directed graph.
    */
-  protected stages: Array<Stage> = []
+  protected stages: Stage[] = []
 
   constructor() {
     this.configuration = new Map<string, Configuration>()

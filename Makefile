@@ -22,10 +22,12 @@ build: depends ## Build all components
 	$(foreach dir, $(SUB_DIRS), $(MAKE) -C $(dir) $@)
 	tsc
 
-check: depends build ## Run validation tests
+lint: depends
+	tslint -c tslint.json -t stylish 'lib/**/*.ts' 'services/**/*.ts'
+
+check: depends lint build ## Run validation tests
 	jest
-	#dredd
-	node parse-test.js
+	dredd
 
 swagger: depends ## Generate the swagger stubs based on apispecs
 
@@ -40,4 +42,4 @@ clean: ## Clean all temporary/working files
 ################################################################################
 
 
-.PHONY: all build check clean depends parser
+.PHONY: all build check clean depends lint swagger

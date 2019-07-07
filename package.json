@@ -20,6 +20,7 @@
     "helmet": "^3.18.0",
     "module-alias": "^2.2.0",
     "nodemon": "^1.19.1",
+    "ts-lint": "^4.5.1",
     "tslib": "^1.10.0",
     "typescript": "^3.5.2",
     "uuid": "^3.3.2",
