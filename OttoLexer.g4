@@ -17,11 +17,9 @@ SUCCESS : 'success';
 FAILURE : 'failure';
 COMPLETE : 'complete';
 
-
-FEEDBACK : 'feedback';
-BEFORE : 'before';
-
-WHEN : 'when';
+GATES : 'gates';
+ENTER : 'enter';
+EXIT : 'exit';
 BRANCH : 'branch';
 EQUALS : '==';
 
