@@ -2,8 +2,6 @@
  * This test file will verify the parsing behavior of the use block
  */
 
-import antlr from 'antlr4';
-
 import { MIN_PIPELINE, parse } from '../utils';
 
 describe('use {}', () => {

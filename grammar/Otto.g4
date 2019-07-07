@@ -43,7 +43,7 @@ use_block
     }
  */
 configure_block
-    : CONFIGURE BEGIN setting_block+ END
+    : CONFIGURE BEGIN setting_block* END
     ;
 
 /* The environments {} block allows the definition of logical environments for
