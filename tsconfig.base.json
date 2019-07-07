@@ -19,7 +19,8 @@
 
     "paths": {
         "@otto-orchestrator/*": ["./services/orchestrator/src/*"],
-        "@otto/*": ["./lib/src/*"]
+        "@otto/*": ["./lib/src/*"],
+        "@otto/grammar/*": ["./grammar/build/parser/JavaScript/*"]
     },
 
     "typeRoots" : [
