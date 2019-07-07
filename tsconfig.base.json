@@ -19,11 +19,15 @@
 
     "paths": {
         "@otto-orchestrator/*": ["./services/orchestrator/src/*"],
-        "@otto/*": ["./lib/src/*"]
+        "@otto/*": ["./lib/src/*"],
+        "@otto/grammar/*": ["./grammar/build/parser/JavaScript/*"]
     },
 
     "typeRoots" : [
         "./node_modules/@types"
     ]
-  }
+  },
+  "exclude": [
+      "**/__tests__/*.ts"
+  ]
 }

@@ -85,7 +85,8 @@ representation is stored in this fashion
 ----
 ottoVersion: 1
 libraries:
-  - stdlib
+  - type: builtin
+    ref: stdlib
 configuration:
   slack:
     settings:

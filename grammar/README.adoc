@@ -1,0 +1,6 @@
+= Otto Grammars
+
+This directory contains the link:https://github.com/antlr/antlr4/[Antlr v4]
+grammars for parsing the modeling language that Otto uses for describing a
+continuous delivery process.
+
