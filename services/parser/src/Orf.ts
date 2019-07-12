@@ -48,13 +48,13 @@ class Stage {
  * Orf is the Otto Representation Format and acts as the parsed and serialized
  * format of a .otto file, suitable for consumption by components within Otto.
  */
-export default class Orf {
+export class Orf {
   /** The version field is for system compatibility */
   public readonly version = 1
   /**
    * An array of libraries which must be loaded at runtime
    */
-  protected libraries: Library[] = []
+  protected _libraries: Library[] = []
 
   /**
    * A map of configuration objects for configuring arbitrary
@@ -65,7 +65,7 @@ export default class Orf {
   /**
    * An ordered array of runtimes which will be used throughout the process
    */
-  protected runtimes: Runtime[] = []
+  protected _runtimes: Runtime[] = []
 
   /**
    * An ordered array of stages as they have been parsed, not necessary how
@@ -73,7 +73,43 @@ export default class Orf {
    */
   protected stages: Stage[] = []
 
+  /**
+   * Default constructor for the Orf
+   *
+   * This doesn't do anything substantial except allocate the collections the
+   * Orf needs to hold onto.
+   */
   constructor() {
     this.configuration = new Map<string, Configuration>()
   }
+
+  get libraries() {
+    return this._libraries
+  }
+
+  /**
+   * Add the given library to the Orf
+   *
+   * @return Boolean true if the addition was successful
+   */
+  public addLibrary(lib: Library): Boolean {
+    this._libraries.push(lib)
+    return true
+  }
+
+  get runtimes() {
+    return this._runtimes
+  }
+
+  /**
+   * Add the given runtime to the Orf
+   *
+   * @return Boolean true if the addition was successful
+   */
+  public addRuntime(runtime: Runtime): Boolean {
+    this._runtimes.push(runtime)
+    return false
+  }
 }
+
+export const EMPTY_ORF = new Orf()
