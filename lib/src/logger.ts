@@ -11,7 +11,7 @@ export default createLogger({
     format.splat(),
     format.simple(),
   ),
-  level: 'info',
+  level: process.env.LOG_LEVEL || 'info',
   transports: [
     new transports.Console(),
   ],
