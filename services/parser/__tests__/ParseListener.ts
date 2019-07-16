@@ -2,7 +2,7 @@ import antlr from 'antlr4'
 
 import ParseListener from '@otto-parser/ParseListener'
 
-import { Otto } from '@otto/grammar/Otto'
+import * as otto from '@otto/grammar/Otto'
 import { OttoLexer } from '@otto/grammar/OttoLexer'
 import { OttoListener } from '@otto/grammar/OttoListener'
 
@@ -12,7 +12,7 @@ function walkTreeFor(listener: ParseListener, input: string) {
   let chars = new antlr.InputStream(input)
   let lexer = new OttoLexer(chars)
   let tokens = new antlr.CommonTokenStream(lexer)
-  let parser = new Otto(tokens)
+  let parser = new otto.Otto(tokens)
   parser.buildParseTrees = true
   let tree = parser.pipeline()
   antlr.tree.ParseTreeWalker.DEFAULT.walk(listener, tree)
@@ -57,5 +57,10 @@ describe('ParseListener', () => {
       const orf = parsedOrf()
       expect(orf).not.toStrictEqual(EMPTY_ORF)
     });
+
+    it('the orf should have a single runtime', () => {
+      const orf = parsedOrf()
+      expect(orf.runtimes.length).toEqual(1)
+    })
   });
 })
