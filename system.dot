@@ -1,0 +1,29 @@
+digraph {
+    label="Otto system design";
+
+    node[shape="box", style="rounded"]
+
+    node[shape="box", style="square"]
+        orchestrator; frontend; datastore; objectstore; webhooks; agents;
+    node[shape="parallelogram", style=""]
+       eventbus;
+
+    webhooks -> eventbus[color="blue", label="write events"];
+    eventbus -> frontend[color="red", label="subscribe to live updates"];
+
+    orchestrator -> datastore[color="blue", label="create runs"];
+    orchestrator -> eventbus[color="purple", dir="both", label="read/write events"];
+    orchestrator -> agents[color="purple", dir="both", label="create and control agents"];
+
+    agents -> eventbus[color="blue", label="write events"];
+    agents -> datastore[color="blue", label="persist results"];
+    agents -> objectstore[color="blue", label="archive artifacts"];
+
+    datastore -> frontend[color="red", label="read runs"];
+    objectstore -> frontend[color="red", label="read artifacts"];
+    objectstore -> agents[color="red", label="fetch artifacts/stashes"];
+
+    //{rank=same; orchestrator agents eventbus}
+    //{rank=same; message input}
+}
+
