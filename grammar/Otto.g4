@@ -118,9 +118,9 @@ pipeline_block
     ;
 
 stages_block
-    : STAGES BEGIN (macro? stages macro?)+ END
+    : STAGES BEGIN (macro? stage macro?)+ END
     ;
-stages
+stage
     : STAGE BEGIN stageStatements* END
     ;
 
@@ -134,7 +134,7 @@ stageStatements
     | notifyExpr
     | macro+
     // And finally, allow nesting our stages!
-    | stages+
+    | stage+
     ;
 steps
     : STEPS BEGIN statements+ END
@@ -248,7 +248,7 @@ step
  */
 macro
     : ID OPEN macroArguments CLOSE
-    (BEGIN (stages+)? END)?
+    (BEGIN (stage+)? END)?
     ;
 macroArguments
     :
