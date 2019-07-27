@@ -5,6 +5,9 @@
  * See the parser README for more information
  */
 
+ import Runtime from '@otto-parser/Runtime'
+
+
 // tslint:disable:max-classes-per-file
 enum LibraryType {
   Builtin,
@@ -23,9 +26,6 @@ class Setting {
 
 class Configuration {
   protected readonly settings: Map<string, Setting>
-}
-
-interface Runtime {
 }
 
 interface Step {

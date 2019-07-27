@@ -7,6 +7,7 @@ import { OttoListener } from '@otto/grammar/OttoListener'
 import logger from '@otto/logger'
 
 import { Orf, EMPTY_ORF } from '@otto-parser/Orf'
+import Runtime from '@otto-parser/Runtime'
 
 export default class ParseListener extends OttoListener {
   /**
@@ -15,7 +16,6 @@ export default class ParseListener extends OttoListener {
    */
   protected readonly orf: Orf
   protected completed: Boolean = false
-  protected runtimes = []
 
   constructor() {
     super()
@@ -34,16 +34,33 @@ export default class ParseListener extends OttoListener {
   }
 
   public exitRuntime(ctx) {
-    logger.debug('exiting runtime',)
+    logger.debug('exiting runtime')
+
+    let settings = {}
+    let runtimeType
+
     ctx.children
       .filter(c => this.withoutTerminals(c))
       .forEach((child) => {
-      console.log(child.constructor.name)
-      console.log(Object.getPrototypeOf(child))
+        runtimeType = child.ID().getText();
+        /*
+         * NOTE: the runtimeType has not yet been validated at this point. It is unclear whether
+         * the runtime type should be validated for correctness at parse time. Or at least
+         * this early in parse time
+         */
 
-      child.children.filter(c => this.withoutTerminals(c))
-        .forEach(nc => console.log(Object.getPrototypeOf(nc)))
+        // Look at all the settings set in the block and do something with them
+        child.children.filter(c => this.withoutTerminals(c))
+          .forEach((setting) => {
+            setting = setting.getChild(0)
+            const key = setting.ID().getText()
+            const value = setting.StringLiteral().getText()
+            // Slicing to remove the leading and trailing quote characters from the string
+            settings[key] = value.slice(1, -1)
+          })
     })
+
+    this.orf.addRuntime(new Runtime(runtimeType, settings))
   }
 
   public exitPipeline(ctx) {
