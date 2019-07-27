@@ -12,7 +12,6 @@ SUB_DIRS=grammar
 
 ################################################################################
 ## Phony targets
-
 # Cute hack thanks to:
 # https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help: ## Display this help text
@@ -39,7 +38,9 @@ prereqs: scripts/prereqs.sh ## Check that this system has the necessary tools to
 clean: ## Clean all temporary/working files
 	$(foreach dir, $(SUB_DIRS), $(MAKE) -C $(dir) $@)
 
-################################################################################
+diagram: system.png system.dot ## Generate the diagrams describing otto
+	dot -Tpng -o system.png system.dot
 
+################################################################################
 
 .PHONY: all build check clean depends lint swagger
