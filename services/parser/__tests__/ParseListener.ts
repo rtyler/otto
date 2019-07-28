@@ -61,6 +61,13 @@ describe('ParseListener', () => {
     it('the orf should have a single runtime', () => {
       const orf = parsedOrf()
       expect(orf.runtimes.length).toEqual(1)
+      expect(orf.runtimes[0].runtimeType).toEqual('docker')
+    })
+
+    it('should parse out the stages', () => {
+      const orf = parsedOrf()
+      expect(orf.stages.length).toEqual(1)
+      expect(orf.stages[0].name).toEqual('Build')
     })
   });
 })

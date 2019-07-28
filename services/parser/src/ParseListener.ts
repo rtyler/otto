@@ -8,6 +8,7 @@ import logger from '@otto/logger'
 
 import { Orf, EMPTY_ORF } from '@otto-parser/Orf'
 import Runtime from '@otto-parser/Runtime'
+import Stage from '@otto-parser/Stage'
 
 export default class ParseListener extends OttoListener {
   /**
@@ -16,14 +17,58 @@ export default class ParseListener extends OttoListener {
    */
   protected readonly orf: Orf
   protected completed: Boolean = false
+  protected currentStage: Stage | null
 
   constructor() {
     super()
     this.orf = new Orf()
   }
 
-  public enterStages(ctx) {
+  public enterStage(ctx) {
     logger.debug('Parsing stage at line %s:%s', ctx.start.line, ctx.start.column)
+    this.currentStage = new Stage()
+  }
+
+  public exitStage(ctx) {
+    if (this.currentStage === null) {
+      throw new Error("How was it possible to exit a stage without entering?")
+      return
+    }
+
+    ctx.children.filter(c => this.withoutTerminals(c))
+      .forEach((child) => {
+        /*
+         * We can have many different children based on the grammar
+         * and we need to pick out their children and assign settings,
+         * etc
+         */
+
+        child.children.filter(c => this.withoutTerminals(c))
+          .forEach((c) => {
+            switch (c.constructor.name) {
+              case 'StepsContext':
+                break;
+              case 'SettingsContext':
+                // At the moment we only care about one setting
+                let [key, value] = this.parseSettingsContext(c)
+                if (key == 'name') {
+                  this.currentStage!.name = value
+                }
+                break;
+            }
+          })
+      })
+
+    /*
+     * For now only bothering to add the stage if it has a name
+     *
+     * Will need a cleaner way to do stage structure validation and error
+     * handling in the future
+     */
+    if (this.currentStage.name) {
+      this.orf.addStage(this.currentStage)
+    }
+    this.currentStage = null
   }
 
   /**
@@ -50,17 +95,35 @@ export default class ParseListener extends OttoListener {
          */
 
         // Look at all the settings set in the block and do something with them
-        child.children.filter(c => this.withoutTerminals(c))
-          .forEach((setting) => {
-            setting = setting.getChild(0)
-            const key = setting.ID().getText()
-            const value = setting.StringLiteral().getText()
-            // Slicing to remove the leading and trailing quote characters from the string
-            settings[key] = value.slice(1, -1)
-          })
+        settings = this.parseSettingBlock(child)
     })
 
-    this.orf.addRuntime(new Runtime(runtimeType, settings))
+    const runtime = new Runtime(runtimeType, settings)
+    this.orf.addRuntime(runtime)
+    if (this.currentStage != null) {
+      this.currentStage.runtime = runtime
+    }
+  }
+
+  protected parseSettingsContext(settingsContext) {
+    const setting = settingsContext.getChild(0)
+    const key = setting.ID().getText()
+    const value = setting.StringLiteral().getText()
+    /* Slicing to remove the leading and trailing quote characters
+      * from the string
+      */
+    return [key, value.slice(1, -1)]
+  }
+
+  protected parseSettingBlock(settingBlockContext) {
+    const settings = {}
+    settingBlockContext.children
+      .filter(c => this.withoutTerminals(c))
+      .map((setting) => {
+        let [key, value] = this.parseSettingsContext(setting)
+        settings[key] = value
+      })
+    return settings
   }
 
   public exitPipeline(ctx) {

@@ -5,7 +5,8 @@
  * See the parser README for more information
  */
 
- import Runtime from '@otto-parser/Runtime'
+import Runtime from '@otto-parser/Runtime'
+import Stage from '@otto-parser/Stage'
 
 
 // tslint:disable:max-classes-per-file
@@ -26,22 +27,6 @@ class Setting {
 
 class Configuration {
   protected readonly settings: Map<string, Setting>
-}
-
-interface Step {
-}
-
-interface FileCapture {
-}
-
-class Stage {
-  protected readonly name: string
-  protected before: Stage
-  protected after: Stage
-  protected runtime: Runtime
-  protected steps: Step[] = []
-  protected capture: Map<string, FileCapture>
-  protected restore: String[]
 }
 
 /**
@@ -71,7 +56,7 @@ export class Orf {
    * An ordered array of stages as they have been parsed, not necessary how
    * they will be executed which may be more of a directed graph.
    */
-  protected stages: Stage[] = []
+  protected _stages: Stage[] = []
 
   /**
    * Default constructor for the Orf
@@ -108,7 +93,15 @@ export class Orf {
    */
   public addRuntime(runtime: Runtime): Boolean {
     this._runtimes.push(runtime)
-    return false
+    return true
+  }
+
+  get stages() {
+    return this._stages
+  }
+  public addStage(stage: Stage) {
+    this._stages.push(stage)
+    return true
   }
 }
 
