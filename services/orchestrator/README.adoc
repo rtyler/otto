@@ -1,4 +1,0 @@
-= Otto Orchestrator
-
-The Otto Orchestration service is responsible for provisioning agents to do their
-necessary work.
