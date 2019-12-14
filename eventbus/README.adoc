@@ -1,0 +1,6 @@
+= Otto Eventbus
+
+The Otto eventbus is intended to provide an API shim which can be easily ported
+to a number of backend durable queueing and eventing systems. The default
+implementation simply uses an in-memory queue for simplicity's sake, and has no
+durability guarantees.

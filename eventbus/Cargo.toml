@@ -1,5 +1,5 @@
 [package]
-name = "eventbus"
+name = "otto-eventbus"
 version = "0.1.0"
 authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
@@ -7,4 +7,23 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-actix-web = "~1.0"
+actix = "~0.8.3"
+# Grabbing an alpha version with async/await support.
+# NOTE: conflicts with web-actors right now
+# actix-web = "2.0.0-alpha.5"
+actix-web = "~1.0.9"
+# This crate provides the websocket support which we will rely on for all
+# clients
+actix-web-actors = "1.0.4"
+actix-rt = "~1.0.0"
+handlebars = "~2.0.2"
+serde_json = "~1.0.0"
+# Need to embed static resources into the binary for serving at runtime
+rust-embed = "~5.2.0"
+# Crossbeam is used for cross-thread communication which is important to send
+# the eventbus messages to clients on multiple actix worker threads
+crossbeam = "~0.7.3"
+
+# Logging
+log = "~0.4.8"
+pretty_env_logger = "~0.3.1"
