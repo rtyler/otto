@@ -1,12 +1,38 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Otto Eventbus</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+        <title>Otto Eventbus 🤖</title>
     </head>
 <body>
     <center>
-        <h1>Otto Eventbus</h1>
+        <h1>Otto Eventbus 🤖</h1>
     </center>
 
+    <div class="footer">
+        v{{version}}
+    </div>
+    <script type="text/javascript">
+        <!--
+        function connectSocket() {
+            const sock = new WebSocket('ws://localhost:8000/ws/');
+            sock.onopen = (event) => console.log('WebSocket connected');
+            sock.onerror = (err) => {
+                console.error('WebSocket error, reconnecting..');
+                sock.close();
+            };
+            sock.onclose = (event) => {
+                console.log('WebSocket connection lost, reconnecting..');
+                connectSocket();
+            }
+            sock.onmessage = (event) => {
+                console.log('Received response:', event);
+            };
+            window.sock = sock;
+        }
+        connectSocket();
+        -->
+    </script>
 </body>
 </html>
