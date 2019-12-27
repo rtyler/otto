@@ -7,6 +7,8 @@ use actix::*;
 use actix_web_actors::ws;
 use log::info;
 
+use std::sync::Arc;
+
 /*
  * Define the Websocket Actor needed for Actix
  *
@@ -30,6 +32,17 @@ impl Handler<crate::bus::Msg> for WSClient {
     fn handle(&mut self, msg: crate::bus::Msg, ctx: &mut Self::Context) {
         info!("Handling message {:?}", msg.0);
         ctx.text(msg.0);
+    }
+}
+
+/**
+ * Handle Basic eventbus messages by serializing them over to the websocket
+ */
+impl Handler<Arc<crate::msg::Basic>> for WSClient {
+    type Result = ();
+
+    fn handle(&mut self, msg: Arc<crate::msg::Basic>, ctx: &mut Self::Context) {
+        ctx.text(serde_json::to_string(&msg).unwrap());
     }
 }
 

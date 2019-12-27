@@ -89,7 +89,10 @@ async fn main() -> std::io::Result<()> {
         let pulse = format!("heartbeat {}", Local::now());
         trace!("sending pulse: {}", pulse);
         let event = crate::bus::Event {
-            m: pulse,
+            e: Arc::new(crate::msg::Basic {
+                command: crate::msg::CommandType::Heartbeat,
+                payload: serde_json::Value::String(pulse),
+            }),
             channel: "all".to_string(),
         };
         bus.do_send(event);

@@ -3,6 +3,7 @@
  */
 use actix::*;
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 use log::{error, info};
 
@@ -20,7 +21,7 @@ pub struct Subscribe {
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Event {
-    pub m: String,
+    pub e: Arc<crate::msg::Basic>,
     pub channel: String,
 }
 
@@ -83,20 +84,19 @@ impl Handler<Subscribe> for EventBus {
 impl Handler<Event> for EventBus {
     type Result = ();
 
-    fn handle(&mut self, msg: Event, _: &mut Context<Self>) {
-        if self.channels.contains_key(&msg.channel) {
-            info!("Bus message for {}", msg.channel);
-            info!("  -> {}", msg.m);
+    fn handle(&mut self, ev: Event, _: &mut Context<Self>) {
+        if self.channels.contains_key(&ev.channel) {
+            info!("Bus message for {}", ev.channel);
 
-            if let Some(clients) = self.channels.get(&msg.channel) {
+            if let Some(clients) = self.channels.get(&ev.channel) {
                 for client in clients {
-                    client.do_send(Msg(msg.m.to_owned()));
+                    client.do_send(ev.e.clone());
                 }
             }
         } else {
             error!(
                 "Received an event for a non-existent channel: {}",
-                msg.channel
+                ev.channel
             );
         }
     }

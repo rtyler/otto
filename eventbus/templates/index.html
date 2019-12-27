@@ -27,7 +27,8 @@
                 connectSocket();
             }
             sock.onmessage = (event) => {
-                console.log('Received response:', event);
+                const data = JSON.parse(event.data);
+                console.log(data);
             };
             window.sock = sock;
         }
