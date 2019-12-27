@@ -1,0 +1,9 @@
+# This file contains the default configuration for otto-eventbus
+---
+motd: 'Welcome to the otto-eventbus, beep beep'
+heartbeat: 60
+channels:
+  stateful:
+    - audit
+  stateless:
+    - all

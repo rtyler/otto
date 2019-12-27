@@ -1,0 +1,20 @@
+# This file is an example otto-eventbus configuration file
+---
+motd: 'Starting otto-eventbus'
+# Time in seconds for the heartbeat to pulse on all connected clients
+heartbeat: 30
+# Channels are available for different types of information. Clients are able
+# to read from some, none, or all channels.
+#
+# NOTE: there is a default "all" channel which is used to broadcast information
+# to all clients.
+channels:
+  # Stateful channels where clients may reconnect and pick up where they left
+  # off in the channel
+  stateful:
+    - tasks
+    - audit
+  # Stateless channels are those which operate on a "pub/sub" model, if a
+  # client misses a message, it's gone
+  stateless:
+    - all

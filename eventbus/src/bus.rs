@@ -7,21 +7,25 @@ use std::sync::Arc;
 
 use log::{error, info};
 
-#[derive(Message)]
-#[rtype(result = "()")]
-pub struct Msg(pub String);
+/*
+ * NOTE: I would like for the bus module not to know anything at all about the clients.
+ *
+ * At the moment I believe that would require a bit more type and generics surgery
+ * than I am currently willing to expend on the problem
+ */
+type ClientId = Addr<crate::client::WSClient>;
 
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Subscribe {
     pub to: String,
-    pub addr: Addr<crate::client::WSClient>,
+    pub addr: ClientId,
 }
 
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Event {
-    pub e: Arc<crate::msg::Basic>,
+    pub e: Arc<crate::Basic>,
     pub channel: String,
 }
 
@@ -30,8 +34,6 @@ pub struct Event {
 pub struct Unsubscribe {
     pub from: String,
 }
-
-type ClientId = Addr<crate::client::WSClient>;
 
 /**
  * The EventBus is the main actor inside of this application and acts as the coordination object
@@ -89,6 +91,13 @@ impl Handler<Event> for EventBus {
             info!("Bus message for {}", ev.channel);
 
             if let Some(clients) = self.channels.get(&ev.channel) {
+                /*
+                 * NOTE: In the future this might need to be a more parallel iteration or something
+                 * which will handle numerous simultaneous client connections.
+                 *
+                 * For now it is safe to assume we're going to have relatively few clients on the
+                 * eventbus
+                 */
                 for client in clients {
                     client.do_send(ev.e.clone());
                 }

@@ -25,23 +25,13 @@ impl WSClient {
     }
 }
 
-/// Handle messages from chat server, we simply send it to peer websocket
-impl Handler<crate::bus::Msg> for WSClient {
-    type Result = ();
-
-    fn handle(&mut self, msg: crate::bus::Msg, ctx: &mut Self::Context) {
-        info!("Handling message {:?}", msg.0);
-        ctx.text(msg.0);
-    }
-}
-
 /**
  * Handle Basic eventbus messages by serializing them over to the websocket
  */
-impl Handler<Arc<crate::msg::Basic>> for WSClient {
+impl Handler<Arc<crate::Basic>> for WSClient {
     type Result = ();
 
-    fn handle(&mut self, msg: Arc<crate::msg::Basic>, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: Arc<crate::Basic>, ctx: &mut Self::Context) {
         ctx.text(serde_json::to_string(&msg).unwrap());
     }
 }

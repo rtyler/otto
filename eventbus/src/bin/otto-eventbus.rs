@@ -4,6 +4,7 @@
  */
 extern crate actix;
 extern crate actix_web;
+extern crate config;
 extern crate log;
 extern crate pretty_env_logger;
 #[macro_use]
@@ -17,21 +18,29 @@ use actix_web::{App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 use chrono::Local;
 use handlebars::Handlebars;
-use log::trace;
+use log::{info, trace};
 
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
-pub mod bus;
-mod client;
-mod msg;
+use otto_eventbus::*;
 
+/**
+ * Templates is a rust-embed struct which will contain all the files embedded from the
+ * eventbus/templates/ directory
+ */
 #[derive(RustEmbed)]
 #[folder = "eventbus/templates"]
-// Templates is a rust-embed struct which will contain all the files embedded from the
-// eventbus/templates/ directory
 struct Templates;
+
+/**
+ * Static is a rust-embed struct which contains everything in the static/
+ * folder at compile-time
+ */
+#[derive(RustEmbed)]
+#[folder = "eventbus/static"]
+struct Static;
 
 #[derive(Clone)]
 struct AppState {
@@ -78,6 +87,25 @@ async fn ws_index(
 async fn main() -> std::io::Result<()> {
     pretty_env_logger::init();
 
+    let embedded_settings = Static::get("eventbus.yml").unwrap();
+    let defaults = std::str::from_utf8(embedded_settings.as_ref()).unwrap();
+    /*
+     * Load our settings in the priority order of:
+     *
+     *   - built-in defaults
+     *   - yaml file
+     *   - environment variables
+     *
+     * Each layer overriding properties from the last
+     */
+    let mut settings = config::Config::default();
+    settings
+        .merge(config::File::from_str(defaults, config::FileFormat::Yaml)).unwrap()
+        .merge(config::File::with_name("eventbus")).unwrap()
+        .merge(config::Environment::with_prefix("OTTO_EB")).unwrap();
+
+    let motd: String = settings.get("motd").expect("Configuration had no `motd` setting");
+    info!("motd: {}", motd);
     /*
      * The EventBus needs our Channel `directory` in order to receive messages and dispatch them
      * appropiately
@@ -89,14 +117,15 @@ async fn main() -> std::io::Result<()> {
         let pulse = format!("heartbeat {}", Local::now());
         trace!("sending pulse: {}", pulse);
         let event = crate::bus::Event {
-            e: Arc::new(crate::msg::Basic {
-                command: crate::msg::CommandType::Heartbeat,
+            e: Arc::new(crate::Basic {
+                command: crate::CommandType::Heartbeat,
                 payload: serde_json::Value::String(pulse),
             }),
             channel: "all".to_string(),
         };
         bus.do_send(event);
-        thread::sleep(Duration::from_millis(30000));
+        let seconds = settings.get("heartbeat").expect("Invalid `heartbeat` configuration, must be an integer");
+        thread::sleep(Duration::from_secs(seconds));
     });
 
     let state = AppState {

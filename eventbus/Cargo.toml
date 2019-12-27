@@ -4,8 +4,6 @@ version = "0.1.0"
 authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 actix = "~0.9.0"
 # Grabbing an alpha version with async/await support.
@@ -18,7 +16,12 @@ handlebars = "~2.0.2"
 # Need to embed static resources into the binary for serving at runtime
 rust-embed = "~5.2.0"
 
+# Used for formatting times in messages
 chrono = "~0.4.10"
+
+# Handling command line options
+#clap = { version = "~2.33.0", features = ["yaml"] }
+config = { version = "~0.10.1", features = ["yaml"] }
 
 # Logging
 log = "~0.4.8"
