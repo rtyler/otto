@@ -3,7 +3,6 @@
  * server loop that the eventbus uses.
  */
 extern crate actix;
-#[macro_use]
 extern crate actix_web;
 extern crate log;
 extern crate pretty_env_logger;
@@ -12,7 +11,7 @@ extern crate rust_embed;
 #[macro_use]
 extern crate serde_json;
 
-use actix::{Actor, Addr, System};
+use actix::{Actor, Addr};
 use actix_web::{middleware, web};
 use actix_web::{App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
@@ -35,18 +34,26 @@ mod msg;
 // eventbus/templates/ directory
 struct Templates;
 
+#[derive(Clone)]
+struct AppState {
+    bus: Addr<bus::EventBus>,
+    // Handlebars uses a repository for the compiled templates. This object must be
+    // shared between the application threads, and is therefore passed to the
+    // Application Builder as an atomic reference-counted pointer.
+    hb: Arc<Handlebars>,
+}
+
 /**
  * index serves up the homepage which is not really functional, but at least shows lost users
  * something
  */
-#[get("/")]
-fn index(hb: web::Data<Handlebars>) -> HttpResponse {
+async fn index(state: web::Data<AppState>) -> HttpResponse {
     let data = json!({
         "version" : option_env!("CARGO_PKG_VERSION").unwrap_or("unknown"),
     });
 
     let template = Templates::get("index.html").unwrap();
-    let body = hb
+    let body = state.hb
         .render_template(std::str::from_utf8(template.as_ref()).unwrap(), &data)
         .expect("Failed to render the index.html template!");
     HttpResponse::Ok().body(body)
@@ -56,21 +63,21 @@ fn index(hb: web::Data<Handlebars>) -> HttpResponse {
  * ws_index is the handler for all websocket connections, all it is responsible for doing is
  * handling the inbound connection and creating a new WSClient for the connection
  */
-fn ws_index(
+async fn ws_index(
     r: HttpRequest,
     stream: web::Payload,
-    eb: web::Data<Addr<bus::EventBus>>,
+    state: web::Data<AppState>,
 ) -> Result<HttpResponse, Error> {
-    let actor = client::WSClient::new(eb.get_ref().clone());
+    let actor = client::WSClient::new(state.bus.clone());
     let res = ws::start(actor, &r, stream);
     trace!("{:?}", res.as_ref().unwrap());
     res
 }
 
-fn main() {
-    pretty_env_logger::init();
 
-    let sys = System::new("ws-example");
+#[actix_rt::main]
+async fn main() -> std::io::Result<()> {
+    pretty_env_logger::init();
 
     /*
      * The directory should contain the mapping for all channels that are available in the eventbus
@@ -94,32 +101,27 @@ fn main() {
      */
     let events = bus::EventBus::default().start();
 
-
     thread::spawn(move || loop {
         debug!("pulse");
         t.send(format!("heartbeat {:?}", SystemTime::now()));
         thread::sleep(Duration::from_millis(3000));
     });
 
-    // Handlebars uses a repository for the compiled templates. This object must be
-    // shared between the application threads, and is therefore passed to the
-    // Application Builder as an atomic reference-counted pointer.
-    let handlebars = Handlebars::new();
-    let handlebars_ref = web::Data::new(handlebars);
+    let state = AppState {
+        bus: events,
+        hb: Arc::new(Handlebars::new()),
+    };
+    let wd = web::Data::new(state);
 
     HttpServer::new(move || {
         App::new()
+            .app_data(wd.clone())
             .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
-            .register_data(handlebars_ref.clone())
-            .register_data(dir_ref.clone())
-            .data(events.clone())
-            .service(index)
+            .route("/", web::get().to(index))
             .route("/ws/", web::get().to(ws_index))
     })
-    .bind("127.0.0.1:8000")
-    .unwrap()
-    .start();
-
-    sys.run().unwrap();
+    .bind("127.0.0.1:8000")?
+    .run()
+    .await
 }

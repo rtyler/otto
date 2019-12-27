@@ -52,15 +52,26 @@ impl Actor for WSClient {
                     Ok(result) => (),
                     _ => ctx.stop(),
                 }
-                actix::fut::ok(())
+                fut::ready(())
             })
             .wait(ctx);
     }
 }
 
 /// Handler for ws::Message message
-impl StreamHandler<ws::Message, ws::ProtocolError> for WSClient {
-    fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WSClient {
+    fn handle(
+        &mut self,
+        msg: Result<ws::Message, ws::ProtocolError>,
+        ctx: &mut Self::Context,
+    ) {
+        let msg = match msg {
+            Err(_) => {
+                ctx.stop();
+                return;
+            }
+            Ok(msg) => msg,
+        };
         info!("WebSocket received: {:?}", msg);
         match msg {
             ws::Message::Ping(msg) => ctx.pong(&msg),

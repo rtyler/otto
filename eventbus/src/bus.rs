@@ -7,15 +7,18 @@ use std::collections::{HashMap, HashSet};
 use log::info;
 
 #[derive(Message)]
+#[rtype(result = "()")]
 pub struct Msg(pub String);
 
 #[derive(Message)]
+#[rtype(result = "()")]
 pub struct Subscribe {
     pub to: String,
     pub addr: Recipient<Msg>,
 }
 
 #[derive(Message)]
+#[rtype(usize)]
 pub struct Unsubscribe {
     pub from: String,
 }
