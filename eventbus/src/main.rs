@@ -15,14 +15,13 @@ use actix::{Actor, Addr};
 use actix_web::{middleware, web};
 use actix_web::{App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
-use crossbeam::channel::{unbounded, Receiver, Sender};
+use chrono::Local;
 use handlebars::Handlebars;
-use log::{debug, trace};
-use std::collections::HashMap;
+use log::trace;
 
 use std::sync::Arc;
 use std::thread;
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 
 pub mod bus;
 mod client;
@@ -53,7 +52,8 @@ async fn index(state: web::Data<AppState>) -> HttpResponse {
     });
 
     let template = Templates::get("index.html").unwrap();
-    let body = state.hb
+    let body = state
+        .hb
         .render_template(std::str::from_utf8(template.as_ref()).unwrap(), &data)
         .expect("Failed to render the index.html template!");
     HttpResponse::Ok().body(body)
@@ -74,37 +74,26 @@ async fn ws_index(
     res
 }
 
-
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     pretty_env_logger::init();
-
-    /*
-     * The directory should contain the mapping for all channels that are available in the eventbus
-     */
-    type SendReceiveRefs = (Arc<Sender<String>>, Arc<Receiver<String>>);
-    let mut directory: HashMap<String, SendReceiveRefs> = HashMap::new();
-    let (tx, rx) = unbounded();
-    let send_ref = Arc::new(tx);
-    let recv_ref = Arc::new(rx);
-
-    let t = Arc::clone(&send_ref);
-    let t1 = Arc::clone(&send_ref);
-    // Starting with a common chan
-    directory.insert(String::from("all"), (t1, recv_ref));
-
-    let dir_ref = web::Data::new(directory);
 
     /*
      * The EventBus needs our Channel `directory` in order to receive messages and dispatch them
      * appropiately
      */
     let events = bus::EventBus::default().start();
+    let bus = events.clone();
 
     thread::spawn(move || loop {
-        debug!("pulse");
-        t.send(format!("heartbeat {:?}", SystemTime::now()));
-        thread::sleep(Duration::from_millis(3000));
+        let pulse = format!("heartbeat {}", Local::now());
+        trace!("sending pulse: {}", pulse);
+        let event = crate::bus::Event {
+            m: pulse,
+            channel: "all".to_string(),
+        };
+        bus.do_send(event);
+        thread::sleep(Duration::from_millis(30000));
     });
 
     let state = AppState {

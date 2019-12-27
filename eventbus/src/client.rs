@@ -28,6 +28,7 @@ impl Handler<crate::bus::Msg> for WSClient {
     type Result = ();
 
     fn handle(&mut self, msg: crate::bus::Msg, ctx: &mut Self::Context) {
+        info!("Handling message {:?}", msg.0);
         ctx.text(msg.0);
     }
 }
@@ -42,14 +43,14 @@ impl Actor for WSClient {
     fn started(&mut self, ctx: &mut Self::Context) {
         let sub = crate::bus::Subscribe {
             to: "all".to_owned(),
-            addr: ctx.address().recipient(),
+            addr: ctx.address(),
         };
         self.events
             .send(sub)
             .into_actor(self)
             .then(|result, _actor, ctx| {
                 match result {
-                    Ok(result) => (),
+                    Ok(_) => (),
                     _ => ctx.stop(),
                 }
                 fut::ready(())
@@ -60,11 +61,7 @@ impl Actor for WSClient {
 
 /// Handler for ws::Message message
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WSClient {
-    fn handle(
-        &mut self,
-        msg: Result<ws::Message, ws::ProtocolError>,
-        ctx: &mut Self::Context,
-    ) {
+    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         let msg = match msg {
             Err(_) => {
                 ctx.stop();

@@ -1,10 +1,10 @@
 /**
  * The bus module contains the actual eventbus actor
  */
-use actix::{Actor, Context, Handler, Message, Recipient};
+use actix::*;
 use std::collections::{HashMap, HashSet};
 
-use log::info;
+use log::{error, info};
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -14,7 +14,14 @@ pub struct Msg(pub String);
 #[rtype(result = "()")]
 pub struct Subscribe {
     pub to: String,
-    pub addr: Recipient<Msg>,
+    pub addr: Addr<crate::client::WSClient>,
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct Event {
+    pub m: String,
+    pub channel: String,
 }
 
 #[derive(Message)]
@@ -23,20 +30,13 @@ pub struct Unsubscribe {
     pub from: String,
 }
 
-/**
- * ClientId is just an internal identifier which can be used to map messages to clients.
- *
- * It is currently an unsigned 64-bit integer, but that is an implementation detail which may
- * change in the future
- */
-type ClientId = u64;
+type ClientId = Addr<crate::client::WSClient>;
 
 /**
  * The EventBus is the main actor inside of this application and acts as the coordination object
  * for sending messages around to the different clients that should receive them
  */
 pub struct EventBus {
-    clients: HashMap<ClientId, u64>,
     /**
      * channels is the map of string to the clients currently connected to that channel by
      * clientId.
@@ -56,10 +56,7 @@ impl Default for EventBus {
         let mut channels = HashMap::new();
         channels.insert("all".to_owned(), HashSet::new());
 
-        EventBus {
-            clients: HashMap::new(),
-            channels: channels,
-        }
+        EventBus { channels: channels }
     }
 }
 
@@ -67,6 +64,40 @@ impl Handler<Subscribe> for EventBus {
     type Result = ();
 
     fn handle(&mut self, msg: Subscribe, _: &mut Context<Self>) {
-        info!("Client subscribing to {}", msg.to);
+        if self.channels.contains_key(&msg.to) {
+            info!("Client subscribing to {}", msg.to);
+            match self.channels.get_mut(&msg.to) {
+                Some(set) => {
+                    set.insert(msg.addr);
+                }
+                None => {
+                    error!("Failed to access the set");
+                }
+            }
+        } else {
+            error!("No channel named `{}` configured", msg.to);
+        }
+    }
+}
+
+impl Handler<Event> for EventBus {
+    type Result = ();
+
+    fn handle(&mut self, msg: Event, _: &mut Context<Self>) {
+        if self.channels.contains_key(&msg.channel) {
+            info!("Bus message for {}", msg.channel);
+            info!("  -> {}", msg.m);
+
+            if let Some(clients) = self.channels.get(&msg.channel) {
+                for client in clients {
+                    client.do_send(Msg(msg.m.to_owned()));
+                }
+            }
+        } else {
+            error!(
+                "Received an event for a non-existent channel: {}",
+                msg.channel
+            );
+        }
     }
 }

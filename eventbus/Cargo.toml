@@ -17,9 +17,8 @@ actix-rt = "~1.0.0"
 handlebars = "~2.0.2"
 # Need to embed static resources into the binary for serving at runtime
 rust-embed = "~5.2.0"
-# Crossbeam is used for cross-thread communication which is important to send
-# the eventbus messages to clients on multiple actix worker threads
-crossbeam = "~0.7.3"
+
+chrono = "~0.4.10"
 
 # Logging
 log = "~0.4.8"
