@@ -26,16 +26,23 @@ pub struct Subscribe {
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Event {
-    pub e: Arc<crate::Basic>,
+    pub e: Arc<crate::Command>,
     pub channel: String,
 }
 
 #[derive(Message)]
 #[rtype(usize)]
 pub struct Unsubscribe {
-    pub from: String,
+    pub addr: ClientId,
 }
 
+/**
+ * The Channel struct is used as an internal representation of each channel that
+ * the eventbus knows about.
+ *
+ * Channels may be either stateless or stateful, with the ladder implying persistence
+ * guarantees, depending on the eventbus' backing implementation.
+ */
 #[derive(Debug, Eq)]
 pub struct Channel {
     name: String,

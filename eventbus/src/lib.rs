@@ -7,24 +7,23 @@ extern crate serde_json;
 
 use actix::Message;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 pub mod bus;
 pub mod client;
 
-#[derive(Serialize, Deserialize)]
-pub enum CommandType {
-    Subscribe,
-    Unsubscribe,
-    Heartbeat,
-}
-
-#[derive(Message, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Message)]
+#[serde(tag = "command", rename_all = "camelCase")]
 #[rtype(result = "()")]
-pub struct Basic {
-    pub command: CommandType,
-    /**
-     * The payload can be of any `Value` type from the serde_json crate
-     */
-    pub payload: Value,
+pub enum Command {
+    Heartbeat,
+    Subscribe {
+        /**
+         * The client's UUID
+         */
+        client: String,
+        /**
+         * The channel the client wishes to subscribe to
+         */
+        channel: String,
+    },
 }

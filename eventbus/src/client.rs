@@ -5,7 +5,8 @@
  */
 use actix::*;
 use actix_web_actors::ws;
-use log::info;
+use log::{error, info};
+use serde_json;
 
 use std::sync::Arc;
 
@@ -23,15 +24,34 @@ impl WSClient {
     pub fn new(eb: Addr<crate::bus::EventBus>) -> Self {
         Self { events: eb }
     }
+
+    fn handle_text(&self, text: String) {
+        let command = serde_json::from_str::<crate::Command>(&text);
+
+        match command {
+            Ok(c) => {
+                // Since we have a Command, what kind?
+                match c {
+                    crate::Command::Subscribe { client, channel } => {
+                        info!("Subscribing {} to {}", client, channel);
+                    }
+                    _ => (),
+                }
+            }
+            Err(e) => {
+                error!("Error parsing message from client: {:?}", e);
+            }
+        }
+    }
 }
 
 /**
  * Handle Basic eventbus messages by serializing them over to the websocket
  */
-impl Handler<Arc<crate::Basic>> for WSClient {
+impl Handler<Arc<crate::Command>> for WSClient {
     type Result = ();
 
-    fn handle(&mut self, msg: Arc<crate::Basic>, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: Arc<crate::Command>, ctx: &mut Self::Context) {
         ctx.text(serde_json::to_string(&msg).unwrap());
     }
 }
@@ -75,7 +95,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WSClient {
         info!("WebSocket received: {:?}", msg);
         match msg {
             ws::Message::Ping(msg) => ctx.pong(&msg),
-            ws::Message::Text(text) => ctx.text(text),
+            ws::Message::Text(text) => self.handle_text(text),
             ws::Message::Binary(bin) => ctx.binary(bin),
             _ => (),
         }

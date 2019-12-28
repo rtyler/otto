@@ -42,7 +42,6 @@ struct Templates;
 #[folder = "eventbus/static"]
 struct Static;
 
-#[derive(Clone)]
 struct AppState {
     bus: Addr<bus::EventBus>,
     // Handlebars uses a repository for the compiled templates. This object must be
@@ -127,10 +126,7 @@ async fn main() -> std::io::Result<()> {
         let pulse = format!("heartbeat {}", Local::now());
         trace!("sending pulse: {}", pulse);
         let event = crate::bus::Event {
-            e: Arc::new(crate::Basic {
-                command: crate::CommandType::Heartbeat,
-                payload: serde_json::Value::String(pulse),
-            }),
+            e: Arc::new(crate::Command::Heartbeat),
             channel: "all".to_string(),
         };
         bus.do_send(event);
