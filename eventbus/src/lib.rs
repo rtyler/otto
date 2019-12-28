@@ -26,4 +26,14 @@ pub enum Command {
          */
         channel: String,
     },
+    Unsubscribe {
+        /**
+         * The client's UUID
+         */
+        client: String,
+        /**
+         * The channel the client wishes to unsubscribe from
+         */
+        channel: String,
+    }
 }

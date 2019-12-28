@@ -25,7 +25,7 @@ impl WSClient {
         Self { events: eb }
     }
 
-    fn handle_text(&self, text: String) {
+    fn handle_text(&self, text: String, ctx: &<WSClient as Actor>::Context) {
         let command = serde_json::from_str::<crate::Command>(&text);
 
         match command {
@@ -34,6 +34,12 @@ impl WSClient {
                 match c {
                     crate::Command::Subscribe { client, channel } => {
                         info!("Subscribing {} to {}", client, channel);
+                        // Sent it along to the bus
+                        // TODO: This should not use do_send which ignores errors
+                        self.events.do_send(crate::bus::Subscribe {
+                            to: channel,
+                            addr: ctx.address(),
+                        });
                     }
                     _ => (),
                 }
@@ -95,7 +101,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WSClient {
         info!("WebSocket received: {:?}", msg);
         match msg {
             ws::Message::Ping(msg) => ctx.pong(&msg),
-            ws::Message::Text(text) => self.handle_text(text),
+            ws::Message::Text(text) => self.handle_text(text, ctx),
             ws::Message::Binary(bin) => ctx.binary(bin),
             _ => (),
         }
