@@ -100,17 +100,27 @@ async fn main() -> std::io::Result<()> {
      */
     let mut settings = config::Config::default();
     settings
-        .merge(config::File::from_str(defaults, config::FileFormat::Yaml)).unwrap()
-        .merge(config::File::with_name("eventbus")).unwrap()
-        .merge(config::Environment::with_prefix("OTTO_EB")).unwrap();
+        .merge(config::File::from_str(defaults, config::FileFormat::Yaml))
+        .unwrap()
+        .merge(config::File::with_name("eventbus"))
+        .unwrap()
+        .merge(config::Environment::with_prefix("OTTO_EB"))
+        .unwrap();
 
-    let motd: String = settings.get("motd").expect("Configuration had no `motd` setting");
+    let motd: String = settings
+        .get("motd")
+        .expect("Configuration had no `motd` setting");
+
     info!("motd: {}", motd);
-    /*
-     * The EventBus needs our Channel `directory` in order to receive messages and dispatch them
-     * appropiately
-     */
-    let events = bus::EventBus::default().start();
+
+    let stateless = settings
+        .get::<Vec<String>>("channels.stateless")
+        .expect("Failed to load `channels.stateless` configuration, which must be an array");
+    let stateful = settings
+        .get::<Vec<String>>("channels.stateful")
+        .expect("Failed to load `channels.stateful` configuration, which must be an array");
+
+    let events = bus::EventBus::with_channels(stateless, stateful).start();
     let bus = events.clone();
 
     thread::spawn(move || loop {
@@ -124,7 +134,9 @@ async fn main() -> std::io::Result<()> {
             channel: "all".to_string(),
         };
         bus.do_send(event);
-        let seconds = settings.get("heartbeat").expect("Invalid `heartbeat` configuration, must be an integer");
+        let seconds = settings
+            .get("heartbeat")
+            .expect("Invalid `heartbeat` configuration, must be an integer");
         thread::sleep(Duration::from_secs(seconds));
     });
 

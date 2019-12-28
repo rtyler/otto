@@ -3,6 +3,7 @@
  */
 use actix::*;
 use std::collections::{HashMap, HashSet};
+use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 
 use log::{error, info};
@@ -35,30 +36,64 @@ pub struct Unsubscribe {
     pub from: String,
 }
 
+#[derive(Debug, Eq)]
+pub struct Channel {
+    name: String,
+    stateful: bool,
+}
+
+impl Hash for Channel {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+    }
+}
+impl PartialEq for Channel {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
+}
+
 /**
  * The EventBus is the main actor inside of this application and acts as the coordination object
  * for sending messages around to the different clients that should receive them
  */
 pub struct EventBus {
-    /**
-     * channels is the map of string to the clients currently connected to that channel by
-     * clientId.
-     *
-     * It is assumed that the EventBus can handle holding onto a client identifier for each and
-     * every client that connects (64 bits should be enough for that)
-     */
-    channels: HashMap<String, HashSet<ClientId>>,
+    channels: HashMap<Channel, HashSet<ClientId>>,
 }
 
 impl Actor for EventBus {
     type Context = Context<Self>;
+
+    fn started(&mut self, _ctx: &mut Self::Context) {
+        info!("Starting Eventbus with channels {:?}", self.channels.keys());
+    }
 }
 
-impl Default for EventBus {
-    fn default() -> EventBus {
+impl EventBus {
+    /**
+     * Configure the EventBus instance with channels
+     */
+    pub fn with_channels(stateless: Vec<String>, stateful: Vec<String>) -> EventBus {
         let mut channels = HashMap::new();
-        channels.insert("all".to_owned(), HashSet::new());
 
+        for name in stateless {
+            channels.insert(
+                Channel {
+                    name,
+                    stateful: false,
+                },
+                HashSet::new(),
+            );
+        }
+        for name in stateful {
+            channels.insert(
+                Channel {
+                    name,
+                    stateful: true,
+                },
+                HashSet::new(),
+            );
+        }
         EventBus { channels: channels }
     }
 }
@@ -67,9 +102,14 @@ impl Handler<Subscribe> for EventBus {
     type Result = ();
 
     fn handle(&mut self, msg: Subscribe, _: &mut Context<Self>) {
-        if self.channels.contains_key(&msg.to) {
-            info!("Client subscribing to {}", msg.to);
-            match self.channels.get_mut(&msg.to) {
+        // The stateful field doesn't matter here because the hashing on the
+        // HashMap only applies to the name of the channel
+        let ch = Channel {
+            name: msg.to,
+            stateful: false,
+        };
+        if self.channels.contains_key(&ch) {
+            match self.channels.get_mut(&ch) {
                 Some(set) => {
                     set.insert(msg.addr);
                 }
@@ -78,7 +118,7 @@ impl Handler<Subscribe> for EventBus {
                 }
             }
         } else {
-            error!("No channel named `{}` configured", msg.to);
+            error!("No channel named `{}` configured", ch.name);
         }
     }
 }
@@ -87,10 +127,12 @@ impl Handler<Event> for EventBus {
     type Result = ();
 
     fn handle(&mut self, ev: Event, _: &mut Context<Self>) {
-        if self.channels.contains_key(&ev.channel) {
-            info!("Bus message for {}", ev.channel);
-
-            if let Some(clients) = self.channels.get(&ev.channel) {
+        let ch = Channel {
+            name: ev.channel,
+            stateful: false,
+        };
+        if self.channels.contains_key(&ch) {
+            if let Some(clients) = self.channels.get(&ch) {
                 /*
                  * NOTE: In the future this might need to be a more parallel iteration or something
                  * which will handle numerous simultaneous client connections.
@@ -103,10 +145,7 @@ impl Handler<Event> for EventBus {
                 }
             }
         } else {
-            error!(
-                "Received an event for a non-existent channel: {}",
-                ev.channel
-            );
+            error!("Received an event for a non-existent channel: {}", ch.name);
         }
     }
 }
