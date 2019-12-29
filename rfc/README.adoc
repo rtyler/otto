@@ -16,15 +16,15 @@ Below is the list of RFCs:
 
 
 | 0001
-| link:rfc/0001-otto-systems-design.adoc[Otto System Design]
+| link:0001-otto-systems-design.adoc[Otto System Design]
 | Not Submitted :information_source:
 
 | 0002
-| link:rfc/0002-execution-manifest.adoc[Execution Manifest]
+| link:0002-execution-manifest.adoc[Execution Manifest]
 | Not Submitted :information_source:
 
 | 0003
-| link:rfc/0003-resource-auctioning.adoc[Resource allocation by auction]
+| link:0003-resource-auctioning.adoc[Resource allocation by auction]
 | Draft :speech_balloon:
 
 
