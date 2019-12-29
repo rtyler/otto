@@ -6,3 +6,14 @@ implementation of Otto.
 It loosely follows the process used for
 link:https://www.python.org/dev/peps/[Python Enhancement Proposals].
 
+
+== Statuses
+
+* Draft :speech_balloon:
+* Deferred :hourglass:
+* Accepted :ok_hand:
+* Rejected :no_entry:
+* Withdrawn :hand:
+* Final :lock:
+* Replaced :dagger:
+* Active :smile:
