@@ -7,6 +7,7 @@ extern crate serde_json;
 
 use actix::Message;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 pub mod bus;
 pub mod client;
@@ -35,5 +36,9 @@ pub enum Command {
          * The channel the client wishes to unsubscribe from
          */
         channel: String,
-    }
+    },
+    Publish {
+        channel: String,
+        payload: Value,
+    },
 }

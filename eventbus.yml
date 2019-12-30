@@ -8,13 +8,15 @@ heartbeat: 30
 #
 # NOTE: there is a default "all" channel which is used to broadcast information
 # to all clients.
-channels:
-  # Stateful channels where clients may reconnect and pick up where they left
-  # off in the channel
-  stateful:
-    - tasks
-    - audit
-  # Stateless channels are those which operate on a "pub/sub" model, if a
-  # client misses a message, it's gone
-  stateless:
-    - all
+#
+# WARN: Channels are not merged with the default configuration, and will overwrite
+# channels:
+#   stateful:
+#     - audit
+#     - tasks.for_auction
+#     - tasks.auction
+#     - tasks.bids
+#   stateless:
+#     - all
+#     - tasks.started
+#     - tasks.finished

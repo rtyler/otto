@@ -5,5 +5,10 @@ heartbeat: 60
 channels:
   stateful:
     - audit
+    - tasks.for_auction
+    - tasks.auction
+    - tasks.bids
   stateless:
     - all
+    - tasks.started
+    - tasks.finished
