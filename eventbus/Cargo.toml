@@ -21,6 +21,7 @@ chrono = "~0.4.10"
 
 # Handling command line options
 #clap = { version = "~2.33.0", features = ["yaml"] }
+# Handling configuration overlays
 config = { version = "~0.10.1", features = ["yaml"] }
 
 # Logging

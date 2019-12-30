@@ -1,9 +1,34 @@
 [package]
-name = "auctioneer"
+name = "otto-auctioneer"
 version = "0.1.0"
 authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+actix = "~0.9.0"
+# Grabbing an alpha version with async/await support.
+actix-web = "~2.0.0"
+# This crate provides the websocket support which we will rely on for all
+# clients
+actix-web-actors = "~2.0.0"
+actix-codec = "0.2.0"
+awc = "1.0.1"
+actix-rt = "~1.0.0"
+futures = "0.3.1"
+bytes = "0.5.3"
+
+# Handling command line options
+#clap = { version = "~2.33.0", features = ["yaml"] }
+# Handling configuration overlays
+config = { version = "~0.10.1", features = ["yaml"] }
+
+# Logging
+log = "~0.4.8"
+pretty_env_logger = "~0.3.1"
+
+# Adding the "rc" feature so we can serialize/deserialize Arc<T> and Rc<T>
+serde = { version = "~1.0.103", features = ["rc"] }
+serde_json = "~1.0.0"
+
+
+otto-eventbus = { path = "../eventbus" }
