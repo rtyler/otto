@@ -24,7 +24,10 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
-use otto_eventbus::*;
+use otto_eventbus::Command;
+
+pub mod connection;
+pub mod eventbus;
 
 /**
  * Templates is a rust-embed struct which will contain all the files embedded from the
@@ -43,7 +46,7 @@ struct Templates;
 struct Static;
 
 struct AppState {
-    bus: Addr<bus::EventBus>,
+    bus: Addr<eventbus::EventBus>,
     // Handlebars uses a repository for the compiled templates. This object must be
     // shared between the application threads, and is therefore passed to the
     // Application Builder as an atomic reference-counted pointer.
@@ -76,7 +79,7 @@ async fn ws_index(
     stream: web::Payload,
     state: web::Data<AppState>,
 ) -> Result<HttpResponse, Error> {
-    let actor = client::WSClient::new(state.bus.clone());
+    let actor = connection::WSClient::new(state.bus.clone());
     let res = ws::start(actor, &r, stream);
     trace!("{:?}", res.as_ref().unwrap());
     res
@@ -119,14 +122,14 @@ async fn main() -> std::io::Result<()> {
         .get::<Vec<String>>("channels.stateful")
         .expect("Failed to load `channels.stateful` configuration, which must be an array");
 
-    let events = bus::EventBus::with_channels(stateless, stateful).start();
+    let events = eventbus::EventBus::with_channels(stateless, stateful).start();
     let bus = events.clone();
 
     thread::spawn(move || loop {
         let pulse = format!("heartbeat {}", Local::now());
         trace!("sending pulse: {}", pulse);
-        let event = crate::bus::Event {
-            e: Arc::new(crate::Command::Heartbeat),
+        let event = eventbus::Event {
+            e: Arc::new(Command::Heartbeat),
             channel: "all".to_string(),
         };
         bus.do_send(event);

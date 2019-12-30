@@ -8,13 +8,15 @@ use std::sync::Arc;
 
 use log::{error, info};
 
+use crate::*;
+
 /*
  * NOTE: I would like for the bus module not to know anything at all about the clients.
  *
  * At the moment I believe that would require a bit more type and generics surgery
  * than I am currently willing to expend on the problem
  */
-type ClientId = Addr<crate::client::WSClient>;
+type ClientId = Addr<connection::WSClient>;
 
 #[derive(Message)]
 #[rtype(result = "()")]

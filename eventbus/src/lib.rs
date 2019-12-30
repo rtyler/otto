@@ -9,9 +9,6 @@ use actix::Message;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-pub mod bus;
-pub mod client;
-
 #[derive(Serialize, Deserialize, Debug, Message)]
 #[serde(tag = "command", rename_all = "camelCase")]
 #[rtype(result = "()")]

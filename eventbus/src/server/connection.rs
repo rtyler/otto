@@ -10,6 +10,9 @@ use serde_json;
 
 use std::sync::Arc;
 
+use otto_eventbus::Command;
+use crate::*;
+
 /*
  * Define the Websocket Actor needed for Actix
  *
@@ -17,26 +20,26 @@ use std::sync::Arc;
  * keep track of this connection and its configuration
  */
 pub struct WSClient {
-    events: Addr<crate::bus::EventBus>,
+    events: Addr<eventbus::EventBus>,
 }
 
 impl WSClient {
-    pub fn new(eb: Addr<crate::bus::EventBus>) -> Self {
+    pub fn new(eb: Addr<eventbus::EventBus>) -> Self {
         Self { events: eb }
     }
 
     fn handle_text(&self, text: String, ctx: &<WSClient as Actor>::Context) {
-        let command = serde_json::from_str::<crate::Command>(&text);
+        let command = serde_json::from_str::<Command>(&text);
 
         match command {
             Ok(c) => {
                 // Since we have a Command, what kind?
                 match c {
-                    crate::Command::Subscribe { client, channel } => {
+                    Command::Subscribe { client, channel } => {
                         info!("Subscribing {} to {}", client, channel);
                         // Sent it along to the bus
                         // TODO: This should not use do_send which ignores errors
-                        self.events.do_send(crate::bus::Subscribe {
+                        self.events.do_send(eventbus::Subscribe {
                             to: channel,
                             addr: ctx.address(),
                         });
@@ -54,10 +57,10 @@ impl WSClient {
 /**
  * Handle Basic eventbus messages by serializing them over to the websocket
  */
-impl Handler<Arc<crate::Command>> for WSClient {
+impl Handler<Arc<Command>> for WSClient {
     type Result = ();
 
-    fn handle(&mut self, msg: Arc<crate::Command>, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: Arc<Command>, ctx: &mut Self::Context) {
         ctx.text(serde_json::to_string(&msg).unwrap());
     }
 }
@@ -70,7 +73,7 @@ impl Actor for WSClient {
     type Context = ws::WebsocketContext<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        let sub = crate::bus::Subscribe {
+        let sub = eventbus::Subscribe {
             to: "all".to_owned(),
             addr: ctx.address(),
         };
