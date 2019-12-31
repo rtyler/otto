@@ -4,14 +4,18 @@ extern crate pretty_env_logger;
 extern crate tungstenite;
 extern crate url;
 
-use bastion::prelude::*;
 use std::sync::Arc;
 use std::thread::sleep;
 use std::time::Duration;
+
+use bastion::prelude::*;
+use serde_json::*;
 use tungstenite::{connect, Message};
 use url::Url;
 
 use log::*;
+
+use otto_eventbus::Command;
 
 fn main() {
     pretty_env_logger::init();
@@ -65,15 +69,20 @@ fn main() {
                         info!("* {}", header);
                     }
 
+                    let c = Command::Subscribe {
+                        client: "foo".into(),
+                        channel: "tasks.for_auction".into(),
+                    };
+
                     socket
-                        .write_message(Message::Text("Hello WebSocket".into()))
+                        .write_message(Message::Text(serde_json::to_string(&c).unwrap()))
                         .unwrap();
 
                     loop {
                         for worker in workers.elems().iter() {
                             let msg = socket.read_message().expect("Error reading message");
                             info!("telling {:?}", worker.id());
-                            worker.tell(msg).expect("Failed to tell worker to do work!");
+                            worker.tell_anonymously(msg);
                         }
                     }
                 }
