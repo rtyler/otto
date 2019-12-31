@@ -9,16 +9,16 @@ name = "otto-eventbus"
 path = "src/server/main.rs"
 
 [dependencies]
-actix = "~0.9.0"
-# Grabbing an alpha version with async/await support.
-actix-web = "~2.0.0"
-# This crate provides the websocket support which we will rely on for all
-# clients
-actix-web-actors = "~2.0.0"
-actix-rt = "~1.0.0"
+async-std = "~1.4.0"
+bastion = { "git" = "https://github.com/bastion-rs/bastion.git", branch = "master" }
+tide = "~0.5.1"
+mime = "~0.3.13"
+
+num_cpus = "~1.11.1"
+
 handlebars = "~2.0.2"
 # Need to embed static resources into the binary for serving at runtime
-rust-embed = "~5.2.0"
+rust-embed = { version = "~5.2.0", features = ["interpolate-folder-path"] }
 
 # Used for formatting times in messages
 chrono = "~0.4.10"
@@ -33,5 +33,6 @@ log = "~0.4.8"
 pretty_env_logger = "~0.3.1"
 
 # Adding the "rc" feature so we can serialize/deserialize Arc<T> and Rc<T>
-serde = { version = "~1.0.103", features = ["rc"] }
+serde = { version = "~1.0.104", features = ["rc"] }
+serde_derive = "~1.0.104"
 serde_json = "~1.0.0"
