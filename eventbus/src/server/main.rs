@@ -34,7 +34,7 @@ pub mod eventbus;
  * eventbus/templates/ directory
  */
 #[derive(RustEmbed)]
-#[folder = "eventbus/templates"]
+#[folder = "$CARGO_MANIFEST_DIR/templates"]
 struct Templates;
 
 /**
@@ -42,7 +42,7 @@ struct Templates;
  * folder at compile-time
  */
 #[derive(RustEmbed)]
-#[folder = "eventbus/static"]
+#[folder = "$CARGO_MANIFEST_DIR/static"]
 struct Static;
 
 struct AppState {

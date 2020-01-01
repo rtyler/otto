@@ -18,7 +18,7 @@ actix-web-actors = "~2.0.0"
 actix-rt = "~1.0.0"
 handlebars = "~2.0.2"
 # Need to embed static resources into the binary for serving at runtime
-rust-embed = "~5.2.0"
+rust-embed = { version = "~5.2.0", features = ["interpolate-folder-path"] }
 
 # Used for formatting times in messages
 chrono = "~0.4.10"
