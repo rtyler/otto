@@ -1,95 +1,132 @@
-extern crate bastion;
-extern crate num_cpus;
+/**!
+ * The auctioneer main model
+ *
+ */
+
+extern crate actix;
+extern crate awc;
 extern crate pretty_env_logger;
-extern crate tungstenite;
-extern crate url;
-
-use std::sync::Arc;
-use std::thread::sleep;
 use std::time::Duration;
+use std::{io, thread};
 
-use bastion::prelude::*;
-use serde_json::*;
-use tungstenite::{connect, Message};
-use url::Url;
+use actix::io::SinkWrite;
+use actix::*;
+use actix_codec::{AsyncRead, AsyncWrite, Framed};
+use awc::{
+    error::WsProtocolError,
+    ws::{Codec, Frame, Message},
+    Client,
+};
+use bytes::Bytes;
+use futures::stream::{SplitSink, StreamExt};
 
-use log::*;
-
-use otto_eventbus::Command;
-
-fn main() {
+#[actix_rt::main]
+async fn main() {
     pretty_env_logger::init();
-    Bastion::init();
 
-    let supervisor = Bastion::supervisor(|sp| sp.with_strategy(SupervisionStrategy::OneForOne))
-        .expect("Couldn't create the supervisor.");
-
-    let workers = supervisor
-        .children(|children: Children| {
-            children
-                .with_redundancy(num_cpus::get())
-                .with_exec(move |ctx: BastionContext| {
-                    async move {
-                        info!("Starting child {:?}", ctx.current().id());
-                        loop {
-                            msg! { ctx.recv().await?,
-                                msg: Message => {
-                                    info!("Received message {} on {:?}", msg, ctx.current().id());
-                                };
-                                _: _ => {
-                                    ()
-                                };
-                            }
-                        }
-                    }
-                })
+    let (response, framed) = Client::new()
+        .ws("http://127.0.0.1:8000/ws/")
+        .connect()
+        .await
+        .map_err(|e| {
+            println!("Error: {}", e);
         })
-        .expect("Couldn't start workers group");
+        .unwrap();
 
-    let workers = Arc::new(workers);
+    println!("{:?}", response);
+    let (sink, stream) = framed.split();
+    let addr = ChatClient::create(|ctx| {
+        ChatClient::add_stream(stream, ctx);
+        ChatClient(SinkWrite::new(sink, ctx))
+    });
 
-    supervisor
-        .children(|children: Children| {
-            children.with_exec(move |_ctx: BastionContext| {
-                let workers = workers.clone();
-                async move {
-                    info!("Server is starting!");
+    // start console loop
+    thread::spawn(move || loop {
+        let mut cmd = String::new();
+        if io::stdin().read_line(&mut cmd).is_err() {
+            println!("error");
+            return;
+        }
+        addr.do_send(ClientCommand(cmd));
+    });
+}
 
-                    let (mut socket, response) =
-                        connect(Url::parse("ws://localhost:8000/ws/").unwrap())
-                            .map_err(|e| {
-                                error!("Failed to connect! {:?}", e);
-                                sleep(Duration::from_secs(1));
-                            })
-                            .expect("Can't connect");
+struct ChatClient<T>(SinkWrite<Message, SplitSink<Framed<T, Codec>, Message>>)
+where
+    T: AsyncRead + AsyncWrite;
 
-                    info!("Response HTTP code: {}", response.code);
-                    info!("Response contains the following headers:");
-                    for (ref header, _value) in response.headers.iter() {
-                        info!("* {}", header);
-                    }
+#[derive(Message)]
+#[rtype(result = "()")]
+struct ClientCommand(String);
 
-                    let c = Command::Subscribe {
-                        client: "foo".into(),
-                        channel: "tasks.for_auction".into(),
-                    };
+impl<T: 'static> Actor for ChatClient<T>
+where
+    T: AsyncRead + AsyncWrite,
+{
+    type Context = Context<Self>;
 
-                    socket
-                        .write_message(Message::Text(serde_json::to_string(&c).unwrap()))
-                        .unwrap();
+    fn started(&mut self, ctx: &mut Context<Self>) {
+        // start heartbeats otherwise server will disconnect after 10 seconds
+        self.hb(ctx)
+    }
 
-                    loop {
-                        for worker in workers.elems().iter() {
-                            let msg = socket.read_message().expect("Error reading message");
-                            info!("telling {:?}", worker.id());
-                            worker.tell_anonymously(msg);
-                        }
-                    }
-                }
-            })
-        })
-        .expect("Couldn't start a new children group.");
+    fn stopped(&mut self, _: &mut Context<Self>) {
+        println!("Disconnected");
 
-    Bastion::start();
-    Bastion::block_until_stopped();
+        // Stop application on disconnect
+        System::current().stop();
+    }
+}
+
+impl<T: 'static> ChatClient<T>
+where
+    T: AsyncRead + AsyncWrite,
+{
+    fn hb(&self, ctx: &mut Context<Self>) {
+        ctx.run_later(Duration::new(1, 0), |act, ctx| {
+            act.0.write(Message::Ping(Bytes::from_static(b""))).unwrap();
+            act.hb(ctx);
+
+            // client should also check for a timeout here, similar to the
+            // server code
+        });
+    }
+}
+
+/// Handle stdin commands
+impl<T: 'static> Handler<ClientCommand> for ChatClient<T>
+where
+    T: AsyncRead + AsyncWrite,
+{
+    type Result = ();
+
+    fn handle(&mut self, msg: ClientCommand, _ctx: &mut Context<Self>) {
+        self.0.write(Message::Text(msg.0)).unwrap();
+    }
+}
+
+/// Handle server websocket messages
+impl<T: 'static> StreamHandler<Result<Frame, WsProtocolError>> for ChatClient<T>
+where
+    T: AsyncRead + AsyncWrite,
+{
+    fn handle(&mut self, msg: Result<Frame, WsProtocolError>, _: &mut Context<Self>) {
+        if let Ok(Frame::Text(txt)) = msg {
+            println!("Server: {:?}", txt)
+        }
+    }
+
+    fn started(&mut self, _ctx: &mut Context<Self>) {
+        println!("Connected");
+    }
+
+    fn finished(&mut self, ctx: &mut Context<Self>) {
+        println!("Server disconnected");
+        ctx.stop()
+    }
+}
+
+impl<T: 'static> actix::io::WriteHandler<WsProtocolError> for ChatClient<T> where
+    T: AsyncRead + AsyncWrite
+{
 }
