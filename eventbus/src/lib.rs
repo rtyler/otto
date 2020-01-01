@@ -2,14 +2,16 @@
  * The msg module contains common message definitions for serialization and deserialization of data
  * across the eventbus
  */
+extern crate serde;
+extern crate serde_json;
 
-
+use actix::Message;
 use serde::{Deserialize, Serialize};
-use serde_derive::{Serialize, Deserialize};
 use serde_json::Value;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Message)]
 #[serde(tag = "command", rename_all = "camelCase")]
+#[rtype(result = "()")]
 pub enum Command {
     Heartbeat,
     Subscribe {
