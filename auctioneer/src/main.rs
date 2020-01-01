@@ -20,35 +20,40 @@ use awc::{
 use bytes::Bytes;
 use futures::stream::{SplitSink, StreamExt};
 
-#[actix_rt::main]
-async fn main() {
+fn main() {
     pretty_env_logger::init();
+    let sys = System::new("auctioneer");
 
-    let (response, framed) = Client::new()
-        .ws("http://127.0.0.1:8000/ws/")
-        .connect()
-        .await
-        .map_err(|e| {
-            println!("Error: {}", e);
-        })
-        .unwrap();
+    Arbiter::spawn(async {
+        let (response, framed) = Client::new()
+            .ws("http://127.0.0.1:8000/ws/")
+            .connect()
+            .await
+            .map_err(|e| {
+                println!("Error: {}", e);
+            })
+            .unwrap();
 
-    println!("{:?}", response);
-    let (sink, stream) = framed.split();
-    let addr = ChatClient::create(|ctx| {
-        ChatClient::add_stream(stream, ctx);
-        ChatClient(SinkWrite::new(sink, ctx))
+        println!("{:?}", response);
+        let (sink, stream) = framed.split();
+        let addr = ChatClient::create(|ctx| {
+            ChatClient::add_stream(stream, ctx);
+            ChatClient(SinkWrite::new(sink, ctx))
+        });
+
+        // start console loop
+        thread::spawn(move || loop {
+            let mut cmd = String::new();
+            if io::stdin().read_line(&mut cmd).is_err() {
+                println!("error");
+                return;
+            }
+            addr.do_send(ClientCommand(cmd));
+        });
+
     });
 
-    // start console loop
-    thread::spawn(move || loop {
-        let mut cmd = String::new();
-        if io::stdin().read_line(&mut cmd).is_err() {
-            println!("error");
-            return;
-        }
-        addr.do_send(ClientCommand(cmd));
-    });
+    sys.run().unwrap()
 }
 
 struct ChatClient<T>(SinkWrite<Message, SplitSink<Framed<T, Codec>, Message>>)
