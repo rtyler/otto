@@ -5,8 +5,18 @@ authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
 [dependencies]
+# Actix provides the web and websocket basis we sit on top of
+actix = "~0.9.0"
+actix-codec = "0.2.0"
+actix-web = "~2.0.0"
+actix-web-actors = "~2.0.0"
+actix-rt = "~1.0.0"
+awc = "1.0.1"
+futures = "0.3.1"
+bytes = "0.5.3"
+
 # Handling command line options
-#clap = { version = "~2.33.0", features = ["yaml"] }
+clap = { version = "~2.33.0", features = ["yaml"] }
 # Handling configuration overlays
 config = { version = "~0.10.1", features = ["yaml"] }
 
@@ -20,12 +30,3 @@ serde_json = "~1.0.0"
 
 otto-eventbus = { path = "../eventbus" }
 
-actix = "~0.9.0"
-actix-codec = "0.2.0"
-actix-web = "~2.0.0"
-actix-web-actors = "~2.0.0"
-actix-files = "0.2.1"
-actix-rt = "~1.0.0"
-awc = "1.0.1"
-futures = "0.3.1"
-bytes = "0.5.3"

@@ -9,13 +9,12 @@ name = "otto-eventbus"
 path = "src/server/main.rs"
 
 [dependencies]
+# Actix provides the web and websocket basis we sit on top of
 actix = "~0.9.0"
-# Grabbing an alpha version with async/await support.
 actix-web = "~2.0.0"
-# This crate provides the websocket support which we will rely on for all
-# clients
 actix-web-actors = "~2.0.0"
 actix-rt = "~1.0.0"
+
 handlebars = "~2.0.2"
 # Need to embed static resources into the binary for serving at runtime
 rust-embed = { version = "~5.2.0", features = ["interpolate-folder-path"] }
@@ -24,7 +23,7 @@ rust-embed = { version = "~5.2.0", features = ["interpolate-folder-path"] }
 chrono = "~0.4.10"
 
 # Handling command line options
-#clap = { version = "~2.33.0", features = ["yaml"] }
+clap = { version = "~2.33.0", features = ["yaml"] }
 # Handling configuration overlays
 config = { version = "~0.10.1", features = ["yaml"] }
 
