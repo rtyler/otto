@@ -24,7 +24,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
-use otto_eventbus::Command;
+use otto_eventbus::*;
 
 pub mod connection;
 pub mod eventbus;
@@ -129,7 +129,7 @@ async fn main() -> std::io::Result<()> {
         let pulse = format!("heartbeat {}", Local::now());
         trace!("sending pulse: {}", pulse);
         let event = eventbus::Event {
-            e: Arc::new(Command::Heartbeat),
+            e: Arc::new(Output::Heartbeat),
             channel: "all".to_string(),
         };
         bus.do_send(event);

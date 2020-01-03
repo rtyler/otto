@@ -28,7 +28,7 @@ pub struct Subscribe {
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Event {
-    pub e: Arc<crate::Command>,
+    pub e: Arc<crate::Output>,
     pub channel: String,
 }
 

@@ -10,7 +10,7 @@ use serde_json;
 
 use std::sync::Arc;
 
-use otto_eventbus::Command;
+use otto_eventbus::*;
 use crate::*;
 
 /*
@@ -29,13 +29,13 @@ impl WSClient {
     }
 
     fn handle_text(&self, text: String, ctx: &<WSClient as Actor>::Context) {
-        let command = serde_json::from_str::<Command>(&text);
+        let command = serde_json::from_str::<Input>(&text);
 
         match command {
             Ok(c) => {
                 // Since we have a Command, what kind?
                 match c {
-                    Command::Subscribe { client, channel } => {
+                    Input::Subscribe { client, channel } => {
                         info!("Subscribing {} to {}", client, channel);
                         // Sent it along to the bus
                         // TODO: This should not use do_send which ignores errors
@@ -57,10 +57,10 @@ impl WSClient {
 /**
  * Handle Basic eventbus messages by serializing them over to the websocket
  */
-impl Handler<Arc<Command>> for WSClient {
+impl Handler<Arc<Output>> for WSClient {
     type Result = ();
 
-    fn handle(&mut self, msg: Arc<Command>, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: Arc<Output>, ctx: &mut Self::Context) {
         ctx.text(serde_json::to_string(&msg).unwrap());
     }
 }
