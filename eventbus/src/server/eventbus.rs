@@ -25,11 +25,11 @@ pub struct Subscribe {
     pub addr: ClientId,
 }
 
-#[derive(Message)]
+#[derive(Message, Clone)]
 #[rtype(result = "()")]
 pub struct Event {
     pub e: Arc<crate::Output>,
-    pub channel: String,
+    pub channel: Arc<String>,
 }
 
 #[derive(Message)]
@@ -137,7 +137,7 @@ impl Handler<Event> for EventBus {
 
     fn handle(&mut self, ev: Event, _: &mut Context<Self>) {
         let ch = Channel {
-            name: ev.channel,
+            name: ev.channel.to_string(),
             stateful: false,
         };
         if self.channels.contains_key(&ch) {
@@ -150,7 +150,7 @@ impl Handler<Event> for EventBus {
                  * eventbus
                  */
                 for client in clients {
-                    client.do_send(ev.e.clone());
+                    client.do_send(ev.clone());
                 }
             }
         } else {

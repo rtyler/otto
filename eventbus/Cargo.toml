@@ -20,7 +20,7 @@ handlebars = "~2.0.2"
 rust-embed = { version = "~5.2.0", features = ["interpolate-folder-path"] }
 
 # Used for formatting times in messages
-chrono = "~0.4.10"
+chrono = { version = "~0.4.10", features = ["serde"] }
 
 # Handling command line options
 clap = { version = "~2.33.0", features = ["yaml"] }

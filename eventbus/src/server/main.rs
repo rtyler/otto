@@ -130,7 +130,7 @@ async fn main() -> std::io::Result<()> {
         trace!("sending pulse: {}", pulse);
         let event = eventbus::Event {
             e: Arc::new(Output::Heartbeat),
-            channel: "all".to_string(),
+            channel: Arc::new("all".to_string()),
         };
         bus.do_send(event);
         let seconds = settings

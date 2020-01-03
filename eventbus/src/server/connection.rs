@@ -5,13 +5,14 @@
  */
 use actix::*;
 use actix_web_actors::ws;
+use chrono::prelude::Utc;
 use log::{error, info};
 use serde_json;
 
 use std::sync::Arc;
 
-use otto_eventbus::*;
 use crate::*;
+use otto_eventbus::*;
 
 /*
  * Define the Websocket Actor needed for Actix
@@ -55,13 +56,29 @@ impl WSClient {
 }
 
 /**
- * Handle Basic eventbus messages by serializing them over to the websocket
+ * Handle eventbus Output messages by serializing them over to the websocket
  */
-impl Handler<Arc<Output>> for WSClient {
+impl Handler<eventbus::Event> for WSClient {
     type Result = ();
 
-    fn handle(&mut self, msg: Arc<Output>, ctx: &mut Self::Context) {
-        ctx.text(serde_json::to_string(&msg).unwrap());
+    /**
+     * The `handle` function will be invoked when the WSClient actor receives a message which is
+     * intended to be sent to the client via a WebSocket.
+     *
+     * The handler will serialize the Output, and add additional metadata for the client
+     */
+    fn handle(&mut self, event: eventbus::Event, ctx: &mut Self::Context) {
+        let meta = Meta {
+            channel: event.channel.to_string(),
+            ts: Utc::now(),
+        };
+        let out = OutputMessage {
+            // TODO: error
+            msg: Arc::try_unwrap(event.e).unwrap(),
+            meta,
+        };
+        // TODO: error
+        ctx.text(serde_json::to_string(&out).unwrap());
     }
 }
 
