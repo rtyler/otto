@@ -150,6 +150,10 @@ impl Handler<Event> for EventBus {
                  * eventbus
                  */
                 for client in clients {
+                    /*
+                     * TODO: cloning this is probably not necessary but I do not currently
+                     * understand how to pass references to Actors in actix.
+                     */
                     client.do_send(ev.clone());
                 }
             }
