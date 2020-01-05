@@ -4,6 +4,7 @@
  */
 extern crate actix;
 extern crate actix_web;
+extern crate actix_http;
 extern crate config;
 extern crate log;
 extern crate pretty_env_logger;
@@ -156,4 +157,48 @@ async fn main() -> std::io::Result<()> {
     .bind("127.0.0.1:8000")?
     .run()
     .await
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use actix_web::{test, web, App};
+
+    use regex::Regex;
+
+    /**
+     * This test just ensures that the server can come online properly and render its index handler
+     * properly.
+     *
+     * It doesn't really test much useful, but does ensure that critical failures in the eventbus
+     * can sometimes be prevented
+     */
+    #[actix_rt::test]
+    async fn test_basic_http() {
+        let events = eventbus::EventBus::with_channels(vec![], vec![]).start();
+        let state = AppState {
+            bus: events,
+            hb: Arc::new(Handlebars::new()),
+        };
+        let wd = web::Data::new(state);
+        let srv = test::start(move || {
+                App::new()
+                    .app_data(wd.clone())
+                    .route("/", web::get().to(index))
+            });
+
+        let req = srv.get("/");
+        let mut response = req.send().await.unwrap();
+        assert!(response.status().is_success());
+
+        let re = Regex::new(r"(v\d\.\d\.\d)").unwrap();
+
+        let body = response.body().await.unwrap();
+        let buffer = String::from_utf8(body.to_vec()).unwrap();
+        let matches = re.captures(&buffer).unwrap();
+
+        let version = matches.get(1).unwrap();
+        assert_eq!(version.as_str(), format!("v{}", option_env!("CARGO_PKG_VERSION").unwrap_or("unknown")));
+    }
 }
