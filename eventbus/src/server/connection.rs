@@ -5,10 +5,14 @@
  */
 use actix::*;
 use actix_web_actors::ws;
+use chrono::prelude::Utc;
 use log::{error, info};
 use serde_json;
 
 use std::sync::Arc;
+
+use crate::*;
+use otto_eventbus::*;
 
 /*
  * Define the Websocket Actor needed for Actix
@@ -17,32 +21,43 @@ use std::sync::Arc;
  * keep track of this connection and its configuration
  */
 pub struct WSClient {
-    events: Addr<crate::bus::EventBus>,
+    events: Addr<eventbus::EventBus>,
 }
 
 impl WSClient {
-    pub fn new(eb: Addr<crate::bus::EventBus>) -> Self {
+    pub fn new(eb: Addr<eventbus::EventBus>) -> Self {
         Self { events: eb }
     }
 
     fn handle_text(&self, text: String, ctx: &<WSClient as Actor>::Context) {
-        let command = serde_json::from_str::<crate::Command>(&text);
+        let command = serde_json::from_str::<InputMessage>(&text);
 
         match command {
             Ok(c) => {
                 // Since we have a Command, what kind?
                 match c {
-                    crate::Command::Subscribe { client, channel } => {
-                        info!("Subscribing {} to {}", client, channel);
-                        // Sent it along to the bus
-                        // TODO: This should not use do_send which ignores errors
-                        self.events.do_send(crate::bus::Subscribe {
-                            to: channel,
-                            addr: ctx.address(),
-                        });
+                    InputMessage { msg, meta } => {
+                        match msg {
+                            Input::Publish { payload } => {
+                                info!("received publish: {:?}", payload);
+                                self.events.do_send(eventbus::Event {
+                                    e: Arc::new(Output::Message { payload: payload }),
+                                    channel: Arc::new(meta.channel),
+                                });
+                            }
+                            Input::Subscribe { client } => {
+                                info!("Subscribing {} to {}", client, meta.channel);
+                                // Sent it along to the bus
+                                // TODO: This should not use do_send which ignores errors
+                                self.events.do_send(eventbus::Subscribe {
+                                    to: meta.channel,
+                                    addr: ctx.address(),
+                                });
+                            }
+                            _ => (),
+                        };
                     }
-                    _ => (),
-                }
+                };
             }
             Err(e) => {
                 error!("Error parsing message from client: {:?}", e);
@@ -52,13 +67,25 @@ impl WSClient {
 }
 
 /**
- * Handle Basic eventbus messages by serializing them over to the websocket
+ * Handle eventbus Output messages by serializing them over to the websocket
  */
-impl Handler<Arc<crate::Command>> for WSClient {
+impl Handler<eventbus::Event> for WSClient {
     type Result = ();
 
-    fn handle(&mut self, msg: Arc<crate::Command>, ctx: &mut Self::Context) {
-        ctx.text(serde_json::to_string(&msg).unwrap());
+    /**
+     * The `handle` function will be invoked when the WSClient actor receives a message which is
+     * intended to be sent to the client via a WebSocket.
+     *
+     * The handler will serialize the Output, and add additional metadata for the client
+     */
+    fn handle(&mut self, event: eventbus::Event, ctx: &mut Self::Context) {
+        let meta = Meta {
+            channel: event.channel.to_string(),
+            ts: Utc::now(),
+        };
+        let out = OutputMessage { msg: event.e, meta };
+        // TODO: error
+        ctx.text(serde_json::to_string(&out).unwrap());
     }
 }
 
@@ -70,7 +97,7 @@ impl Actor for WSClient {
     type Context = ws::WebsocketContext<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        let sub = crate::bus::Subscribe {
+        let sub = eventbus::Subscribe {
             to: "all".to_owned(),
             addr: ctx.address(),
         };

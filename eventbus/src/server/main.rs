@@ -4,6 +4,7 @@
  */
 extern crate actix;
 extern crate actix_web;
+extern crate actix_http;
 extern crate config;
 extern crate log;
 extern crate pretty_env_logger;
@@ -26,12 +27,15 @@ use std::time::Duration;
 
 use otto_eventbus::*;
 
+pub mod connection;
+pub mod eventbus;
+
 /**
  * Templates is a rust-embed struct which will contain all the files embedded from the
  * eventbus/templates/ directory
  */
 #[derive(RustEmbed)]
-#[folder = "eventbus/templates"]
+#[folder = "$CARGO_MANIFEST_DIR/templates"]
 struct Templates;
 
 /**
@@ -39,11 +43,11 @@ struct Templates;
  * folder at compile-time
  */
 #[derive(RustEmbed)]
-#[folder = "eventbus/static"]
+#[folder = "$CARGO_MANIFEST_DIR/static"]
 struct Static;
 
 struct AppState {
-    bus: Addr<bus::EventBus>,
+    bus: Addr<eventbus::EventBus>,
     // Handlebars uses a repository for the compiled templates. This object must be
     // shared between the application threads, and is therefore passed to the
     // Application Builder as an atomic reference-counted pointer.
@@ -76,7 +80,7 @@ async fn ws_index(
     stream: web::Payload,
     state: web::Data<AppState>,
 ) -> Result<HttpResponse, Error> {
-    let actor = client::WSClient::new(state.bus.clone());
+    let actor = connection::WSClient::new(state.bus.clone());
     let res = ws::start(actor, &r, stream);
     trace!("{:?}", res.as_ref().unwrap());
     res
@@ -119,15 +123,15 @@ async fn main() -> std::io::Result<()> {
         .get::<Vec<String>>("channels.stateful")
         .expect("Failed to load `channels.stateful` configuration, which must be an array");
 
-    let events = bus::EventBus::with_channels(stateless, stateful).start();
+    let events = eventbus::EventBus::with_channels(stateless, stateful).start();
     let bus = events.clone();
 
     thread::spawn(move || loop {
         let pulse = format!("heartbeat {}", Local::now());
         trace!("sending pulse: {}", pulse);
-        let event = crate::bus::Event {
-            e: Arc::new(crate::Command::Heartbeat),
-            channel: "all".to_string(),
+        let event = eventbus::Event {
+            e: Arc::new(Output::Heartbeat),
+            channel: Arc::new("all".to_string()),
         };
         bus.do_send(event);
         let seconds = settings
@@ -153,4 +157,48 @@ async fn main() -> std::io::Result<()> {
     .bind("127.0.0.1:8000")?
     .run()
     .await
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use actix_web::{test, web, App};
+
+    use regex::Regex;
+
+    /**
+     * This test just ensures that the server can come online properly and render its index handler
+     * properly.
+     *
+     * It doesn't really test much useful, but does ensure that critical failures in the eventbus
+     * can sometimes be prevented
+     */
+    #[actix_rt::test]
+    async fn test_basic_http() {
+        let events = eventbus::EventBus::with_channels(vec![], vec![]).start();
+        let state = AppState {
+            bus: events,
+            hb: Arc::new(Handlebars::new()),
+        };
+        let wd = web::Data::new(state);
+        let srv = test::start(move || {
+                App::new()
+                    .app_data(wd.clone())
+                    .route("/", web::get().to(index))
+            });
+
+        let req = srv.get("/");
+        let mut response = req.send().await.unwrap();
+        assert!(response.status().is_success());
+
+        let re = Regex::new(r"(v\d\.\d\.\d)").unwrap();
+
+        let body = response.body().await.unwrap();
+        let buffer = String::from_utf8(body.to_vec()).unwrap();
+        let matches = re.captures(&buffer).unwrap();
+
+        let version = matches.get(1).unwrap();
+        assert_eq!(version.as_str(), format!("v{}", option_env!("CARGO_PKG_VERSION").unwrap_or("unknown")));
+    }
 }

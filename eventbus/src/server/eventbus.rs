@@ -8,13 +8,15 @@ use std::sync::Arc;
 
 use log::{error, info};
 
+use crate::*;
+
 /*
  * NOTE: I would like for the bus module not to know anything at all about the clients.
  *
  * At the moment I believe that would require a bit more type and generics surgery
  * than I am currently willing to expend on the problem
  */
-type ClientId = Addr<crate::client::WSClient>;
+type ClientId = Addr<connection::WSClient>;
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -23,11 +25,11 @@ pub struct Subscribe {
     pub addr: ClientId,
 }
 
-#[derive(Message)]
+#[derive(Message, Clone)]
 #[rtype(result = "()")]
 pub struct Event {
-    pub e: Arc<crate::Command>,
-    pub channel: String,
+    pub e: Arc<crate::Output>,
+    pub channel: Arc<String>,
 }
 
 #[derive(Message)]
@@ -135,7 +137,7 @@ impl Handler<Event> for EventBus {
 
     fn handle(&mut self, ev: Event, _: &mut Context<Self>) {
         let ch = Channel {
-            name: ev.channel,
+            name: ev.channel.to_string(),
             stateful: false,
         };
         if self.channels.contains_key(&ch) {
@@ -148,7 +150,11 @@ impl Handler<Event> for EventBus {
                  * eventbus
                  */
                 for client in clients {
-                    client.do_send(ev.e.clone());
+                    /*
+                     * TODO: cloning this is probably not necessary but I do not currently
+                     * understand how to pass references to Actors in actix.
+                     */
+                    client.do_send(ev.clone());
                 }
             }
         } else {

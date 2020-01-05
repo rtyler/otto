@@ -6,3 +6,38 @@ implementation of Otto.
 It loosely follows the process used for
 link:https://www.python.org/dev/peps/[Python Enhancement Proposals].
 
+== RFCs
+
+Below is the list of RFCs:
+
+
+|===
+| Number | Title | Status
+
+
+| 0001
+| link:0001-otto-systems-design.adoc[Otto System Design]
+| Not Submitted :information_source:
+
+| 0002
+| link:0002-execution-manifest.adoc[Execution Manifest]
+| Not Submitted :information_source:
+
+| 0003
+| link:0003-resource-auctioning.adoc[Resource allocation by auction]
+| Draft :speech_balloon:
+
+
+|===
+
+
+== Statuses
+
+* Draft :speech_balloon:
+* Deferred :hourglass:
+* Accepted :ok_hand:
+* Rejected :no_entry:
+* Withdrawn :hand:
+* Final :lock:
+* Replaced :dagger:
+* Active :smile:
