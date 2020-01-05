@@ -10,6 +10,17 @@ use chrono::prelude::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use std::sync::Arc;
+
+
+/**
+ * Default function for deserialize/serialize of times, always defaults to 1970-01-01
+ */
+fn epoch() -> DateTime<Utc> {
+    use chrono::offset::TimeZone;
+    return Utc.ymd(1970, 1, 1).and_hms_milli(0, 0, 1, 444);
+}
+
 /**
  * The `Meta` struct contains the necessary metadata about a message which is being sent over the
  * wire
@@ -20,6 +31,7 @@ use serde_json::Value;
 #[rtype(result = "()")]
 pub struct Meta {
     pub channel: String,
+    #[serde(default="epoch")]
     pub ts: DateTime<Utc>,
 }
 
@@ -70,10 +82,6 @@ pub enum Input {
          * The client's UUID
          */
         client: String,
-        /**
-         * The channel the client wishes to subscribe to
-         */
-        channel: String,
     },
     /**
      * The unsubscribe message can be sent if the client wishes to stop following a specific
@@ -84,17 +92,15 @@ pub enum Input {
          * The client's UUID
          */
         client: String,
-        /**
-         * The channel the client wishes to unsubscribe from
-         */
-        channel: String,
     },
     /**
      * The Publish message is the most common message clients should be sending
      *
      * The `payload` is an arbitrary bit of JSON, and is not typed
      */
-    Publish { channel: String, payload: Value },
+    Publish {
+        payload: Value,
+    },
 }
 
 /**

@@ -30,20 +30,25 @@ impl WSClient {
     }
 
     fn handle_text(&self, text: String, ctx: &<WSClient as Actor>::Context) {
-        let command = serde_json::from_str::<Input>(&text);
+        let command = serde_json::from_str::<InputMessage>(&text);
 
         match command {
             Ok(c) => {
                 // Since we have a Command, what kind?
                 match c {
-                    Input::Subscribe { client, channel } => {
-                        info!("Subscribing {} to {}", client, channel);
-                        // Sent it along to the bus
-                        // TODO: This should not use do_send which ignores errors
-                        self.events.do_send(eventbus::Subscribe {
-                            to: channel,
-                            addr: ctx.address(),
-                        });
+                    InputMessage { msg, meta } => {
+                        match msg {
+                            Input::Subscribe { client } => {
+                                info!("Subscribing {} to {}", client, meta.channel);
+                                // Sent it along to the bus
+                                // TODO: This should not use do_send which ignores errors
+                                self.events.do_send(eventbus::Subscribe {
+                                    to: meta.channel,
+                                    addr: ctx.address(),
+                                });
+                            },
+                            _ => (),
+                        }
                     }
                     _ => (),
                 }
