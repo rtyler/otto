@@ -38,6 +38,13 @@ impl WSClient {
                 match c {
                     InputMessage { msg, meta } => {
                         match msg {
+                            Input::Publish { payload } => {
+                                info!("received publish: {:?}", payload);
+                                self.events.do_send(eventbus::Event {
+                                    e: Arc::new(Output::Message { payload: payload }),
+                                    channel: Arc::new(meta.channel),
+                                });
+                            }
                             Input::Subscribe { client } => {
                                 info!("Subscribing {} to {}", client, meta.channel);
                                 // Sent it along to the bus
@@ -46,12 +53,11 @@ impl WSClient {
                                     to: meta.channel,
                                     addr: ctx.address(),
                                 });
-                            },
+                            }
                             _ => (),
-                        }
+                        };
                     }
-                    _ => (),
-                }
+                };
             }
             Err(e) => {
                 error!("Error parsing message from client: {:?}", e);
@@ -77,10 +83,7 @@ impl Handler<eventbus::Event> for WSClient {
             channel: event.channel.to_string(),
             ts: Utc::now(),
         };
-        let out = OutputMessage {
-            msg: event.e,
-            meta,
-        };
+        let out = OutputMessage { msg: event.e, meta };
         // TODO: error
         ctx.text(serde_json::to_string(&out).unwrap());
     }

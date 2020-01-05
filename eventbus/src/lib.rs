@@ -12,7 +12,6 @@ use serde_json::Value;
 
 use std::sync::Arc;
 
-
 /**
  * Default function for deserialize/serialize of times, always defaults to 1970-01-01
  */
@@ -31,7 +30,7 @@ fn epoch() -> DateTime<Utc> {
 #[rtype(result = "()")]
 pub struct Meta {
     pub channel: String,
-    #[serde(default="epoch")]
+    #[serde(default = "epoch")]
     pub ts: DateTime<Utc>,
 }
 
@@ -44,6 +43,7 @@ pub struct Meta {
 #[rtype(result = "()")]
 pub enum Output {
     Heartbeat,
+    Message { payload: Value },
 }
 
 /**
@@ -98,9 +98,7 @@ pub enum Input {
      *
      * The `payload` is an arbitrary bit of JSON, and is not typed
      */
-    Publish {
-        payload: Value,
-    },
+    Publish { payload: Value },
 }
 
 /**
