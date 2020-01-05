@@ -73,8 +73,7 @@ impl Handler<eventbus::Event> for WSClient {
             ts: Utc::now(),
         };
         let out = OutputMessage {
-            // TODO: error
-            msg: Arc::try_unwrap(event.e).unwrap(),
+            msg: event.e,
             meta,
         };
         // TODO: error

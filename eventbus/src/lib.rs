@@ -46,7 +46,7 @@ pub enum Output {
 #[derive(Serialize, Deserialize, Debug, Message)]
 #[rtype(result = "()")]
 pub struct OutputMessage {
-    pub msg: Output,
+    pub msg: Arc<Output>,
     pub meta: Meta,
 }
 
