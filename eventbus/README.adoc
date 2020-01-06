@@ -1,10 +1,117 @@
 = Otto Eventbus
 
+THe eventbus is the core of the Otto ecosystem, which provides stateless
+link:https://en.wikipedia.org/wiki/Publish-subscribe_pattern[pubsub]
+channels and stateful queues over
+link:https://en.wikipedia.org/wiki/WebSocket[WebSocket]
+connections.
+
+Other services in the Otto ecosystem are expected to register for events by
+subscribing to different channels. Events from these channels will be received
+over a single WebSocket connection.
+
+== API
+
+All messages to ("inputs") and from ("outputs") the eventbus are serialized as
+JSON.
+
+WebSocket connections must be initiated to `http://EVENTBUS_URL/ws/`.
+
+
+=== Inputs
+
+==== Subscribe
+
+[source,json]
+----
+{
+  "meta" : {
+    "channel" : "<channel name>",
+    "ts" : "<iso-8601 timestamp>"
+  },
+  "msg" : {
+    "type" : "subscribe",
+    "client" : "<client uuid>"
+  }
+}
+----
+
+==== Unsubscribe
+
+[source,json]
+----
+{
+  "meta" : {
+    "channel" : "<channel name>",
+    "ts" : "<iso-8601 timestamp>"
+  },
+  "msg" : {
+    "type" : "unsubscribe",
+    "client" : "<client uuid>"
+  }
+}
+----
+
+==== Publish
+
+[source,json]
+----
+{
+  "meta" : {
+    "channel" : "<channel name>",
+    "ts" : "<iso-8601 timestamp>"
+  },
+  "msg" : {
+    "type" : "publish",
+    "_comment" : "The payload can be any arbitrary JSON object",
+    "payload" : {
+      "<arbitrary>" : "<json>"
+    }
+  }
+}
+----
+
+=== Outputs
+
+==== Heartbeat
+
+[source,json]
+----
+{
+  "meta" : {
+    "channel" : "<channel name>",
+    "ts" : "<iso-8601 timestamp>"
+  },
+  "msg" : {
+    "type" : "heartbeat"
+  }
+}
+----
+
+==== Message
+
+[source,json]
+----
+{
+  "meta" : {
+    "channel" : "<channel name>",
+    "ts" : "<iso-8601 timestamp>"
+  },
+  "msg" : {
+    "type" : "message",
+    "_comment" : "The payload can be any arbitrary JSON object",
+    "payload" : {
+      "<arbitrary>" : "<json>"
+    }
+  }
+}
+----
+
+
+== Implementations
+
 The Otto eventbus is intended to provide an API shim which can be easily ported
-to a number of backend durable queueing and eventing systems. The default
-implementation simply uses an in-memory queue for simplicity's sake, and has no
-durability guarantees.
+to a number of backend durable queueing and eventing systems.
 
-
-Clients are expected to register for events which will come over a single WebSocket
-channel.
+There are currently no other implementations other than the in-memory
+implementation in this directory.
