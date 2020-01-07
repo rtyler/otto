@@ -2,11 +2,35 @@
 
 **link:https://webchat.freenode.net/?channels=#otto[Chat on IRC]**
 
-Meet Otto, your friendly continuous delivery companion. Otto does not aim to be
-the center of the entire continuous delivery process, but rather seeks to
-interoperate seamlessly with all the various components which make CD work for
-you.
+Meet Otto, your friendly continuous delivery companion.
 
+Otto is a robust distributed system for scalable continuous integration and
+delivery. To accomplish this Otto is multi-process oriented and distributed by
+default; all system interactions must occur over process boundaries even if
+executing in the same logical host. This document outlines the high level
+architecture but omits specific inter-process communication formats, protocols,
+and dependencies.
+
+Otto does not aim to be the center of the entire continuous delivery process,
+but rather seeks to interoperate seamlessly with all the various components
+which make CD work for you.
+
+
+= Status
+
+Otto is currently not usable.
+
+THe various components are in different states of development, pleaes consult
+the README document in the subfolders for their current purpose and status.
+
+= Development
+
+Much of Otto is built in
+link:https://www.rust-lang.org/[Rust].
+THe service-to-service communication is all done with JSON over HTTP.
+
+In order to contribute to the project, please join us on IRC or open pull
+requests and issues.
 
 == Problems to Solve
 
