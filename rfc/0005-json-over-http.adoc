@@ -1,0 +1,238 @@
+= RFC-0005: JSON over HTTP for data serialization and transport
+:toc: preamble
+:toclevels: 3
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+.**RFC Template**
+
+.Metadata
+[cols="1h,1"]
+|===
+| RFC
+| 0005
+
+| Title
+| JSON over HTTP for data serialization and transport
+
+| Sponsor
+| link:https://github.com/rtyler/[R Tyler Croy]
+
+| Status
+| Draft :speech_balloon:
+
+| Type
+| Standards
+
+| Created
+| 2020-01-07
+
+|===
+
+== Abstract
+
+Otto is a distributed system in which multiple services need to communicate
+with one another in standardized formats with a common transport layer.
+Practically every component in the system acts as both a producer and a
+consumer of data. Consolidating all service-to-service interactions onto a
+single format and transport layer offers numerous benefits in tooling and
+shared code. It is also very important to make the Otto ecosystem easily
+interoperable, such that users can bring their own services into the Otto
+ecosystem without requiring any implementation changes from the existing
+services.
+
+
+
+== Specification
+
+[TIP]
+====
+Provide a detailed specification what is being proposed.  Be as technical and
+detailed as needed to allow new or existing developers to reasonably understand
+the scope/impact of an implementation.
+
+* Use present tense - describe what the proposal "does" (as if it were already done) not what it will do.
+* Do not discuss alternative designs that were rejected, those belong in the Reasoning section.
+* Avoid in-depth discussion or justification of design choices, that belongs in the Reasoning section.
+====
+
+
+This specification describes the standard methoa and format for all
+service-to-service interaction in the Otto distributed system. The interactions
+in the system are expected to take two forms:
+
+. *Synchronous*: a traditional request/response model with two services, or a
+  client and service, directly interacting with one another. This flow is expected
+  to follow the <<rest-api, REST API model>> described below.
+. *Asynchronous*: oriented around the Otto eventbus, whereby services can send a
+  message to a channel and expect no response other than a confirmation that the
+  message was received. The details for event transmission and interaction with
+  the Eventbus is described in the <<events, Events>> section below.
+
+[[rest-api]]
+=== REST API
+
+Generally speaking, REST APIs are intended for administrative for
+user-interface related data requirements. For the most part, services are
+expected to communicate with one another using <<events, Events on the
+Eventbus>> rather than sending synchronous requests back and forth.
+
+All REST APIs must be:
+
+* *Versioned*: The URLs should be versioned using the major version number from
+  the service's
+  link:http://semver.org/[Semantic Versioning]
+  scheme. For example, `GET /v1/channels`. 
+* *Documented with OpenAPI*: 
+* *Accept JSON*: All requests to REST APIs must be documented JSON payloads,
+  except in cases of binary object uploads
+* *Respond with JSON*: All REST APIs are expected to _only_ respond with
+  documented JSON payloads. Any non-JSON response, except for expected binary
+  blobs, are to be considered by the client as a server-side error.
+
+==== Error Handling
+
+Errors should be communicated by the server with JSON encoded error messages
+and status codes:
+
+* *4xx*: Malformed request or other client errors. Clients should not attempt
+  to retry these errors, but instead log them as local errors and try to
+  recover.
+* *5xx*: Server-side failures. Clients _should* attempt to retry the requests
+  after an exponential back-off, with some permanent failure mode after a
+  period of 30+ minutes.
+
+
+If the server does *not* respond with a JSON payload, the client should treat
+the response as if it is a recoverable error and perform an exponential
+back-off retry.
+
+
+[[events]]
+=== Events
+
+
+Services are all expected to emit and receive events over a
+link:https://en.wikipedia.org/wiki/WebSocket[WebSocket]
+connection to the Eventbus service, e.g. `http://eventbus.lan/ws/`. The Eventbus acts as a quasi-central broker
+of all events occurring in the Otto distributed system. Its design is discussed
+in another RFC< but the message payloads sent to "channels" on the eventbus
+*must* be JSON data structures matching JSON Schemas defined for each channel.
+
+
+==== Error Handling
+
+For cases where the WebSocket connection has errored, reset, or is otherwise
+unavailable, services must attempt to retry into infinity. Local error logs
+should be generated during these failure schenarios and the service's health
+check URLs should also convey that the Eventbus connection is down.
+
+The only errors which should be expected by services writing events to the
+Eventbus should be schema validation errors, which are considered to be similar
+to REST API client-side errors  Therefor local errors should be logged, but the
+message should not be retransmitted.
+
+
+== Reasoning
+
+[TIP]
+====
+Explain why particular design decisions were made.
+Describe alternate designs that were considered and related work, e.g. how the feature is supported in other systems.
+Provide evidence of consensus within the community and discuss important objections or concerns raised during discussion.
+
+* Use sub-headings to organize this section for ease of readability.
+* Do not talk about history or why this needs to be done, that is part of Motivation section.
+====
+
+
+Interprocess communication occurring via JSON over HTTP helps meet a number of
+the key design goals for Otto:
+
+* *Avoiding a singular central hub*
+* *Extensibility must not come at the expense of system integrity*
+* *User-level extension of the system must be viable*
+
+
+The key aspect of JSON over HTTP which helps address all of these goals is that
+JSON and HTTP are interoperable with practically _everything_ in the modern
+technology environment, from backend services, to cloud storage providers, and
+also user's browsers.
+
+By providing documented synchronous and asynchronous APIs, Otto should be able
+to accomodate new user-provided services into its ecosystem that add additional
+functionality without any substantive change to the core components shipped
+with Otto. One example which comes to mind is an analytics system around Otto.
+In its current design there is not analytics system tracking tasks executed,
+resources utilized, etc. If a user or provider wished to offer budget
+forecasting, as an example, this JSON over HTTP model with REST APIs and events
+via WebSockets would allow for the deployment of services which could tabulate
+interesting events off of the Eventbus, and easily provide the end-user with a
+forecast. Implementing such a system, assuming the necessary events are present
+in the Eventbus and the necessary data is available from existing services'
+REST APIs, would require *zero* changes to the "base" components of Otto.
+
+
+Since browsers can also natively "speak" JSON over HTTP, this also allows for
+new and interesting user interfaces atop these services and events to be
+developed.
+
+=== Alternatives Considered
+
+==== Protocol Buffers / gRPC
+
+The only serious alternative considered was the use of
+link:https://developers.google.com/protocol-buffers/[Protocol Buffers]
+for the data format/serialization and gRPC for the transport layer between services.
+
+This approach would be functionally very similar, and may even offer some
+schema and data validation benefits when compared to JSON over HTTP.
+
+The gRPC approach does add implementation overhead however for new clients,
+which must have shared binary stubs with other services generated from the
+Protocol Buffer IDL footnote:[Interactive Data Language, in Protocol Buffers
+the language for describing the binary data structure].
+This increases the coupling between services, which must all be booted with
+shared definitions of data, but also prevents easy interoperability with
+"outside" services and web browsers.
+
+
+Ultimately, the portability story for Protocol Buffers and gRPC pales in
+comparison to JSON over HTTP. For Otto, the extensibility and portability of
+data in the system is a key design goal.
+
+== Security
+
+
+The authentication and authorization of connections over HTTP is not subject to
+this specification. Additional concerns around data verification through
+signatures or other means are also not intended to be discussed in this
+specification. The securing of the transport layer is a concern which will be
+addressed in future extensions to this design.
+
+
+== Testing
+
+There are no testing issues specifically related to this proposal. However
+clients and services will need to express API documentation which can be
+automatically tested in the future. Tooling to help this already exists, for
+example
+link:https://github.com/apiaryio/dredd[Dredd]
+which works with OpenAPI/Swagger specifications.
+
+
+== References
+
+* link:https://github.com/actix/actix-web[actix-web]: a Rust framework for
+  building high-performance web services.
+* link:https://docs.serde.rs/serde_json/[serde_json]: a Rust library for
+  serializing and deserializing JSON objects
+* link:https://json-schema.org/learn/getting-started-step-by-step.html[JSON Schema]: 
+  tool for specifying JSON data structure and requirements.
+* link:https://swagger.io/specification/[OpenAPI/Swagger specification]
+
