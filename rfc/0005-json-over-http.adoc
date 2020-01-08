@@ -46,21 +46,7 @@ interoperable, such that users can bring their own services into the Otto
 ecosystem without requiring any implementation changes from the existing
 services.
 
-
-
 == Specification
-
-[TIP]
-====
-Provide a detailed specification what is being proposed.  Be as technical and
-detailed as needed to allow new or existing developers to reasonably understand
-the scope/impact of an implementation.
-
-* Use present tense - describe what the proposal "does" (as if it were already done) not what it will do.
-* Do not discuss alternative designs that were rejected, those belong in the Reasoning section.
-* Avoid in-depth discussion or justification of design choices, that belongs in the Reasoning section.
-====
-
 
 This specification describes the standard methoa and format for all
 service-to-service interaction in the Otto distributed system. The interactions
@@ -139,17 +125,6 @@ message should not be retransmitted.
 
 
 == Reasoning
-
-[TIP]
-====
-Explain why particular design decisions were made.
-Describe alternate designs that were considered and related work, e.g. how the feature is supported in other systems.
-Provide evidence of consensus within the community and discuss important objections or concerns raised during discussion.
-
-* Use sub-headings to organize this section for ease of readability.
-* Do not talk about history or why this needs to be done, that is part of Motivation section.
-====
-
 
 Interprocess communication occurring via JSON over HTTP helps meet a number of
 the key design goals for Otto:

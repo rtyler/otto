@@ -27,6 +27,10 @@ Below is the list of RFCs:
 | link:0003-resource-auctioning.adoc[Resource allocation by auction]
 | Draft :speech_balloon:
 
+| 0005
+| link:0005-json-over-http.adoc[JSON over HTTP for data serialization and transport]
+| Draft :speech_balloon:
+
 
 |===
 
