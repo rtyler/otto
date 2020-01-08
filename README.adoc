@@ -36,7 +36,7 @@ requests and issues.
 
 Below is an incomplete listing of the problems Otto aims to solve for:
 
-* **Existing tools to not model the entire continuous delivery process.** Using
+* **Existing tools do not model the entire continuous delivery process.** Using
   an external tool such as Puppet, or relying on an external provider such as
   AWS ECS, there can be a "black hole" in the deployment. A point where control
   is delegated to an external system, and the orchestration tool (Otto), loses
