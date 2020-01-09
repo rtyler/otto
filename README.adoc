@@ -20,14 +20,14 @@ which make CD work for you.
 
 Otto is currently not usable.
 
-THe various components are in different states of development, pleaes consult
+The various components are in different states of development, please consult
 the README document in the subfolders for their current purpose and status.
 
 = Development
 
 Much of Otto is built in
 link:https://www.rust-lang.org/[Rust].
-THe service-to-service communication is all done with JSON over HTTP.
+The service-to-service communication is all done with JSON over HTTP.
 
 In order to contribute to the project, please join us on IRC or open pull
 requests and issues.
