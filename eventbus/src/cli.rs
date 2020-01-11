@@ -4,15 +4,19 @@
 
 extern crate rustyline;
 
-use std::io::{stdin, stdout, Write};
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
+use tungstenite::client::AutoStream;
+use tungstenite::handshake::client::Response;
 use tungstenite::*;
 use url::Url;
 
+fn ws_connect() -> Result<(WebSocket<AutoStream>, Response)> {
+    return connect(Url::parse("ws://localhost:8000/ws/").unwrap());
+}
+
 fn main() {
-    let (mut socket, response) =
-        connect(Url::parse("ws://localhost:8000/ws/").unwrap()).expect("Failed to connect");
+    let (mut socket, _response) = ws_connect().unwrap();
     println!("Connected to the server");
 
     // `()` can be used when no completer is required
@@ -28,10 +32,25 @@ fn main() {
         match readline {
             Ok(line) => {
                 if line.len() == 0 {
-                    let msg = socket.read_message().expect("Failed to read message");
-                    println!("Received: {}", msg);
+                    let response = socket.read_message();
+                     match response {
+                        Ok(msg) => {
+                            println!("{}", msg);
+                        },
+                        Err(e) => {
+                            println!("Failed to read: {}", e);
+                        }
+                    }
                 } else {
-                    socket.write_message(Message::Text(line));
+                    if line == "quit" {
+                        return;
+                    }
+                    match socket.write_message(Message::Text(line)) {
+                        Ok(_) => {},
+                        Err(e) => {
+                            println!("Failed to write: {}", e);
+                        }
+                    }
                 }
             },
             Err(ReadlineError::Interrupted) => {
