@@ -169,5 +169,4 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WSClient {
 }
 
 #[cfg(test)]
-mod test {
-}
+mod test {}

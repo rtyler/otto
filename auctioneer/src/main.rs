@@ -5,7 +5,6 @@ extern crate actix;
 extern crate actix_http;
 extern crate actix_web;
 extern crate awc;
-extern crate chrono;
 extern crate pretty_env_logger;
 
 use actix::io::SinkWrite;
@@ -19,7 +18,6 @@ use awc::{
     BoxedSocket, Client,
 };
 use bytes::Bytes;
-use chrono::Utc;
 use futures::stream::{SplitSink, StreamExt};
 use log::{error, info};
 
@@ -54,7 +52,10 @@ async fn main() -> std::io::Result<()> {
     let (sink, stream) = framed.split();
     let _addr = EventBusClient::create(|ctx| {
         EventBusClient::add_stream(stream, ctx);
-        EventBusClient(SinkWrite::new(sink, ctx))
+        EventBusClient {
+            sink: SinkWrite::new(sink, ctx),
+            id: "auctioneer",
+        }
     });
 
     HttpServer::new(move || {
@@ -68,7 +69,24 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
-struct EventBusClient(SinkWrite<Message, SplitSink<Framed<BoxedSocket, Codec>, Message>>);
+
+/**
+ * An EventBusClient is capable of connecting to, reading messages from, and sending messages to
+ * the eventbus.
+ */
+struct EventBusClient {
+    /**
+     * The sink is a writable object which can send messages back to the EventBus
+     */
+    sink: SinkWrite<Message, SplitSink<Framed<BoxedSocket, Codec>, Message>>,
+    /**
+     * String identifier for the client
+     *
+     * This should be persisted between invocations of the process if the client
+     * should have any semblence of persistence with its messages
+     */
+    id: &'static str,
+}
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -79,15 +97,12 @@ impl Actor for EventBusClient {
 
     fn started(&mut self, ctx: &mut Context<Self>) {
         let input = InputMessage {
-            meta: Meta {
-                channel: "".to_string(),
-                ts: Utc::now(),
-            },
+            meta: Meta::default(),
             msg: Input::Connect {
-                name: "auctioneer".to_string(),
+                name: self.id.to_string(),
             },
         };
-        self.0
+        self.sink
             .write(Message::Text(serde_json::to_string(&input).unwrap()))
             .unwrap();
         // start heartbeats otherwise server will disconnect after 10 seconds
@@ -102,7 +117,7 @@ impl Actor for EventBusClient {
 impl EventBusClient {
     fn hb(&self, ctx: &mut Context<Self>) {
         ctx.run_later(Duration::new(1, 0), |act, ctx| {
-            act.0.write(Message::Ping(Bytes::from_static(b""))).unwrap();
+            act.sink.write(Message::Ping(Bytes::from_static(b""))).unwrap();
             act.hb(ctx);
 
             // client should also check for a timeout here, similar to the
@@ -116,7 +131,7 @@ impl Handler<ClientCommand> for EventBusClient {
     type Result = ();
 
     fn handle(&mut self, msg: ClientCommand, _ctx: &mut Context<Self>) {
-        self.0.write(Message::Text(msg.0)).unwrap();
+        self.sink.write(Message::Text(msg.0)).unwrap();
     }
 }
 

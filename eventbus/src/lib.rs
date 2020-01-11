@@ -21,6 +21,14 @@ fn epoch() -> DateTime<Utc> {
 }
 
 /**
+ * Default function for the deserialization of an empty channel, will just create an empty string
+ */
+
+fn default_channel() -> String {
+    return "".to_owned();
+}
+
+/**
  * The `Meta` struct contains the necessary metadata about a message which is being sent over the
  * wire
  *
@@ -29,6 +37,7 @@ fn epoch() -> DateTime<Utc> {
 #[derive(Serialize, Deserialize, Debug, Message)]
 #[rtype(result = "()")]
 pub struct Meta {
+    #[serde(default = "default_channel")]
     pub channel: String,
     #[serde(default = "epoch")]
     pub ts: DateTime<Utc>,
@@ -119,4 +128,30 @@ pub enum Input {
 pub struct InputMessage {
     pub msg: Input,
     pub meta: Meta,
+}
+
+/**
+ * The Default trait for `Meta` will create a functionally empty Meta struct
+ */
+impl Default for Meta {
+    fn default() -> Meta {
+        Meta {
+            channel: default_channel(),
+            ts: epoch(),
+        }
+    }
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use chrono::Utc;
+
+    #[test]
+    fn test_default_for_meta() {
+        let m = Meta::default();
+        assert_eq!(m.channel, "");
+        assert!(m.ts < Utc::now());
+    }
 }
