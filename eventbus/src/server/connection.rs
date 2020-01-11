@@ -12,7 +12,6 @@ use serde_json;
 use std::sync::Arc;
 
 use crate::*;
-use otto_eventbus::*;
 
 /*
  * Define the Websocket Actor needed for Actix
@@ -171,5 +170,4 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WSClient {
 
 #[cfg(test)]
 mod test {
-    use super::*;
 }
