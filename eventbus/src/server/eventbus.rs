@@ -18,6 +18,33 @@ use crate::*;
  */
 type ClientId = Addr<connection::WSClient>;
 
+/**
+ * The Channel struct is used as an internal representation of each channel that
+ * the eventbus knows about.
+ *
+ * Channels may be either stateless or stateful, with the ladder implying persistence
+ * guarantees, depending on the eventbus' backing implementation.
+ */
+#[derive(Clone, Debug, Eq)]
+pub struct Channel {
+    pub name: String,
+    pub stateful: bool,
+}
+
+/**
+ * The CreateChannel message is only meant to be used by internal components of
+ * the eventbus.
+ *
+ * It is used primarily for creating new channels on-demand, such as those needed
+ * for new client inboxes
+ */
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct CreateChannel {
+    pub channel: Channel,
+}
+
+
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Subscribe {
@@ -39,23 +66,17 @@ pub struct Unsubscribe {
 }
 
 /**
- * The Channel struct is used as an internal representation of each channel that
- * the eventbus knows about.
- *
- * Channels may be either stateless or stateful, with the ladder implying persistence
- * guarantees, depending on the eventbus' backing implementation.
+ * Implementation of the Hash trait for Channel ensures that it can be placed in a HashSet
  */
-#[derive(Debug, Eq)]
-pub struct Channel {
-    name: String,
-    stateful: bool,
-}
-
 impl Hash for Channel {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.name.hash(state);
     }
 }
+
+/**
+ * Implementation of PartialEq trait for Channel ensures that it can be placed in a HashSet
+ */
 impl PartialEq for Channel {
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name
@@ -70,6 +91,10 @@ pub struct EventBus {
     channels: HashMap<Channel, HashSet<ClientId>>,
 }
 
+/**
+ *
+ * The Actor trait for the Eventbus allows it to act as an actor in the actix system
+ */
 impl Actor for EventBus {
     type Context = Context<Self>;
 
@@ -107,16 +132,26 @@ impl EventBus {
     }
 }
 
+impl Handler<CreateChannel> for EventBus {
+    type Result = ();
+
+    fn handle(&mut self, create: CreateChannel, _: &mut Context<Self>) {
+        self.channels.insert(create.channel, HashSet::new());
+    }
+}
+
 impl Handler<Subscribe> for EventBus {
     type Result = ();
 
     fn handle(&mut self, msg: Subscribe, _: &mut Context<Self>) {
+        info!("Subscribing client to {}", msg.to);
         // The stateful field doesn't matter here because the hashing on the
         // HashMap only applies to the name of the channel
         let ch = Channel {
             name: msg.to,
             stateful: false,
         };
+
         if self.channels.contains_key(&ch) {
             match self.channels.get_mut(&ch) {
                 Some(set) => {
@@ -140,6 +175,7 @@ impl Handler<Event> for EventBus {
             name: ev.channel.to_string(),
             stateful: false,
         };
+
         if self.channels.contains_key(&ch) {
             if let Some(clients) = self.channels.get(&ch) {
                 /*
@@ -160,5 +196,20 @@ impl Handler<Event> for EventBus {
         } else {
             error!("Received an event for a non-existent channel: {}", ch.name);
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_with_channels_empty() {
+        let _bus = EventBus::with_channels(vec![], vec![]);
+    }
+
+    #[test]
+    fn test_with_channels_stateless() {
+        let _bus = EventBus::with_channels(vec![String::from("test")], vec![]);
     }
 }

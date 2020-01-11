@@ -72,6 +72,15 @@ pub struct OutputMessage {
 #[rtype(result = "()")]
 pub enum Input {
     /**
+     * A Connect message must be sent for the client to start receiving messages
+     *
+     * This message instructs the eventbus to subscribe the client to the "all"
+     * channel and its own private inbox channel
+     */
+    Connect {
+        name: String,
+    },
+    /**
      * A Subscribe message must be sent for each channel the client wishes to subscribe to.
      *
      * These subscriptions are currently NOT durable. Once the client disconnects, subscriptions

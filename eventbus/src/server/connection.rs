@@ -6,7 +6,7 @@
 use actix::*;
 use actix_web_actors::ws;
 use chrono::prelude::Utc;
-use log::{error, info};
+use log::{error, info, trace};
 use serde_json;
 
 use std::sync::Arc;
@@ -24,12 +24,55 @@ pub struct WSClient {
     events: Addr<eventbus::EventBus>,
 }
 
+/**
+ * The WSClient is an actor responsible for the stateful behavior of each websocket
+ * connected client
+ */
 impl WSClient {
+    /**
+     * Construct the WSClient with the given EventBus actor to communicate with
+     */
     pub fn new(eb: Addr<eventbus::EventBus>) -> Self {
         Self { events: eb }
     }
 
-    fn handle_text(&self, text: String, ctx: &<WSClient as Actor>::Context) {
+    /**
+     * handle_connect() takes care of the Input::Connect message and will ensure
+     * that the client is connected to the "all" channel as well as its inbox"
+     */
+    fn handle_connect(&self, client_name: String, ctx: &mut <WSClient as Actor>::Context) {
+        self.events.do_send(eventbus::Subscribe {
+            to: "all".to_owned(),
+            addr: ctx.address(),
+        });
+
+        /*
+         * Both of these message sends are creating their own String to represent
+         * the inbox channel.
+         *
+         * This SHOULD be fixed, but will require some more thinking about how
+         * the lifetimes of Channel objects should work
+         */
+
+        self.events.do_send(eventbus::CreateChannel {
+            channel: eventbus::Channel {
+                name: format!("inbox.{}", client_name),
+                stateful: true,
+            },
+        });
+
+        self.events.do_send(eventbus::Subscribe {
+            to: format!("inbox.{}", client_name),
+            addr: ctx.address(),
+        });
+    }
+
+    /**
+     * handle_text handles _all_ incoming messages from the websocket connection,
+     * it is responsible for translating those JSON messages into something the
+     * eventbus can pass around internally
+     */
+    fn handle_text(&self, text: String, ctx: &mut <WSClient as Actor>::Context) {
         let command = serde_json::from_str::<InputMessage>(&text);
 
         match command {
@@ -38,6 +81,11 @@ impl WSClient {
                 match c {
                     InputMessage { msg, meta } => {
                         match msg {
+                            Input::Connect { name } => {
+                                info!("Received connect for client named: {}", name);
+                                self.handle_connect(name, ctx)
+                            },
+
                             Input::Publish { payload } => {
                                 info!("received publish: {:?}", payload);
                                 self.events.do_send(eventbus::Event {
@@ -95,27 +143,13 @@ impl Handler<eventbus::Event> for WSClient {
  */
 impl Actor for WSClient {
     type Context = ws::WebsocketContext<Self>;
-
-    fn started(&mut self, ctx: &mut Self::Context) {
-        let sub = eventbus::Subscribe {
-            to: "all".to_owned(),
-            addr: ctx.address(),
-        };
-        self.events
-            .send(sub)
-            .into_actor(self)
-            .then(|result, _actor, ctx| {
-                match result {
-                    Ok(_) => (),
-                    _ => ctx.stop(),
-                }
-                fut::ready(())
-            })
-            .wait(ctx);
-    }
 }
 
-/// Handler for ws::Message message
+/**
+ * Handler for the ws::Message message for the WSClient actor
+ *
+ * This handler will be called for every message from a websocket client
+ */
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WSClient {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         let msg = match msg {
@@ -125,7 +159,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WSClient {
             }
             Ok(msg) => msg,
         };
-        info!("WebSocket received: {:?}", msg);
+        trace!("WebSocket message received: {:?}", msg);
         match msg {
             ws::Message::Ping(msg) => ctx.pong(&msg),
             ws::Message::Text(text) => self.handle_text(text, ctx),
@@ -133,4 +167,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WSClient {
             _ => (),
         }
     }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
 }
