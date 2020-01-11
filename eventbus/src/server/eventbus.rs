@@ -44,7 +44,6 @@ pub struct CreateChannel {
     pub channel: Channel,
 }
 
-
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Subscribe {

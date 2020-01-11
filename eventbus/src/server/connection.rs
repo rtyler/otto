@@ -84,7 +84,7 @@ impl WSClient {
                             Input::Connect { name } => {
                                 info!("Received connect for client named: {}", name);
                                 self.handle_connect(name, ctx)
-                            },
+                            }
 
                             Input::Publish { payload } => {
                                 info!("received publish: {:?}", payload);

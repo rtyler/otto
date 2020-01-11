@@ -3,8 +3,8 @@
  * server loop that the eventbus uses.
  */
 extern crate actix;
-extern crate actix_web;
 extern crate actix_http;
+extern crate actix_web;
 extern crate config;
 extern crate log;
 extern crate pretty_env_logger;
@@ -159,7 +159,6 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -183,10 +182,10 @@ mod test {
         };
         let wd = web::Data::new(state);
         let srv = test::start(move || {
-                App::new()
-                    .app_data(wd.clone())
-                    .route("/", web::get().to(index))
-            });
+            App::new()
+                .app_data(wd.clone())
+                .route("/", web::get().to(index))
+        });
 
         let req = srv.get("/");
         let mut response = req.send().await.unwrap();
@@ -199,6 +198,9 @@ mod test {
         let matches = re.captures(&buffer).unwrap();
 
         let version = matches.get(1).unwrap();
-        assert_eq!(version.as_str(), format!("v{}", option_env!("CARGO_PKG_VERSION").unwrap_or("unknown")));
+        assert_eq!(
+            version.as_str(),
+            format!("v{}", option_env!("CARGO_PKG_VERSION").unwrap_or("unknown"))
+        );
     }
 }

@@ -77,9 +77,7 @@ pub enum Input {
      * This message instructs the eventbus to subscribe the client to the "all"
      * channel and its own private inbox channel
      */
-    Connect {
-        name: String,
-    },
+    Connect { name: String },
     /**
      * A Subscribe message must be sent for each channel the client wishes to subscribe to.
      *

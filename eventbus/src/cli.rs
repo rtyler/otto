@@ -1,7 +1,6 @@
 /**
  * The CLI is meant to be used for manual testing and verification of the eventbus only.
  */
-
 extern crate rustyline;
 
 use rustyline::error::ReadlineError;
@@ -33,10 +32,10 @@ fn main() {
             Ok(line) => {
                 if line.len() == 0 {
                     let response = socket.read_message();
-                     match response {
+                    match response {
                         Ok(msg) => {
                             println!("{}", msg);
-                        },
+                        }
                         Err(e) => {
                             println!("Failed to read: {}", e);
                         }
@@ -46,24 +45,24 @@ fn main() {
                         return;
                     }
                     match socket.write_message(Message::Text(line)) {
-                        Ok(_) => {},
+                        Ok(_) => {}
                         Err(e) => {
                             println!("Failed to write: {}", e);
                         }
                     }
                 }
-            },
+            }
             Err(ReadlineError::Interrupted) => {
                 // ctrl-C
-                break
-            },
+                break;
+            }
             Err(ReadlineError::Eof) => {
                 // ctrl-D
-                break
-            },
+                break;
+            }
             Err(err) => {
                 println!("Error: {:?}", err);
-                break
+                break;
             }
         }
     }
