@@ -122,7 +122,19 @@ impl Handler<ClientCommand> for EventBusClient {
 impl StreamHandler<Result<Frame, WsProtocolError>> for EventBusClient {
     fn handle(&mut self, msg: Result<Frame, WsProtocolError>, _: &mut Context<Self>) {
         if let Ok(Frame::Text(txt)) = msg {
-            info!("Server: {:?}", txt)
+            /*
+             * We have received _some_ message from the eventbus, let's try to
+             * decode it!
+             */
+            let msg = serde_json::from_slice::<OutputMessage>(&txt);
+            match msg {
+                Ok(msg) => {
+                    info!("Received valid message: {:?}", msg);
+                },
+                Err(e) => {
+                    error!("Received invalid message: {}", e);
+                },
+            }
         }
     }
 
