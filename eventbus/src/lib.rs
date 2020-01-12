@@ -12,6 +12,8 @@ use serde_json::Value;
 
 use std::sync::Arc;
 
+pub mod client;
+
 /**
  * Default function for deserialize/serialize of times, always defaults to 1970-01-01
  */
@@ -141,7 +143,6 @@ impl Default for Meta {
         }
     }
 }
-
 
 #[cfg(test)]
 mod test {
