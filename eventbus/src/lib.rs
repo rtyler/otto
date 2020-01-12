@@ -54,7 +54,10 @@ pub struct Meta {
 #[rtype(result = "()")]
 pub enum Output {
     Heartbeat,
-    Message { payload: Value },
+    Message {
+        #[serde(default)]
+        payload: Value,
+    },
 }
 
 /**

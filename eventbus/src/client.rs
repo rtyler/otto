@@ -45,41 +45,49 @@ impl std::fmt::Debug for EventBusClient {
     }
 }
 
+pub trait EventDispatch<T> {
+    fn dispatch(&self, payload: T);
+}
+
 /**
  * connect will create begin the connection process and start the EventBusClient
  * actor.
  *
  * The caller will need to await in order to get the EventBusClient
  */
-pub async fn connect(ws: &str) -> Addr<EventBusClient> {
-    /*
-     * Creating a awc::Client to handle the first part of our WebSocket client bootstrap
-     */
-    let (response, framed) = Client::new()
-        .ws(ws)
-        .connect()
-        .await
-        .map_err(|e| {
-            error!("Error: {}", e);
-        })
-        .unwrap();
+pub async fn connect(ws: &'static str, id: &'static str) -> Addr<EventBusClient> {
+    let mut backoff = 1;
 
-    info!("{:?}", response);
-    let (sink, stream) = framed.split();
+    loop {
+        let r = Client::new().ws(ws).connect().await;
 
-    EventBusClient::create(|ctx| {
-        EventBusClient::add_stream(stream, ctx);
-        EventBusClient {
-            sink: SinkWrite::new(sink, ctx),
-            id: "auctioneer",
+        match r {
+            Ok((response, framed)) => {
+                let (sink, stream) = framed.split();
+
+                return EventBusClient::create(|ctx| {
+                    EventBusClient::add_stream(stream, ctx);
+                    EventBusClient {
+                        sink: SinkWrite::new(sink, ctx),
+                        id: id,
+                    }
+                });
+            }
+            Err(e) => {
+                error!("Failed establish WebSocket: {}", e);
+                backoff = backoff + backoff;
+                std::thread::sleep(Duration::from_secs(backoff));
+            }
         }
-    })
+    }
 }
 
 impl EventBusClient {
     fn hb(&self, ctx: &mut Context<Self>) {
         ctx.run_later(Duration::new(1, 0), |act, ctx| {
-            act.sink.write(Message::Ping(Bytes::from_static(b""))).unwrap();
+            act.sink
+                .write(Message::Ping(Bytes::from_static(b"")))
+                .unwrap();
             act.hb(ctx);
 
             // client should also check for a timeout here, similar to the
@@ -88,6 +96,7 @@ impl EventBusClient {
     }
 }
 
+//impl Actor<dyn EventDispatch> for EventBusClient {
 impl Actor for EventBusClient {
     type Context = Context<Self>;
 
@@ -157,5 +166,4 @@ impl StreamHandler<Result<Frame, WsProtocolError>> for EventBusClient {
 impl actix::io::WriteHandler<WsProtocolError> for EventBusClient {}
 
 #[cfg(test)]
-mod test {
-}
+mod test {}

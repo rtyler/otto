@@ -11,6 +11,7 @@ use actix_web::{App, HttpResponse, HttpServer};
 use log::debug;
 
 use otto_eventbus::client::*;
+use otto_eventbus::*;
 
 /**
  * The index handler for the root of the Auctioneer web interface
@@ -23,7 +24,7 @@ async fn route_index() -> HttpResponse {
 async fn main() -> std::io::Result<()> {
     pretty_env_logger::init();
 
-    let client = connect("http://127.0.0.1:8000/ws/").await;
+    let client = connect("http://127.0.0.1:8000/ws/", "auctioneer").await;
     debug!("Client created: {:?}", client);
 
     HttpServer::new(move || {
