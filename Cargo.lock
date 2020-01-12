@@ -2000,6 +2000,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "travis-ci"
+version = "0.1.0"
+
+[[package]]
 name = "trust-dns-proto"
 version = "0.18.0-alpha.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

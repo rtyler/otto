@@ -1,0 +1,6 @@
+= Otto Processors
+
+
+Processors in Otto take configuration files, e.g. `.travis-ci.yml`,
+`Jenkinsfile`, and convert them into the internal Otto constructs necessary for
+task execution.

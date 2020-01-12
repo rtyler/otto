@@ -1,0 +1,10 @@
+#
+# This is an example of a _very_ simple .travis-ci.yml file. 
+
+---
+sudo: false
+script:
+  - echo "Hello World"
+  - env
+
+

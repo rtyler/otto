@@ -3,4 +3,5 @@
 members = [
     "auctioneer",
     "eventbus",
+    "processors/travis-ci",
 ]
