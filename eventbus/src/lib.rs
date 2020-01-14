@@ -45,6 +45,18 @@ pub struct Meta {
     pub ts: DateTime<Utc>,
 }
 
+impl Meta {
+    /**
+     * Construct a Meta struct with the current time
+     */
+    pub fn new(channel: String) -> Self {
+        Meta {
+            channel: channel,
+            ts: Utc::now(),
+        }
+    }
+}
+
 /**
  * The Output enums are all meant to capture the types of messages which can be received from the
  * eventbus.
@@ -157,5 +169,11 @@ mod test {
         let m = Meta::default();
         assert_eq!(m.channel, "");
         assert!(m.ts < Utc::now());
+    }
+
+    #[test]
+    fn test_new_meta() {
+        let m = Meta::new("foo".to_string());
+        assert_eq!(m.channel, "foo");
     }
 }

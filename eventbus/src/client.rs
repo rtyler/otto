@@ -35,6 +35,10 @@ pub struct EventBusClient {
     id: &'static str,
 }
 
+#[derive(Debug, Message)]
+#[rtype(result = "()")]
+pub struct Disconnect;
+
 /**
  * Implementation of the Debug trait so that the EventBusClient can be included
  * in logging statements and print each instance's `id`
@@ -43,10 +47,6 @@ impl std::fmt::Debug for EventBusClient {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "EventBusClient<id:{}>", self.id)
     }
-}
-
-pub trait EventDispatch<T> {
-    fn dispatch(&self, payload: T);
 }
 
 /**
@@ -96,7 +96,6 @@ impl EventBusClient {
     }
 }
 
-//impl Actor<dyn EventDispatch> for EventBusClient {
 impl Actor for EventBusClient {
     type Context = Context<Self>;
 
@@ -116,6 +115,24 @@ impl Actor for EventBusClient {
 
     fn stopped(&mut self, _: &mut Context<Self>) {
         info!("Disconnected");
+    }
+}
+
+impl Handler<Disconnect> for EventBusClient {
+    type Result = ();
+
+    fn handle(&mut self, _: Disconnect, ctx: &mut Context<Self>) {
+        ctx.stop()
+    }
+}
+
+impl Handler<InputMessage> for EventBusClient {
+    type Result = ();
+
+    fn handle(&mut self, input: InputMessage, _ctx: &mut Context<Self>) {
+        self.sink
+            .write(Message::Text(serde_json::to_string(&input).unwrap()))
+            .unwrap();
     }
 }
 

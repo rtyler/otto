@@ -1,9 +1,13 @@
+extern crate actix;
 extern crate clap;
+extern crate pretty_env_logger;
 extern crate serde;
 extern crate serde_yaml;
 extern crate uuid;
 
-use clap::{Arg, App};
+use actix::*;
+use clap::{App, Arg};
+use log::*;
 use serde::{Deserialize, Serialize};
 use serde_yaml::Value;
 use uuid::Uuid;
@@ -11,31 +15,35 @@ use uuid::Uuid;
 use std::collections::HashMap;
 use std::fs;
 
+use otto_eventbus::client::*;
+use otto_eventbus::*;
+
 fn main() {
+    pretty_env_logger::init();
+
     let matches = App::new("travis processor")
-                          .arg(Arg::with_name("filename")
-                               .short("f")
-                               .long("filename")
-                               .value_name("FILE")
-                               .required(true)
-                               .help("File")
-                               .takes_value(true))
-                          .get_matches();
+        .arg(
+            Arg::with_name("filename")
+                .short("f")
+                .long("filename")
+                .value_name("FILE")
+                .required(true)
+                .help("File")
+                .takes_value(true),
+        )
+        .get_matches();
     let filename = matches.value_of("filename").unwrap_or(".travis-ci.yml");
     let contents = fs::read_to_string(filename).expect("Something went wrong reading the file");
     let pipeline = serde_yaml::from_str::<TravisConfig>(&contents)
         .expect("Failed to deserialize the yaml file into a TravisConfig");
 
-    let mut output = PipelineManifest {
-        tasks: vec![],
-    };
+    let mut output = PipelineManifest { tasks: vec![] };
 
     let mut caps = HashMap::new();
 
     if pipeline.sudo {
         caps.insert("docker_run".to_string(), Value::Bool(false));
-    }
-    else {
+    } else {
         caps.insert("docker_run".to_string(), Value::Bool(true));
     }
 
@@ -55,14 +63,16 @@ fn main() {
     for script in pipeline.script.iter() {
         let mut data = HashMap::new();
         data.insert("script".to_string(), Value::String(script.to_string()));
-        data.insert("timeout_s".to_string(), Value::Number(serde_yaml::Number::from(300)));
+        data.insert(
+            "timeout_s".to_string(),
+            Value::Number(serde_yaml::Number::from(300)),
+        );
         data.insert("env".to_string(), Value::Null);
         task.ops.push(Op {
             id: Uuid::new_v4().to_string(),
             op_type: OpType::RunProcess,
-            data
-            });
-
+            data,
+        });
     }
 
     task.ops.push(Op {
@@ -74,7 +84,33 @@ fn main() {
 
     output.tasks.push(task);
 
-    println!("{}", serde_yaml::to_string(&output).expect("Failed to serialize manifest"));
+    info!(
+        "{}",
+        serde_yaml::to_string(&output).expect("Failed to serialize manifest")
+    );
+
+    let sys = System::new("name");
+    Arbiter::spawn(async {
+        let client = connect("http://127.0.0.1:8000/ws/", "processor-travis-ci").await;
+        info!("Client created: {:?}", client);
+
+        let input = InputMessage {
+            meta: Meta::new("tasks.for_auction".to_string()),
+            msg: Input::Publish {
+                payload: serde_json::to_value(output).unwrap(),
+            },
+        };
+        client.do_send(input);
+
+        /*
+         * Disconnecting as soon as we send Input doesn't work well, because the client seems to
+         * terminate before it can actually send messages over.
+         */
+        //client.do_send(Disconnect {});
+        //info!("Disconnected");
+        //System::current().stop();
+    });
+    sys.run().unwrap();
 }
 
 #[derive(Deserialize, Debug, Serialize)]
