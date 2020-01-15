@@ -41,6 +41,7 @@ fn main() {
                         }
                     }
                 } else {
+                    rl.add_history_entry(line.as_str());
                     if line == "quit" {
                         return;
                     }
