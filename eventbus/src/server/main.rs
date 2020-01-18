@@ -6,6 +6,7 @@
  * server loop that the eventbus uses.
  */
 extern crate config;
+extern crate futures;
 extern crate log;
 extern crate pretty_env_logger;
 #[macro_use]
@@ -14,10 +15,12 @@ extern crate rust_embed;
 extern crate serde_json;
 
 use chrono::Local;
+use futures::{FutureExt, StreamExt};
 use handlebars::Handlebars;
 use log::{debug, error, info, trace};
 use serde::Serialize;
 use warp::Filter;
+use warp::reject::Rejection;
 
 use std::convert::Infallible;
 use std::sync::Arc;
@@ -25,8 +28,6 @@ use std::thread;
 use std::time::Duration;
 
 use otto_eventbus::*;
-
-pub mod eventbus;
 
 /**
  * Templates is a rust-embed struct which will contain all the files embedded from the
@@ -44,7 +45,7 @@ struct Templates;
 #[folder = "$CARGO_MANIFEST_DIR/static"]
 struct Static;
 
-async fn index(hb: Arc<Handlebars>) -> Result<impl warp::Reply, Infallible> {
+async fn index(hb: Arc<Handlebars>) -> Result<impl warp::Reply, Rejection> {
     let data = json!({
         "version" : option_env!("CARGO_PKG_VERSION").unwrap_or("unknown"),
     });
@@ -97,21 +98,28 @@ fn load_settings() -> config::Config {
     return settings;
 }
 
-#[tokio::main]
-async fn main() {
-    pretty_env_logger::init();
-    let mut hb = Handlebars::new();
-
+fn load_templates(hb: &mut Handlebars) {
     for t in Templates::iter() {
+        if ! t.ends_with(".html") {
+            continue;
+        }
+
         let template = Templates::get(&t)
             .expect("Somehow we iterated Templates but didn't get one? How is this possible!");
         let buf = std::str::from_utf8(template.as_ref())
             .expect(format!("Unable to convert {} to a string buffer", &t).as_str());
         hb.register_template_string(&t, buf)
             .expect(format!("Failed to register {} as a Handlebars template", &t).as_str());
+
         info!("Registered handlebars template: {}", &t);
     }
+}
 
+#[tokio::main]
+async fn main() {
+    pretty_env_logger::init();
+    let mut hb = Handlebars::new();
+    load_templates(&mut hb);
     let hb = Arc::new(hb);
     let _settings = load_settings();
 
