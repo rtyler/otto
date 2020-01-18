@@ -14,7 +14,8 @@ path = "src/cli/main.rs"
 
 [dependencies]
 warp = { version = "~0.2.0", features = ["websocket"] }
-tokio = { version = "~0.2", features = ["full"] }
+tokio = { version = "~0.2.0", features = ["full"] }
+futures = { version = "~0.3.0", default-features = false, features = ["alloc"] }
 
 handlebars = "~2.0.2"
 # Need to embed static resources into the binary for serving at runtime
