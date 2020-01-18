@@ -15,7 +15,7 @@ extern crate serde_json;
 
 use chrono::Local;
 use handlebars::Handlebars;
-use log::{error, info, trace};
+use log::{debug, error, info, trace};
 use serde::Serialize;
 use warp::Filter;
 
@@ -58,8 +58,43 @@ async fn index(hb: Arc<Handlebars>) -> Result<impl warp::Reply, Infallible> {
     }
 }
 
+/**
+ * Return a filter which will proppogate a Handlebars Arc
+ */
 fn with_render(hb: Arc<Handlebars>) -> impl Filter<Extract = (Arc<Handlebars>,), Error=Infallible> + Clone {
     warp::any().map(move || hb.clone())
+}
+
+/**
+ * Load the hierarchy of settings and return the configuration object
+ */
+fn load_settings() -> config::Config {
+    let embedded_settings = Static::get("eventbus.yml").expect("Failed to load built-in/static settings");
+    let defaults = std::str::from_utf8(embedded_settings.as_ref()).unwrap();
+    /*
+     * Load our settings in the priority order of:
+     *
+     *   - built-in defaults
+     *   - yaml file
+     *   - environment variables
+     *
+     * Each layer overriding properties from the last
+     */
+    let mut settings = config::Config::default();
+    settings
+        .merge(config::File::from_str(defaults, config::FileFormat::Yaml))
+        .unwrap()
+        .merge(config::File::with_name("eventbus").required(false))
+        .unwrap()
+        .merge(config::Environment::with_prefix("OTTO_EB"))
+        .unwrap();
+
+    let motd: String = settings
+        .get("motd")
+        .expect("Configuration had no `motd` setting");
+
+    debug!("configured motd: {}", motd);
+    return settings;
 }
 
 #[tokio::main]
@@ -78,43 +113,12 @@ async fn main() {
     }
 
     let hb = Arc::new(hb);
+    let _settings = load_settings();
 
     let routes = warp::any().and(with_render(hb)).and_then(index);
     warp::serve(routes).run(([127, 0, 0, 1], 8000)).await;
 
     /*
-    let embedded_settings = Static::get("eventbus.yml").unwrap();
-    let defaults = std::str::from_utf8(embedded_settings.as_ref()).unwrap();
-    /*
-     * Load our settings in the priority order of:
-     *
-     *   - built-in defaults
-     *   - yaml file
-     *   - environment variables
-     *
-     * Each layer overriding properties from the last
-     */
-    let mut settings = config::Config::default();
-    settings
-        .merge(config::File::from_str(defaults, config::FileFormat::Yaml))
-        .unwrap()
-        .merge(config::File::with_name("eventbus"))
-        .unwrap()
-        .merge(config::Environment::with_prefix("OTTO_EB"))
-        .unwrap();
-
-    let motd: String = settings
-        .get("motd")
-        .expect("Configuration had no `motd` setting");
-
-    info!("motd: {}", motd);
-
-    let stateless = settings
-        .get::<Vec<String>>("channels.stateless")
-        .expect("Failed to load `channels.stateless` configuration, which must be an array");
-    let stateful = settings
-        .get::<Vec<String>>("channels.stateful")
-        .expect("Failed to load `channels.stateful` configuration, which must be an array");
 
     let events = eventbus::EventBus::with_channels(stateless, stateful).start();
     let bus = events.clone();
@@ -141,6 +145,15 @@ mod tests {
     use super::*;
 
     use regex::Regex;
+
+    #[test]
+    fn test_load_settings() {
+        let c = load_settings();
+        let motd: String = c.get("motd").unwrap();
+        let pulse: u64 = c.get("heartbeat").unwrap();
+        assert!(motd.len() > 0);
+        assert_eq!(pulse, 60);
+    }
 
     /**
      * This test just ensures that the server can come online properly and render its index handler
