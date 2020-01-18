@@ -66,7 +66,7 @@
     <script type="text/javascript">
         <!--
         function connectSocket() {
-            const sock = new WebSocket('ws://localhost:8000/ws/');
+            const sock = new WebSocket('ws://localhost:8000/ws');
             sock.onopen = (event) => console.log('WebSocket connected');
             sock.onerror = (err) => {
                 console.error('WebSocket error, reconnecting..');

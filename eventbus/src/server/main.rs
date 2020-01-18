@@ -123,29 +123,25 @@ async fn main() {
     let hb = Arc::new(hb);
     let _settings = load_settings();
 
-    let routes = warp::any().and(with_render(hb)).and_then(index);
+    let index = warp::path::end().and(with_render(hb)).and_then(index);
+    let ws = warp::path("ws")
+        // The `ws()` filter will prepare the Websocket handshake.
+        .and(warp::ws())
+        .map(|ws: warp::ws::Ws| {
+            // And then our closure will be called when it completes...
+            ws.on_upgrade(|websocket| {
+                // Just echo all messages back...
+                let (tx, rx) = websocket.split();
+                rx.forward(tx).map(|result| {
+                    if let Err(e) = result {
+                        error!("websocket error: {:?}", e);
+                    }
+                })
+            })
+        });
+    let routes = warp::get().and(index.or(ws));
+
     warp::serve(routes).run(([127, 0, 0, 1], 8000)).await;
-
-    /*
-
-    let events = eventbus::EventBus::with_channels(stateless, stateful).start();
-    let bus = events.clone();
-
-    thread::spawn(move || loop {
-        let pulse = format!("heartbeat {}", Local::now());
-        trace!("sending pulse: {}", pulse);
-        let event = eventbus::Event {
-            e: Arc::new(Output::Heartbeat),
-            channel: Arc::new("all".to_string()),
-        };
-        bus.do_send(event);
-        let seconds = settings
-            .get("heartbeat")
-            .expect("Invalid `heartbeat` configuration, must be an integer");
-        thread::sleep(Duration::from_secs(seconds));
-    });
-    */
-
 }
 
 #[cfg(test)]
