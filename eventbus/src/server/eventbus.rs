@@ -1,7 +1,6 @@
 /**
  * The bus module contains the actual eventbus actor
  */
-use actix::*;
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
@@ -10,13 +9,7 @@ use log::{error, info};
 
 use crate::*;
 
-/*
- * NOTE: I would like for the bus module not to know anything at all about the clients.
- *
- * At the moment I believe that would require a bit more type and generics surgery
- * than I am currently willing to expend on the problem
- */
-type ClientId = Addr<connection::WSClient>;
+type ClientId = u64;
 
 /**
  * The Channel struct is used as an internal representation of each channel that
@@ -38,28 +31,20 @@ pub struct Channel {
  * It is used primarily for creating new channels on-demand, such as those needed
  * for new client inboxes
  */
-#[derive(Message)]
-#[rtype(result = "()")]
 pub struct CreateChannel {
     pub channel: Channel,
 }
 
-#[derive(Message)]
-#[rtype(result = "()")]
 pub struct Subscribe {
     pub to: String,
     pub addr: ClientId,
 }
 
-#[derive(Message, Clone)]
-#[rtype(result = "()")]
 pub struct Event {
     pub e: Arc<crate::Output>,
     pub channel: Arc<String>,
 }
 
-#[derive(Message)]
-#[rtype(usize)]
 pub struct Unsubscribe {
     pub addr: ClientId,
 }
@@ -88,18 +73,6 @@ impl PartialEq for Channel {
  */
 pub struct EventBus {
     channels: HashMap<Channel, HashSet<ClientId>>,
-}
-
-/**
- *
- * The Actor trait for the Eventbus allows it to act as an actor in the actix system
- */
-impl Actor for EventBus {
-    type Context = Context<Self>;
-
-    fn started(&mut self, _ctx: &mut Self::Context) {
-        info!("Starting Eventbus with channels {:?}", self.channels.keys());
-    }
 }
 
 impl EventBus {
@@ -131,6 +104,7 @@ impl EventBus {
     }
 }
 
+/*
 impl Handler<CreateChannel> for EventBus {
     type Result = ();
 
@@ -197,6 +171,7 @@ impl Handler<Event> for EventBus {
         }
     }
 }
+*/
 
 #[cfg(test)]
 mod test {

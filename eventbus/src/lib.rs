@@ -1,3 +1,6 @@
+#![allow(unused_imports)]
+#![allow(dead_code)]
+
 /**
  * The msg module contains common message definitions for serialization and deserialization of data
  * across the eventbus
@@ -5,7 +8,6 @@
 extern crate serde;
 extern crate serde_json;
 
-use actix::Message;
 use chrono::prelude::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -36,8 +38,7 @@ fn default_channel() -> String {
  *
  * It is not intended to carry message contents itself, but rather information about the message
  */
-#[derive(Serialize, Deserialize, Debug, Message)]
-#[rtype(result = "()")]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Meta {
     #[serde(default = "default_channel")]
     pub channel: String,
@@ -61,9 +62,8 @@ impl Meta {
  * The Output enums are all meant to capture the types of messages which can be received from the
  * eventbus.
  */
-#[derive(Serialize, Deserialize, Debug, Message)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type", rename_all = "camelCase")]
-#[rtype(result = "()")]
 pub enum Output {
     Heartbeat,
     Message {
@@ -81,8 +81,7 @@ pub enum Output {
  * Clients should be prepared to handle each of these messages coming over the channels they
  * subscribe to.
  */
-#[derive(Serialize, Deserialize, Debug, Message)]
-#[rtype(result = "()")]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct OutputMessage {
     pub msg: Arc<Output>,
     pub meta: Meta,
@@ -93,9 +92,8 @@ pub struct OutputMessage {
  * as "inputs."
  *
  */
-#[derive(Serialize, Deserialize, Debug, Message)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type", rename_all = "camelCase")]
-#[rtype(result = "()")]
 pub enum Input {
     /**
      * A Connect message must be sent for the client to start receiving messages
@@ -140,8 +138,7 @@ pub enum Input {
  * This struct should never be constructed except by client websocket handlers just prior to
  * writing to an active websocket
  */
-#[derive(Serialize, Deserialize, Debug, Message)]
-#[rtype(result = "()")]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct InputMessage {
     pub msg: Input,
     pub meta: Meta,

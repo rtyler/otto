@@ -1,6 +1,5 @@
-/**!
+/*
  * This module is the eventbus client
- */
 use actix::io::SinkWrite;
 use actix::*;
 use actix_codec::Framed;
@@ -184,3 +183,4 @@ impl actix::io::WriteHandler<WsProtocolError> for EventBusClient {}
 
 #[cfg(test)]
 mod test {}
+*/

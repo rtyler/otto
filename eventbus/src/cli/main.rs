@@ -1,6 +1,6 @@
-/**
+fn main() {}
+/*
  * The CLI is meant to be used for manual testing and verification of the eventbus only.
- */
 extern crate rustyline;
 
 use rustyline::error::ReadlineError;
@@ -69,3 +69,4 @@ fn main() {
     }
     rl.save_history(history).unwrap();
 }
+*/

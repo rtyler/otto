@@ -1,11 +1,9 @@
-extern crate actix;
 extern crate clap;
 extern crate pretty_env_logger;
 extern crate serde;
 extern crate serde_yaml;
 extern crate uuid;
 
-use actix::*;
 use clap::{App, Arg};
 use log::*;
 use serde::{Deserialize, Serialize};
@@ -89,6 +87,7 @@ fn main() {
         serde_yaml::to_string(&output).expect("Failed to serialize manifest")
     );
 
+    /*
     let sys = System::new("name");
     Arbiter::spawn(async {
         let client = connect("http://127.0.0.1:8000/ws/", "processor-travis-ci").await;
@@ -111,6 +110,7 @@ fn main() {
         //System::current().stop();
     });
     sys.run().unwrap();
+    */
 }
 
 #[derive(Deserialize, Debug, Serialize)]
