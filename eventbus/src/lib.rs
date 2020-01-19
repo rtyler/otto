@@ -14,30 +14,17 @@ use tokio::sync::broadcast::{channel, Receiver, Sender};
 /**
  * A channel is named and typed with the type of messages it should be carrying
  */
-struct ChannelV<T> {
+struct Channel {
     name: String,
-    send: Sender<T>,
-    recv: Receiver<T>,
+    send: Sender<Message>,
+    recv: Receiver<Message>,
 }
 
-struct StringChannel {
-    name: String,
-    send: Sender<String>,
-    recv: Receiver<String>,
-}
-struct SM(String);
-impl Message for SM {}
+struct Message {}
 
-impl Channel<SM> for StringChannel {
-    fn send(&self, msg: SM) {}
-    fn recv(&self, msg: SM) {}
-}
-
-trait Message {}
-
-trait Channel<T> {
-    fn send(&self, msg: impl Message);
-    fn recv(&self, msg: impl Message);
+impl Channel {
+    fn send(&self, msg: Message) {}
+    fn recv(&self, msg: Message) {}
 }
 
 struct Bus {
@@ -46,7 +33,7 @@ struct Bus {
      * allow the Bus to handle different channels with different message payloads
      * while still taking advantage of compile-time checks
      */
-    channels: HashMap<String, Box<Channel<Message>>>,
+    channels: HashMap<String, Channel>,
 }
 
 #[cfg(test)]
