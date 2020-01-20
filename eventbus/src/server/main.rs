@@ -16,12 +16,13 @@ extern crate serde_json;
 
 use chrono::Local;
 use futures::future;
-use futures::{FutureExt, StreamExt};
+use futures::{FutureExt, StreamExt, SinkExt};
 use handlebars::Handlebars;
 use log::{debug, error, info, trace};
 use serde::Serialize;
 use warp::Filter;
 use warp::reject::Rejection;
+use warp::ws::{Message, WebSocket};
 
 use std::convert::Infallible;
 use std::sync::Arc;
@@ -156,17 +157,16 @@ async fn main() {
     let b = Arc::new(bus);
     let b1 = b.clone();
     let b2 = b.clone();
+
     thread::spawn(move || loop {
         let ts = Local::now();
         let pulse = format!("heartbeat {}", ts);
         info!("sending pulse: {}", pulse);
-        let e = Event { id: ts.timestamp(), };
+        let hb = msg::Output::Heartbeat {};
+        let e = Event {
+            m: Arc::new(hb),
+        };
         b1.send(&"all".to_string(), Arc::new(e));
-        //let event = eventbus::Event {
-        //    e: Arc::new(Output::Heartbeat),
-        //    channel: Arc::new("all".to_string()),
-        //};
-        //bus.do_send(event);
         thread::sleep(Duration::from_secs(seconds));
     });
 
@@ -179,7 +179,7 @@ async fn main() {
             // And then our closure will be called when it completes...
             ws.on_upgrade(move  |websocket| {
                 // Just echo all messages back...
-                let (tx, rx) = websocket.split();
+                let (mut tx, rx) = websocket.split();
                 //if let Ok(bus_rx) = b3.receiver_for(&"all".to_string()) {
                 //    bus_rx.forward(tx).map(|result| {
                 //        info!("forwarded: {}", result);
@@ -189,8 +189,20 @@ async fn main() {
                 let mut erx = b3.receiver_for(&"all".to_string()).unwrap();
                 tokio::task::spawn(async move {
                     loop {
-                        let t = erx.recv().await;
-                        info!("t: {:?}", t);
+                        if let Ok(bus_event) = erx.recv().await {
+                            let meta = msg::Meta::new("all".to_string());
+
+                            let em = msg::OutputMessage {
+                                meta,
+                                msg: bus_event.m.clone(),
+                            };
+                            info!("dispatching output message: {:?}", em);
+
+                            tx.send(Message::text(serde_json::to_string(&em).unwrap())).await;
+                        }
+                        else {
+                            error!("Failed to access a bus event in the websocket client loop");
+                        }
                     }
                 });
                 tokio::task::spawn(rx.for_each(|item| {

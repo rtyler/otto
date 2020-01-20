@@ -5,7 +5,7 @@
 extern crate serde;
 extern crate serde_json;
 
-use chrono::prelude::{DateTime, Utc};
+use chrono::prelude::{DateTime, Local, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -32,7 +32,7 @@ fn default_channel() -> String {
  *
  * It is not intended to carry message contents itself, but rather information about the message
  */
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Meta {
     #[serde(default = "default_channel")]
     pub channel: String,
@@ -56,14 +56,24 @@ impl Meta {
  * The Output enums are all meant to capture the types of messages which can be received from the
  * eventbus.
  */
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum Output {
+    Empty {
+        id: i64,
+    },
     Heartbeat,
     Message {
         #[serde(default)]
         payload: Value,
     },
+}
+
+impl Default for Output {
+    fn default() -> Output {
+        let ts = Local::now();
+        Output::Empty { id: ts.timestamp() }
+    }
 }
 
 /**

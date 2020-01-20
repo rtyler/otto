@@ -18,9 +18,16 @@ use std::sync::Arc;
  */
 const MAX_CHANNEL_QUEUE: usize = 16;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Event {
-    pub id: i64,
+    pub m: Arc<msg::Output>,
+}
+
+impl Default for Event {
+    fn default() -> Event {
+        let md = msg::Output::default();
+        Event { m: Arc::new(md) }
+    }
 }
 
 type SendableEvent = Arc<Event>;
@@ -155,11 +162,11 @@ mod tests {
         b.stateless(vec!["test".to_string()]);
 
         if let Ok(mut rx) = b.receiver_for(&ch) {
-            let e = Event { id: 1 };
+            let e = Event::default();
             let p = Arc::new(e);
             if let Ok(value) = b.send(&ch, p.clone()) {
                 let value = rx.try_recv().unwrap();
-                assert_eq!(p.id, value.id);
+            //assert_eq!(p.m.id, value.m.id);
             } else {
                 assert!(false);
             }
