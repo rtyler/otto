@@ -67,7 +67,17 @@
         <!--
         function connectSocket() {
             const sock = new WebSocket('ws://localhost:8000/ws');
-            sock.onopen = (event) => console.log('WebSocket connected');
+            sock.onopen = (event) => {
+                console.log('WebSocket connected');
+                const m = {
+                    meta: {
+                    },
+                    msg: {
+                        name: "eventbus-homepage",
+                    },
+                };
+                sock.send(JSON.stringify(m));
+            };
             sock.onerror = (err) => {
                 console.error('WebSocket error, reconnecting..');
                 sock.close();

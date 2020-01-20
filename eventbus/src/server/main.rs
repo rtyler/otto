@@ -15,6 +15,7 @@ extern crate rust_embed;
 extern crate serde_json;
 
 use chrono::Local;
+use futures::future;
 use futures::{FutureExt, StreamExt};
 use handlebars::Handlebars;
 use log::{debug, error, info, trace};
@@ -115,28 +116,88 @@ fn load_templates(hb: &mut Handlebars) {
     }
 }
 
+/*
+ * TODO: This is an idea for later
+trait WarpRouter {
+    fn routes() -> String;
+}
+
+struct Router;
+impl WarpRouter for Router {
+    fn routes() -> String {
+        // TODO: Refactor the routes out of the main so that the warp main can be re-used across
+        // otto services
+        "".to_string()
+    }
+}
+*/
+
 #[tokio::main]
 async fn main() {
     pretty_env_logger::init();
+    let settings = load_settings();
+
     let mut hb = Handlebars::new();
     load_templates(&mut hb);
     let hb = Arc::new(hb);
-    let _settings = load_settings();
+
+    let mut bus = Bus::new();
+    bus.stateless(settings
+        .get::<Vec<String>>("channels.stateless")
+            .expect("Failed to load `channels.stateless`"));
+    bus.stateful(settings
+        .get::<Vec<String>>("channels.stateful")
+            .expect("Failed to load `channels.stateful`"));
+
+    let seconds = settings
+        .get("heartbeat")
+        .expect("Invalid `heartbeat` configuration, must be an integer");
+
+    let b = Arc::new(bus);
+    let b1 = b.clone();
+    let b2 = b.clone();
+    thread::spawn(move || loop {
+        let ts = Local::now();
+        let pulse = format!("heartbeat {}", ts);
+        info!("sending pulse: {}", pulse);
+        let e = Event { id: ts.timestamp(), };
+        b1.send(&"all".to_string(), Arc::new(e));
+        //let event = eventbus::Event {
+        //    e: Arc::new(Output::Heartbeat),
+        //    channel: Arc::new("all".to_string()),
+        //};
+        //bus.do_send(event);
+        thread::sleep(Duration::from_secs(seconds));
+    });
 
     let index = warp::path::end().and(with_render(hb)).and_then(index);
     let ws = warp::path("ws")
         // The `ws()` filter will prepare the Websocket handshake.
         .and(warp::ws())
-        .map(|ws: warp::ws::Ws| {
+        .map(move |ws: warp::ws::Ws| {
+            let b3 = b2.clone();
             // And then our closure will be called when it completes...
-            ws.on_upgrade(|websocket| {
+            ws.on_upgrade(move  |websocket| {
                 // Just echo all messages back...
                 let (tx, rx) = websocket.split();
-                rx.forward(tx).map(|result| {
-                    if let Err(e) = result {
-                        error!("websocket error: {:?}", e);
+                //if let Ok(bus_rx) = b3.receiver_for(&"all".to_string()) {
+                //    bus_rx.forward(tx).map(|result| {
+                //        info!("forwarded: {}", result);
+                //    });
+                //    info!("hi");
+                //}
+                let mut erx = b3.receiver_for(&"all".to_string()).unwrap();
+                tokio::task::spawn(async move {
+                    loop {
+                        let t = erx.recv().await;
+                        info!("t: {:?}", t);
                     }
-                })
+                });
+                tokio::task::spawn(rx.for_each(|item| {
+                    info!("Item received: {:?}", item);
+                    future::ready(())
+                }));
+                future::ready(())
             })
         });
     let routes = warp::get().and(index.or(ws));
@@ -148,8 +209,6 @@ async fn main() {
 mod tests {
     use super::*;
 
-    use regex::Regex;
-
     #[test]
     fn test_load_settings() {
         let c = load_settings();
@@ -157,45 +216,5 @@ mod tests {
         let pulse: u64 = c.get("heartbeat").unwrap();
         assert!(motd.len() > 0);
         assert_eq!(pulse, 60);
-    }
-
-    /**
-     * This test just ensures that the server can come online properly and render its index handler
-     * properly.
-     *
-     * It doesn't really test much useful, but does ensure that critical failures in the eventbus
-     * can sometimes be prevented
-     */
-    #[tokio::test]
-    async fn test_basic_http() {
-        /*
-        let events = eventbus::EventBus::with_channels(vec![], vec![]).start();
-        let state = AppState {
-            bus: events,
-            hb: Arc::new(Handlebars::new()),
-        };
-        let wd = web::Data::new(state);
-        let srv = test::start(move || {
-            App::new()
-                .app_data(wd.clone())
-                .route("/", web::get().to(index))
-        });
-
-        let req = srv.get("/");
-        let mut response = req.send().await.unwrap();
-        assert!(response.status().is_success());
-
-        let re = Regex::new(r"(v\d\.\d\.\d)").unwrap();
-
-        let body = response.body().await.unwrap();
-        let buffer = String::from_utf8(body.to_vec()).unwrap();
-        let matches = re.captures(&buffer).unwrap();
-
-        let version = matches.get(1).unwrap();
-        assert_eq!(
-            version.as_str(),
-            format!("v{}", option_env!("CARGO_PKG_VERSION").unwrap_or("unknown"))
-        );
-        */
     }
 }
