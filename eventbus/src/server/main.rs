@@ -17,13 +17,16 @@ extern crate serde_json;
 use chrono::Local;
 use futures::future;
 use futures::{FutureExt, StreamExt, SinkExt};
+use futures::stream::{SplitStream, SplitSink};
 use handlebars::Handlebars;
 use log::{debug, error, info, trace};
 use serde::Serialize;
+use tokio::sync::broadcast::Receiver;
 use warp::Filter;
 use warp::reject::Rejection;
 use warp::ws::{Message, WebSocket};
 
+use std::collections::HashMap;
 use std::convert::Infallible;
 use std::sync::Arc;
 use std::thread;
@@ -117,21 +120,52 @@ fn load_templates(hb: &mut Handlebars) {
     }
 }
 
-/*
- * TODO: This is an idea for later
-trait WarpRouter {
-    fn routes() -> String;
+
+struct Connection {
+    tx: SplitSink<WebSocket, Message>,
+    bus: Arc<Bus>,
+    channels: HashMap<String, Receiver<SendableEvent>>,
 }
 
-struct Router;
-impl WarpRouter for Router {
-    fn routes() -> String {
-        // TODO: Refactor the routes out of the main so that the warp main can be re-used across
-        // otto services
-        "".to_string()
+impl Connection {
+    fn new(tx: SplitSink<WebSocket, Message>, bus: Arc<Bus>) -> Connection {
+        Connection {
+            tx,
+            bus,
+            channels: HashMap::new(),
+        }
+    }
+
+    fn subscribe(&self, named: &str) {
+        let mut bus_rx = self.bus.receiver_for(named).unwrap();
+
+        tokio::task::spawn(async move {
+            loop {
+                match bus_rx.recv().await {
+                    Ok(ev) => {
+                        info!("Need to dispatch: {:?}", ev);
+                            let meta = msg::Meta::new("all".to_string());
+
+                            let em = msg::OutputMessage {
+                                meta,
+                                msg: ev.m.clone(),
+                            };
+                            info!("dispatching output message: {:?}", em);
+
+                            self.tx.send(Message::text(serde_json::to_string(&em).unwrap())).await;
+                    },
+                    Err(err) => {
+                        error!("Failed to listen to channel: {:?}", err);
+                    },
+                }
+            }
+        });
+    }
+
+    fn dispatch(&self, _ev: Arc<msg::Output>) {
     }
 }
-*/
+
 
 #[tokio::main]
 async fn main() {
@@ -172,48 +206,51 @@ async fn main() {
 
     let index = warp::path::end().and(with_render(hb)).and_then(index);
     let ws = warp::path("ws")
-        // The `ws()` filter will prepare the Websocket handshake.
         .and(warp::ws())
         .map(move |ws: warp::ws::Ws| {
+            /*
+             * Cloning again just to propagate the pointer, bleh
+             */
             let b3 = b2.clone();
+
             // And then our closure will be called when it completes...
             ws.on_upgrade(move  |websocket| {
+                info!("Connection established for {:?}", websocket);
                 // Just echo all messages back...
-                let (mut tx, rx) = websocket.split();
-                //if let Ok(bus_rx) = b3.receiver_for(&"all".to_string()) {
-                //    bus_rx.forward(tx).map(|result| {
-                //        info!("forwarded: {}", result);
-                //    });
-                //    info!("hi");
-                //}
-                let mut erx = b3.receiver_for(&"all".to_string()).unwrap();
-                tokio::task::spawn(async move {
-                    loop {
-                        if let Ok(bus_event) = erx.recv().await {
-                            let meta = msg::Meta::new("all".to_string());
-
-                            let em = msg::OutputMessage {
-                                meta,
-                                msg: bus_event.m.clone(),
-                            };
-                            info!("dispatching output message: {:?}", em);
-
-                            tx.send(Message::text(serde_json::to_string(&em).unwrap())).await;
-                        }
-                        else {
-                            error!("Failed to access a bus event in the websocket client loop");
-                        }
-                    }
-                });
+                let (tx, rx) = websocket.split();
+                let con = Connection::new(tx, b3);
+                con.subscribe(CHANNEL_ALL);
                 tokio::task::spawn(rx.for_each(|item| {
                     info!("Item received: {:?}", item);
                     future::ready(())
                 }));
                 future::ready(())
+                /*
+                 * Task for receiving events from the bus that we are interested
+                 * in, and then forwarding them along to the connected sink
+                 */
+                //tokio::task::spawn(async move {
+                //    loop {
+                //        if let Ok(bus_event) = erx.recv().await {
+                //            let meta = msg::Meta::new("all".to_string());
+
+                //            let em = msg::OutputMessage {
+                //                meta,
+                //                msg: bus_event.m.clone(),
+                //            };
+                //            info!("dispatching output message: {:?}", em);
+
+                //            tx.send(Message::text(serde_json::to_string(&em).unwrap())).await;
+                //        }
+                //        else {
+                //            error!("Failed to access a bus event in the websocket client loop");
+                //        }
+                //    }
+                //});
             })
         });
-    let routes = warp::get().and(index.or(ws));
 
+    let routes = warp::get().and(index.or(ws));
     warp::serve(routes).run(([127, 0, 0, 1], 8000)).await;
 }
 

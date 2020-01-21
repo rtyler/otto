@@ -17,6 +17,7 @@ use std::sync::Arc;
  * The maximum number of items in transit for each channel
  */
 const MAX_CHANNEL_QUEUE: usize = 16;
+pub static CHANNEL_ALL: &str = "all";
 
 #[derive(Debug, PartialEq)]
 pub struct Event {
@@ -30,7 +31,7 @@ impl Default for Event {
     }
 }
 
-type SendableEvent = Arc<Event>;
+pub type SendableEvent = Arc<Event>;
 
 /**
  * A channel is named and typed with the type of messages it should be carrying
@@ -139,7 +140,7 @@ impl Bus {
     /**
      * Create a new receiver for the named channel
      */
-    pub fn receiver_for(&self, channel: &String) -> Result<Receiver<SendableEvent>, &str> {
+    pub fn receiver_for(&self, channel: &str) -> Result<Receiver<SendableEvent>, &str> {
         debug!("receiver_for({})", channel);
         if let Some(c) = self.channels.get(channel) {
             Ok(c.sender.subscribe())
@@ -156,7 +157,6 @@ mod tests {
 
     #[test]
     fn test_bus_send() {
-        pretty_env_logger::init();
         let mut b = Bus::new();
         let ch = "test".to_string();
         b.stateless(vec!["test".to_string()]);
@@ -166,7 +166,7 @@ mod tests {
             let p = Arc::new(e);
             if let Ok(value) = b.send(&ch, p.clone()) {
                 let value = rx.try_recv().unwrap();
-            //assert_eq!(p.m.id, value.m.id);
+                assert_eq!(p, value);
             } else {
                 assert!(false);
             }
