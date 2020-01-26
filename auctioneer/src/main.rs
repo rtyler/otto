@@ -2,7 +2,6 @@
  * The auctioneer main model
  */
 #[deny(unsafe_code)]
-
 extern crate pretty_env_logger;
 extern crate tokio;
 extern crate warp;
