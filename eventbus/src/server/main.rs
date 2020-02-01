@@ -139,7 +139,7 @@ impl Connection {
     fn subscribe(&self, named: &str) {
         let mut bus_rx = self.bus.receiver_for(named).unwrap();
 
-        tokio::task::spawn(async move {
+        /*tokio::task::spawn(async move {
             loop {
                 match bus_rx.recv().await {
                     Ok(ev) => {
@@ -160,6 +160,7 @@ impl Connection {
                 }
             }
         });
+        */
     }
 
     fn dispatch(&self, _ev: Arc<msg::Output>) {
