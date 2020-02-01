@@ -122,52 +122,6 @@ fn load_templates(hb: &mut Handlebars) {
     }
 }
 
-struct Connection {
-    tx: SplitSink<WebSocket, Message>,
-    bus: Arc<Bus>,
-    channels: HashMap<String, Receiver<SendableEvent>>,
-}
-
-impl Connection {
-    fn new(tx: SplitSink<WebSocket, Message>, bus: Arc<Bus>) -> Connection {
-        Connection {
-            tx,
-            bus,
-            channels: HashMap::new(),
-        }
-    }
-
-    fn subscribe(&self, named: &str) {
-        let mut bus_rx = self.bus.receiver_for(named).unwrap();
-
-        /*tokio::task::spawn(async move {
-            loop {
-                match bus_rx.recv().await {
-                    Ok(ev) => {
-                        info!("Need to dispatch: {:?}", ev);
-                            let meta = msg::Meta::new("all".to_string());
-
-                            let em = msg::OutputMessage {
-                                meta,
-                                msg: ev.m.clone(),
-                            };
-                            info!("dispatching output message: {:?}", em);
-
-                            self.tx.send(Message::text(serde_json::to_string(&em).unwrap())).await;
-                    },
-                    Err(err) => {
-                        error!("Failed to listen to channel: {:?}", err);
-                    },
-                }
-            }
-        });
-        */
-    }
-
-    fn dispatch(&self, _ev: Arc<msg::Output>) {
-    }
-}
-
 #[tokio::main]
 async fn main() {
     pretty_env_logger::init();
