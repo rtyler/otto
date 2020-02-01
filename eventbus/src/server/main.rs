@@ -170,8 +170,10 @@ async fn main() {
                 info!("Connection established for {:?}", websocket);
                 let (tx, rx) = websocket.split();
 
+                // Clone a reference of the bus for this WebSocket connection
+                let bus_conn = bus.clone();
                 tokio::task::spawn(async {
-                    let mut conn = Connection::new(tx, rx);
+                    let mut conn = Connection::new(tx, rx, bus_conn);
                     conn.runloop().await;
                 });
                 future::ready(())
@@ -190,13 +192,15 @@ type WsInput = SplitStream<WebSocket>;
 struct Connection {
     tx: WsOutput,
     rx: WsInput,
+    bus: Arc<Bus>,
 }
 
 impl Connection {
-    fn new(tx: WsOutput, rx: WsInput) -> Self {
+    fn new(tx: WsOutput, rx: WsInput, bus: Arc<Bus>) -> Self {
         Connection {
             tx,
             rx,
+            bus,
         }
     }
 
@@ -211,8 +215,19 @@ impl Connection {
              * NOTE: we need to wait for messages to come in on some channel here?
              * busy loop
              */
-            info!("writer!");
-            future::ready(())
+            debug!("Starting writer task for connection {:?}", self);
+            let bus_rx = self.bus.receiver_for("all").unwrap();
+
+            loop {
+                match bus_rx.recv().await {
+                    Ok(ev) => {
+                        info!("Need to dispatch: {:?}", ev);
+                    },
+                    Err(err) => {
+                        error!("Failed to listen to channel: {:?}", err);
+                    },
+                }
+            }
         });
 
         // TODO handle errors on the join
