@@ -1,7 +1,0 @@
-
-# Dramatically increases the link performance for the eventbus
-[build]
-rustflags = ["-C", "link-arg=-fuse-ld=lld"]
-
-
-# vim: ft=cfg
