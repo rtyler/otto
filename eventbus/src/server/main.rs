@@ -191,11 +191,10 @@ async fn main() {
                 info!("Connection established for {:?}", websocket);
                 let (tx, rx) = websocket.split();
 
-                tokio::task::spawn(rx.for_each(|item| {
-                    info!("Item received: {:?}", item);
-                    future::ready(())
-                }));
-
+                tokio::task::spawn(async {
+                    let mut conn = Connection::new(tx, rx);
+                    conn.runloop().await;
+                });
                 future::ready(())
             })
         },
@@ -205,7 +204,37 @@ async fn main() {
     warp::serve(routes).run(([127, 0, 0, 1], 8000)).await;
 }
 
-struct Clients {}
+type WsOutput = SplitSink<WebSocket, Message>;
+type WsInput = SplitStream<WebSocket>;
+
+struct Connection {
+    tx: WsOutput,
+    rx: WsInput,
+}
+
+impl Connection {
+    fn new(tx: WsOutput, rx: WsInput) -> Self {
+        Connection {
+            tx,
+            rx,
+        }
+    }
+
+    async fn runloop(&mut self) {
+        let reader = self.rx.by_ref().for_each(|item| {
+            info!("Item received: {:?}", item);
+            future::ready(())
+        });
+
+        let writer = tokio::task::spawn(async {
+            info("writier!");
+            future::ready(())
+        });
+
+        future::join(reader, writer)
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
