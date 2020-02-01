@@ -162,6 +162,7 @@ async fn main() {
     });
 
     let index = warp::path::end().and(with_render(hb)).and_then(index);
+
     let ws = warp::path("ws").and(warp::ws()).and(event_bus.clone()).map(
         move |ws: warp::ws::Ws, bus: Arc<Bus>| {
             // And then our closure will be called when it completes...
@@ -205,11 +206,16 @@ impl Connection {
         });
 
         let writer = tokio::task::spawn(async {
-            info("writier!");
+            /*
+             * NOTE: we need to wait for messages to come in on some channel here?
+             * busy loop
+             */
+            info!("writer!");
             future::ready(())
         });
 
-        future::join(reader, writer)
+        // TODO handle errors on the join
+        future::join(reader, writer).await;
     }
 }
 
