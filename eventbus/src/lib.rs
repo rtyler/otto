@@ -73,6 +73,7 @@ impl Channel {
     }
 }
 
+#[derive(Debug)]
 pub struct Bus {
     /**
      * Channels are named and can implement a number of different types. This should

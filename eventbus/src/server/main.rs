@@ -186,6 +186,7 @@ async fn main() {
 type WsOutput = SplitSink<WebSocket, Message>;
 type WsInput = SplitStream<WebSocket>;
 
+#[derive(Debug)]
 struct Connection {
     tx: WsOutput,
     rx: WsInput,
