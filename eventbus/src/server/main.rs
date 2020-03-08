@@ -20,10 +20,17 @@ extern crate tide;
 
 use async_std::net::{TcpListener, TcpStream};
 use async_std::task;
+use async_tungstenite::tungstenite::Message;
 use async_tungstenite::*;
 use chrono::Local;
 use config::Config;
-use futures::StreamExt;
+use futures::{
+    channel::mpsc::{unbounded, UnboundedSender},
+    future, pin_mut,
+    stream::TryStreamExt,
+    SinkExt, StreamExt,
+};
+
 use handlebars::Handlebars;
 use http::status::StatusCode;
 use log::{debug, error, info, trace};
@@ -142,16 +149,18 @@ async fn handle_connection(stream: TcpStream) {
         .expect("connected streams should have a peer address");
     info!("Peer address: {}", addr);
 
-    let ws_stream = async_tungstenite::accept_async(stream)
+    let mut ws_stream = async_tungstenite::accept_async(stream)
         .await
         .expect("Error during the websocket handshake occurred");
 
     info!("New WebSocket connection: {}", addr);
 
-    let (write, read) = ws_stream.split();
-    read.forward(write)
-        .await
-        .expect("Failed to forward message")
+    while let Some(msg) = ws_stream.next().await {
+        println!("Received: {:?}", msg);
+        ws_stream
+            .send(Message::text("hey sailor".to_string()))
+            .await;
+    }
 }
 
 /**
