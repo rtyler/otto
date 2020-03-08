@@ -139,27 +139,27 @@ fn load_templates(hb: &mut Handlebars) {
     }
 }
 
-/**
- * Handle a given WebSocket connection
- */
-async fn handle_connection(stream: TcpStream) {
-    info!("handle_connection: {:?}", stream);
-    let addr = stream
-        .peer_addr()
-        .expect("connected streams should have a peer address");
-    info!("Peer address: {}", addr);
+struct Connection {
+    stream: WebSocketStream<TcpStream>,
+}
 
-    let mut ws_stream = async_tungstenite::accept_async(stream)
-        .await
-        .expect("Error during the websocket handshake occurred");
-
-    info!("New WebSocket connection: {}", addr);
-
-    while let Some(msg) = ws_stream.next().await {
-        println!("Received: {:?}", msg);
-        ws_stream
-            .send(Message::text("hey sailor".to_string()))
-            .await;
+impl Connection {
+    /**
+     * The runloop while watch the stream for messages and ensure that we're
+     * sending and receiving values to the underlying WebSocket stream
+     */
+    async fn runloop(&mut self) -> Result<(), std::io::Error> {
+        while let Some(msg) = self.stream.next().await {
+            println!("Received: {:?}", msg);
+            if let Err(e) = self
+                .stream
+                .send(Message::text("hey sailor".to_string()))
+                .await
+            {
+                error!("Failed to send a message to a connection: {}", e);
+            }
+        }
+        Ok(())
     }
 }
 
@@ -181,7 +181,16 @@ async fn serve_ws(conf: Arc<config::Config>) -> Result<(), std::io::Error> {
     info!("Listening for WebSocket connections on {}:{}", bind, port);
 
     while let Ok((stream, _)) = listener.accept().await {
-        task::spawn(handle_connection(stream));
+        task::spawn(async move {
+            let ws = accept_async(stream)
+                .await
+                .expect("Error during the WebSocket handshake occurred");
+
+            let mut conn = Connection { stream: ws };
+            conn.runloop()
+                .await
+                .expect("Failed to properly start a connection runloop");
+        });
     }
 
     Ok(())
@@ -230,7 +239,7 @@ fn main() {
         .expect("Invalid `heartbeat` configuration, must be an integer");
 
     task::spawn(serve_ws(conf.clone()));
-    task::block_on(serve_http(conf.clone(), state));
+    task::block_on(serve_http(conf.clone(), state)).expect("Failed to run the main runloop");
 
     //thread::spawn(move || loop {
     //    let ts = Local::now();
