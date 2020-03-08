@@ -60,14 +60,22 @@
         <h1>Otto Eventbus 🤖</h1>
     </center>
 
+    <div>
+        Configured to hit a WebSocket connection at {{ws}}
+    </div>
+
     <div class="footer">
         v{{version}}
     </div>
     <script type="text/javascript">
         <!--
+        window.wsDelay = 1000;
         function connectSocket() {
-            const sock = new WebSocket('ws://localhost:8000/ws');
+
+            const sock = new WebSocket("ws://{{ws}}/");
             sock.onopen = (event) => {
+                // Reset our timeout interval
+                window.wsDelay = 1000;
                 console.log('WebSocket connected');
                 const m = {
                     meta: {
@@ -82,17 +90,27 @@
 
             sock.onerror = (err) => {
                 console.error('WebSocket error, reconnecting..');
+
                 sock.close();
             };
 
             sock.onclose = (event) => {
                 console.log('WebSocket connection lost, reconnecting..');
-                connectSocket();
+                setTimeout(() => {
+                    window.wsDelay = window.wsDelay * 2;
+                    console.log(`reconnection delay: ${window.wsDelay}`);
+                    connectSocket();
+                }, window.wsDelay);
             }
 
             sock.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                console.log(data);
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log(data);
+                } catch (err) {
+                    console.error("Did not receive JSON data");
+                    console.error(event.data);
+                }
             };
             window.sock = sock;
         }

@@ -8,7 +8,6 @@ pub mod client;
 pub mod msg;
 
 use log::*;
-use tokio::sync::broadcast::{channel, Receiver, SendError, Sender};
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -33,6 +32,9 @@ impl Default for Event {
 
 pub type SendableEvent = Arc<Event>;
 
+/*
+
+
 /**
  * A channel is named and typed with the type of messages it should be carrying
  */
@@ -50,8 +52,6 @@ impl Channel {
     }
 
     pub fn new(name: String, stateful: bool) -> Self {
-        let (sender, receiver) = tokio::sync::broadcast::channel(MAX_CHANNEL_QUEUE);
-
         Channel {
             name,
             stateful,
@@ -210,3 +210,5 @@ mod tests {
         assert!(!c.is_stateful());
     }
 }
+
+*/
