@@ -25,7 +25,7 @@ use async_tungstenite::*;
 use chrono::Local;
 use config::Config;
 use futures::{
-    channel::mpsc::{unbounded, UnboundedSender},
+    channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender},
     future, pin_mut,
     stream::TryStreamExt,
     SinkExt, StreamExt,
@@ -141,6 +141,7 @@ fn load_templates(hb: &mut Handlebars) {
 
 struct Connection {
     stream: WebSocketStream<TcpStream>,
+    inbox: UnboundedReceiver<String>,
 }
 
 impl Connection {
@@ -180,13 +181,22 @@ async fn serve_ws(conf: Arc<config::Config>) -> Result<(), std::io::Error> {
 
     info!("Listening for WebSocket connections on {}:{}", bind, port);
 
-    while let Ok((stream, _)) = listener.accept().await {
-        task::spawn(async move {
-            let ws = accept_async(stream)
-                .await
-                .expect("Error during the WebSocket handshake occurred");
+    let mut txs: Vec<UnboundedSender<String>> = vec![];
 
-            let mut conn = Connection { stream: ws };
+    while let Ok((stream, _)) = listener.accept().await {
+        let ws = accept_async(stream)
+            .await
+            .expect("Error during the WebSocket handshake occurred");
+
+        let (tx, inbox) = unbounded();
+        txs.push(tx);
+
+        let mut conn = Connection {
+            stream: ws,
+            inbox,
+        };
+
+        task::spawn(async move {
             conn.runloop()
                 .await
                 .expect("Failed to properly start a connection runloop");
@@ -234,7 +244,7 @@ fn main() {
         conf: conf.clone(),
     };
 
-    let seconds: u64 = conf
+    let _seconds: u64 = conf
         .get("heartbeat")
         .expect("Invalid `heartbeat` configuration, must be an integer");
 
