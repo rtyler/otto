@@ -144,24 +144,16 @@ struct Connection {
     inbox: UnboundedReceiver<String>,
 }
 
-impl Connection {
-    /**
-     * The runloop while watch the stream for messages and ensure that we're
-     * sending and receiving values to the underlying WebSocket stream
-     */
-    async fn runloop(&mut self) -> Result<(), std::io::Error> {
-        while let Some(msg) = self.stream.next().await {
-            println!("Received: {:?}", msg);
-            if let Err(e) = self
-                .stream
-                .send(Message::text("hey sailor".to_string()))
-                .await
-            {
-                error!("Failed to send a message to a connection: {}", e);
-            }
+async fn handle_ws(mut c: Connection) -> Result<(), std::io::Error> {
+    while let Some(msg) = c.stream.next().await {
+        println!("Received: {:?}", msg);
+
+        if let Err(e) = c.stream.send(Message::text("{\"m\": \"Hello sailor\"}".to_string())).await {
+            error!("Failed to send a message to a connection: {}", e);
         }
-        Ok(())
     }
+
+    Ok(())
 }
 
 /**
@@ -191,16 +183,12 @@ async fn serve_ws(conf: Arc<config::Config>) -> Result<(), std::io::Error> {
         let (tx, inbox) = unbounded();
         txs.push(tx);
 
-        let mut conn = Connection {
+        let conn = Connection {
             stream: ws,
             inbox,
         };
 
-        task::spawn(async move {
-            conn.runloop()
-                .await
-                .expect("Failed to properly start a connection runloop");
-        });
+        let _handle = task::spawn(handle_ws(conn));
     }
 
     Ok(())
