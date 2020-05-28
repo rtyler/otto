@@ -26,8 +26,8 @@ use chrono::Local;
 use config::Config;
 use futures::{
     channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender},
-    future, pin_mut,
     stream::TryStreamExt,
+    stream::select,
     SinkExt, StreamExt,
 };
 
@@ -145,15 +145,17 @@ struct Connection {
 }
 
 async fn handle_ws(mut c: Connection) -> Result<(), std::io::Error> {
-    while let Some(msg) = c.stream.next().await {
-        println!("Received: {:?}", msg);
-
-        if let Err(e) = c.stream.send(Message::text("{\"m\": \"Hello sailor\"}".to_string())).await {
-            error!("Failed to send a message to a connection: {}", e);
-        }
+    while let Some(item) = select(c.stream, c.inbox).await {
+        println!("Received: {:?}", item);
     }
+    //while let Some(msg) = c.stream.next().await {
 
-    Ok(())
+    //    if let Err(e) = c.stream.send(Message::text("{\"m\": \"Hello sailor\"}".to_string())).await {
+    //        error!("Failed to send a message to a connection: {}", e);
+    //    }
+    //}
+
+    //Ok(())
 }
 
 /**

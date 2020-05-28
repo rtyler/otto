@@ -19,7 +19,7 @@ tide = "~0.6.0"
 mime = "~0.3.16"
 http = "~0.1.19"
 # Used for managing the websocket channels
-async-tungstenite = "~0.4.0"
+async-tungstenite = { version = "~0.4.0", features = ["async-std"] }
 futures = "~0.3.4"
 
 handlebars = "~2.0.2"
