@@ -1,58 +1,37 @@
 /**!
  * The auctioneer main model
  */
-extern crate actix;
-extern crate actix_http;
-extern crate actix_web;
+#[deny(unsafe_code)]
 extern crate pretty_env_logger;
+extern crate tokio;
+extern crate warp;
 
-use actix_web::{middleware, web};
-use actix_web::{App, HttpResponse, HttpServer};
 use log::debug;
+use warp::{Filter, Rejection};
 
-use otto_eventbus::client::*;
-use otto_eventbus::*;
-
-/**
- * The index handler for the root of the Auctioneer web interface
- */
-async fn route_index() -> HttpResponse {
-    HttpResponse::Ok().body("Auctioneer")
+pub fn index_filter() -> impl Filter<Extract = (&'static str,), Error = Rejection> + Clone {
+    warp::path::end().map(|| "Index page")
 }
 
-#[actix_rt::main]
-async fn main() -> std::io::Result<()> {
+#[tokio::main]
+async fn main() {
     pretty_env_logger::init();
 
-    let client = connect("http://127.0.0.1:8000/ws/", "auctioneer").await;
-    debug!("Client created: {:?}", client);
-
-    HttpServer::new(move || {
-        App::new()
-            .wrap(middleware::Compress::default())
-            .wrap(middleware::Logger::default())
-            .route("/", web::get().to(route_index))
-    })
-    .bind("127.0.0.1:8001")?
-    .run()
-    .await
+    let routes = index_filter();
+    warp::serve(routes).run(([127, 0, 0, 1], 8001)).await;
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
-    use actix_web::{test, web, App};
+    use warp::http::StatusCode;
+    use warp::test::request;
 
-    /**
-     * This test just ensures that the server can come online properly and render its index handler
-     * properly.
-     */
-    #[actix_rt::test]
-    async fn test_basic_http() {
-        let srv = test::start(move || App::new().route("/", web::get().to(route_index)));
-
-        let req = srv.get("/");
-        let response = req.send().await.unwrap();
-        assert!(response.status().is_success());
+    #[tokio::test]
+    async fn test_index() {
+        let index = index_filter();
+        let response = request().method("GET").path("/").reply(&index).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(response.body(), "Index page");
     }
 }

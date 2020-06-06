@@ -5,11 +5,8 @@ authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
 [dependencies]
-# Needed for the actor system
-actix = "~0.9.0"
-actix-http = "~1.0.1"
-actix-rt = "~1.0.0"
-actix-web = "~2.0.0"
+warp = { version = "~0.2.0", features = ["websocket"] }
+tokio = { version = "~0.2", features = ["full"] }
 
 # Handling command line options
 clap = { version = "~2.33.0", features = ["yaml"] }

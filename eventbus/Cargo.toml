@@ -13,12 +13,14 @@ name = "otto-ebc"
 path = "src/cli/main.rs"
 
 [dependencies]
-# Actix provides the web and websocket basis we sit on top of
-actix = "~0.9.0"
-actix-web = "~2.0.0"
-actix-web-actors = "~2.0.0"
-actix-rt = "~1.0.0"
-actix-http = "~1.0.1"
+async-std = "~1.5.0"
+# Library used for implementing HTTP APIs
+tide = "~0.6.0"
+mime = "~0.3.16"
+http = "~0.1.19"
+# Used for managing the websocket channels
+async-tungstenite = { version = "~0.4.0", features = ["async-std"] }
+futures = "~0.3.4"
 
 handlebars = "~2.0.2"
 # Need to embed static resources into the binary for serving at runtime
@@ -40,18 +42,8 @@ pretty_env_logger = "~0.3.1"
 serde = { version = "~1.0.103", features = ["rc"] }
 serde_json = "~1.0.0"
 
-# Needed for websockets in cli.rs
-tungstenite = "~0.9.2"
-url = "~2.1.0"
 # Needed for the nice bits in the cli
 rustyline = "~5.0.6"
-
-
-# Used for the websocket client
-actix-codec = "~0.2.0"
-awc = "~1.0.1"
-futures = "~0.3.1"
-bytes = "~0.5.3"
 
 
 [dev-dependencies]

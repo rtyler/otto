@@ -4,31 +4,113 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1.0">
         <title>Otto Eventbus 🤖</title>
+        <style type="text/css">
+            body {
+                margin: 0px;
+                font-family: 'proxima-nova', 'Helvetica', 'Avenir', 'Arial', sans-serif;
+                color: #4D4D4D;
+                background-color: white;
+                font-size: 1.1rem;
+            }
+            a:link, a:visited {
+                color: black;
+            }
+            a:hover {
+                color: red;
+                text-decoration: none;
+            }
+            @media(min-width: 1024px) {
+                .content {
+                    max-width: 65%;
+                }
+                main {
+                    margin-left: auto;
+                    margin-right: auto;
+                }
+                footer {
+                    margin-left: auto;
+                    margin-right: auto;
+                    margin-top: 2rem;
+                    padding-top: 1rem;
+                    border-top: 2px solid #e9e9e9;
+                    max-width: 55%;
+                }
+            }
+            header.masthead {
+                float: right;
+                margin-right: 1rem;
+            }
+            .notice {
+                background: #ffffe0;
+                text-align: center;
+                margin-left: auto;
+                margin-right: auto;
+                padding: 1rem;
+            }
+            img {
+                max-width: 100%;
+            }
+            li {
+                margin: 0.5rem;
+            }
+        </style>
     </head>
 <body>
     <center>
         <h1>Otto Eventbus 🤖</h1>
     </center>
 
+    <div>
+        Configured to hit a WebSocket connection at {{ws}}
+    </div>
+
     <div class="footer">
         v{{version}}
     </div>
     <script type="text/javascript">
         <!--
+        window.wsDelay = 1000;
         function connectSocket() {
-            const sock = new WebSocket('ws://localhost:8000/ws/');
-            sock.onopen = (event) => console.log('WebSocket connected');
+
+            const sock = new WebSocket("ws://{{ws}}/");
+            sock.onopen = (event) => {
+                // Reset our timeout interval
+                window.wsDelay = 1000;
+                console.log('WebSocket connected');
+                const m = {
+                    meta: {
+                    },
+                    msg: {
+                        type: "connect",
+                        name: "eventbus-homepage",
+                    },
+                };
+                sock.send(JSON.stringify(m));
+            };
+
             sock.onerror = (err) => {
                 console.error('WebSocket error, reconnecting..');
+
                 sock.close();
             };
+
             sock.onclose = (event) => {
                 console.log('WebSocket connection lost, reconnecting..');
-                connectSocket();
+                setTimeout(() => {
+                    window.wsDelay = window.wsDelay * 2;
+                    console.log(`reconnection delay: ${window.wsDelay}`);
+                    connectSocket();
+                }, window.wsDelay);
             }
+
             sock.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                console.log(data);
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log(data);
+                } catch (err) {
+                    console.error("Did not receive JSON data");
+                    console.error(event.data);
+                }
             };
             window.sock = sock;
         }

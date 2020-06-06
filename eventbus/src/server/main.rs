@@ -1,34 +1,49 @@
+#![allow(unused_imports)]
+#![allow(dead_code)]
+
 /**
  * The main module for otto-eventbus simply sets up the responders and the main
  * server loop that the eventbus uses.
  */
-extern crate actix;
-extern crate actix_http;
-extern crate actix_web;
+extern crate async_std;
 extern crate config;
+extern crate futures;
+extern crate http;
 extern crate log;
+extern crate mime;
 extern crate pretty_env_logger;
 #[macro_use]
 extern crate rust_embed;
 #[macro_use]
 extern crate serde_json;
+extern crate tide;
 
-use actix::{Actor, Addr};
-use actix_web::{middleware, web};
-use actix_web::{App, Error, HttpRequest, HttpResponse, HttpServer};
-use actix_web_actors::ws;
+use async_std::net::{TcpListener, TcpStream};
+use async_std::task;
+use async_tungstenite::tungstenite::Message;
+use async_tungstenite::*;
 use chrono::Local;
-use handlebars::Handlebars;
-use log::{info, trace};
+use config::Config;
+use futures::{
+    channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender},
+    stream::TryStreamExt,
+    stream::select,
+    SinkExt, StreamExt,
+};
 
-use std::sync::Arc;
+use handlebars::Handlebars;
+use http::status::StatusCode;
+use log::{debug, error, info, trace};
+use serde::Serialize;
+use tide::{Request, Response, Server};
+
+use std::collections::HashMap;
+use std::convert::Infallible;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
 use otto_eventbus::*;
-
-pub mod connection;
-pub mod eventbus;
 
 /**
  * Templates is a rust-embed struct which will contain all the files embedded from the
@@ -46,52 +61,39 @@ struct Templates;
 #[folder = "$CARGO_MANIFEST_DIR/static"]
 struct Static;
 
-struct AppState {
-    bus: Addr<eventbus::EventBus>,
-    // Handlebars uses a repository for the compiled templates. This object must be
-    // shared between the application threads, and is therefore passed to the
-    // Application Builder as an atomic reference-counted pointer.
+struct State {
     hb: Arc<Handlebars>,
+    conf: Arc<Config>,
 }
 
-/**
- * index serves up the homepage which is not really functional, but at least shows lost users
- * something
- */
-async fn index(state: web::Data<AppState>) -> HttpResponse {
+async fn index(ctx: Request<State>) -> Response {
+    let conf = &ctx.state().conf;
+
+    let bind = conf.get_str("ws.bind").expect("Could not locate ws.bind");
+    let port = conf.get_int("ws.port").expect("Could not locate ws.port");
+
+    let res = Response::new(200);
     let data = json!({
         "version" : option_env!("CARGO_PKG_VERSION").unwrap_or("unknown"),
+        "ws" : format!("{}:{}", bind, port),
     });
 
-    let template = Templates::get("index.html").unwrap();
-    let body = state
-        .hb
-        .render_template(std::str::from_utf8(template.as_ref()).unwrap(), &data)
-        .expect("Failed to render the index.html template!");
-    HttpResponse::Ok().body(body)
+    if let Ok(view) = ctx.state().hb.render("index.html", &data) {
+        return res.body_string(view).set_mime(mime::TEXT_HTML);
+    } else {
+        error!("Failed to render");
+        return res
+            .set_status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body_string("Internal server error".to_string());
+    }
 }
 
 /**
- * ws_index is the handler for all websocket connections, all it is responsible for doing is
- * handling the inbound connection and creating a new WSClient for the connection
+ * Load the hierarchy of settings and return the configuration object
  */
-async fn ws_index(
-    r: HttpRequest,
-    stream: web::Payload,
-    state: web::Data<AppState>,
-) -> Result<HttpResponse, Error> {
-    let actor = connection::WSClient::new(state.bus.clone());
-    let res = ws::start(actor, &r, stream);
-    trace!("{:?}", res.as_ref().unwrap());
-    res
-}
-
-#[actix_rt::main]
-async fn main() -> std::io::Result<()> {
-    pretty_env_logger::init();
-
-    let embedded_settings = Static::get("eventbus.yml").unwrap();
-    let defaults = std::str::from_utf8(embedded_settings.as_ref()).unwrap();
+fn load_configuration() -> Config {
+    let embedded = Static::get("eventbus.yml").expect("Failed to load built-in/static settings");
+    let defaults = std::str::from_utf8(embedded.as_ref()).unwrap();
     /*
      * Load our settings in the priority order of:
      *
@@ -101,106 +103,165 @@ async fn main() -> std::io::Result<()> {
      *
      * Each layer overriding properties from the last
      */
-    let mut settings = config::Config::default();
-    settings
-        .merge(config::File::from_str(defaults, config::FileFormat::Yaml))
+    let mut conf = Config::default();
+    conf.merge(config::File::from_str(defaults, config::FileFormat::Yaml))
         .unwrap()
-        .merge(config::File::with_name("eventbus"))
+        .merge(config::File::with_name("eventbus").required(false))
         .unwrap()
         .merge(config::Environment::with_prefix("OTTO_EB"))
         .unwrap();
 
-    let motd: String = settings
+    let motd: String = conf
         .get("motd")
         .expect("Configuration had no `motd` setting");
 
-    info!("motd: {}", motd);
+    debug!("configured motd: {}", motd);
+    return conf;
+}
 
-    let stateless = settings
-        .get::<Vec<String>>("channels.stateless")
-        .expect("Failed to load `channels.stateless` configuration, which must be an array");
-    let stateful = settings
-        .get::<Vec<String>>("channels.stateful")
-        .expect("Failed to load `channels.stateful` configuration, which must be an array");
+/**
+ * Load the Handlebars templates needed for presenting the web UI
+ */
+fn load_templates(hb: &mut Handlebars) {
+    for t in Templates::iter() {
+        if !t.ends_with(".html") {
+            continue;
+        }
 
-    let events = eventbus::EventBus::with_channels(stateless, stateful).start();
-    let bus = events.clone();
+        let template = Templates::get(&t)
+            .expect("Somehow we iterated Templates but didn't get one? How is this possible!");
+        let buf = std::str::from_utf8(template.as_ref())
+            .expect(format!("Unable to convert {} to a string buffer", &t).as_str());
+        hb.register_template_string(&t, buf)
+            .expect(format!("Failed to register {} as a Handlebars template", &t).as_str());
 
-    thread::spawn(move || loop {
-        let pulse = format!("heartbeat {}", Local::now());
-        trace!("sending pulse: {}", pulse);
-        let event = eventbus::Event {
-            e: Arc::new(Output::Heartbeat),
-            channel: Arc::new("all".to_string()),
+        info!("Registered handlebars template: {}", &t);
+    }
+}
+
+struct Connection {
+    stream: WebSocketStream<TcpStream>,
+    inbox: UnboundedReceiver<String>,
+}
+
+async fn handle_ws(mut c: Connection) -> Result<(), std::io::Error> {
+    while let Some(item) = select(c.stream, c.inbox).await {
+        println!("Received: {:?}", item);
+    }
+    //while let Some(msg) = c.stream.next().await {
+
+    //    if let Err(e) = c.stream.send(Message::text("{\"m\": \"Hello sailor\"}".to_string())).await {
+    //        error!("Failed to send a message to a connection: {}", e);
+    //    }
+    //}
+
+    //Ok(())
+}
+
+/**
+ * Create the WebSocket listener for accepting commands and pushing events
+ */
+async fn serve_ws(conf: Arc<config::Config>) -> Result<(), std::io::Error> {
+    let bind: String = conf
+        .get("ws.bind")
+        .expect("Invalid `ws.bind` configuration, must be a string (e.g. '127.0.0.1')");
+    let port: u64 = conf
+        .get("ws.port")
+        .expect("Invalid `ws.port` configuration, must be an integer");
+
+    let listener = TcpListener::bind(format!("{}:{}", bind, port))
+        .await
+        .expect(format!("Failed to bind to {}", port).as_str());
+
+    info!("Listening for WebSocket connections on {}:{}", bind, port);
+
+    let mut txs: Vec<UnboundedSender<String>> = vec![];
+
+    while let Ok((stream, _)) = listener.accept().await {
+        let ws = accept_async(stream)
+            .await
+            .expect("Error during the WebSocket handshake occurred");
+
+        let (tx, inbox) = unbounded();
+        txs.push(tx);
+
+        let conn = Connection {
+            stream: ws,
+            inbox,
         };
-        bus.do_send(event);
-        let seconds = settings
-            .get("heartbeat")
-            .expect("Invalid `heartbeat` configuration, must be an integer");
-        thread::sleep(Duration::from_secs(seconds));
-    });
 
-    let state = AppState {
-        bus: events,
-        hb: Arc::new(Handlebars::new()),
+        let _handle = task::spawn(handle_ws(conn));
+    }
+
+    Ok(())
+}
+
+/**
+ * Create the tide HTTP listener for handling conventional web requests
+ *
+ * This is mostly used for serving up the web UI for the eventbus
+ */
+async fn serve_http(conf: Arc<config::Config>, state: State) -> Result<(), std::io::Error> {
+    let bind: String = conf
+        .get("http.bind")
+        .expect("Invalid `http.bind` configuration, must be a string (e.g. '127.0.0.1')");
+    let port: u64 = conf
+        .get("http.port")
+        .expect("Invalid `http.port` configuration, must be an integer");
+
+    let mut app = Server::with_state(state);
+
+    app.at("/").get(index);
+
+    info!("Listening for HTTP connections on {}:{}", bind, port);
+    app.listen(format!("{}:{}", bind, port)).await?;
+
+    info!("HTTP listener exiting..");
+    Ok(())
+}
+
+fn main() {
+    pretty_env_logger::init();
+    info!("Initializing the Otto Eventbus");
+    let config = load_configuration();
+    let conf = Arc::new(config);
+
+    let mut hb = Handlebars::new();
+    load_templates(&mut hb);
+    let hb = Arc::new(hb);
+    let state = State {
+        hb: hb,
+        conf: conf.clone(),
     };
-    let wd = web::Data::new(state);
 
-    HttpServer::new(move || {
-        App::new()
-            .app_data(wd.clone())
-            .wrap(middleware::Compress::default())
-            .wrap(middleware::Logger::default())
-            .route("/", web::get().to(index))
-            .route("/ws/", web::get().to(ws_index))
-    })
-    .bind("127.0.0.1:8000")?
-    .run()
-    .await
+    let _seconds: u64 = conf
+        .get("heartbeat")
+        .expect("Invalid `heartbeat` configuration, must be an integer");
+
+    task::spawn(serve_ws(conf.clone()));
+    task::block_on(serve_http(conf.clone(), state)).expect("Failed to run the main runloop");
+
+    //thread::spawn(move || loop {
+    //    let ts = Local::now();
+    //    let pulse = format!("heartbeat {}", ts);
+    //    info!("sending pulse: {}", pulse);
+    //    let hb = msg::Output::Heartbeat {};
+    //    let e = Event { m: Arc::new(hb) };
+    //    hb_bus.send(&"all".to_string(), Arc::new(e));
+    //    thread::sleep(Duration::from_secs(seconds));
+    //});
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
-    use actix_web::{test, web, App};
 
-    use regex::Regex;
-
-    /**
-     * This test just ensures that the server can come online properly and render its index handler
-     * properly.
-     *
-     * It doesn't really test much useful, but does ensure that critical failures in the eventbus
-     * can sometimes be prevented
-     */
-    #[actix_rt::test]
-    async fn test_basic_http() {
-        let events = eventbus::EventBus::with_channels(vec![], vec![]).start();
-        let state = AppState {
-            bus: events,
-            hb: Arc::new(Handlebars::new()),
-        };
-        let wd = web::Data::new(state);
-        let srv = test::start(move || {
-            App::new()
-                .app_data(wd.clone())
-                .route("/", web::get().to(index))
-        });
-
-        let req = srv.get("/");
-        let mut response = req.send().await.unwrap();
-        assert!(response.status().is_success());
-
-        let re = Regex::new(r"(v\d\.\d\.\d)").unwrap();
-
-        let body = response.body().await.unwrap();
-        let buffer = String::from_utf8(body.to_vec()).unwrap();
-        let matches = re.captures(&buffer).unwrap();
-
-        let version = matches.get(1).unwrap();
-        assert_eq!(
-            version.as_str(),
-            format!("v{}", option_env!("CARGO_PKG_VERSION").unwrap_or("unknown"))
-        );
+    #[test]
+    fn test_load_conf() {
+        let c = load_configuration();
+        let motd: String = c.get("motd").unwrap();
+        let pulse: u64 = c.get("heartbeat").unwrap();
+        assert!(motd.len() > 0);
+        assert_eq!(pulse, 60);
     }
 }

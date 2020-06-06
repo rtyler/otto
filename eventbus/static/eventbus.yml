@@ -1,7 +1,20 @@
 # This file contains the default configuration for otto-eventbus
 ---
 motd: 'Welcome to the otto-eventbus, beep beep'
+
+# the http section configures the HTTP (RESTful) listener
+http:
+  bind: 127.0.0.1
+  port: 9310
+
+# the ws section configures the WebSocket only listener
+ws:
+  bind: 127.0.0.1
+  # The ws.port is expected to conventionally be at http.port + 1
+  port: 9311
+
 heartbeat: 60
+
 channels:
   stateful:
     - audit
