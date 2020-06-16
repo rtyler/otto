@@ -2,14 +2,13 @@
  * This is the simplest implementation of an Otto Eventbus, which keeps everything
  * only in memory
  */
-
 use futures::future::FutureExt;
 use log::*;
+use otto_eventbus::server::*;
 use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::{Arc, RwLock};
-use otto_eventbus::server::*;
 
 fn main() -> Result<(), std::io::Error> {
     Ok(())
@@ -28,7 +27,7 @@ struct MemoryBus {
 }
 
 impl Eventbus for MemoryBus {
-    fn pending(&self, topic: Topic, caller: CallerId) -> Pin<Box<dyn Future<Output=i64> + Send>> {
+    fn pending(&self, topic: Topic, caller: CallerId) -> Pin<Box<dyn Future<Output = i64> + Send>> {
         let topics = self.topics.clone();
         let offsets = self.offsets.clone();
 
@@ -38,7 +37,7 @@ impl Eventbus for MemoryBus {
                  * If the topic doesn't exist yet, we'll consider there to be
                  * zero pending messages
                  */
-                if ! topics.contains_key(&topic) {
+                if !topics.contains_key(&topic) {
                     return 0;
                 }
 
@@ -47,26 +46,24 @@ impl Eventbus for MemoryBus {
                 if let Ok(offsets) = offsets.read() {
                     if let Some(current) = offsets.get(&(topic, caller)) {
                         return latest - current;
-                    }
-                    else {
+                    } else {
                         /* If the caller never showed up then our pending is basically everything
                          * in the topic
                          */
                         return latest;
                     }
-                }
-                else {
+                } else {
                     error!("Failed to get a read lock on the offsets");
                 }
-            }
-            else {
+            } else {
                 error!("Failed to get a read lock on the topics");
             }
             0
-        }.boxed()
+        }
+        .boxed()
     }
 
-    fn latest(&self, topic: Topic) -> Pin<Box<dyn Future<Output=Offset> + Send>> {
+    fn latest(&self, topic: Topic) -> Pin<Box<dyn Future<Output = Offset> + Send>> {
         let topics = self.topics.clone();
         async move {
             if let Ok(topics) = topics.read() {
@@ -75,7 +72,8 @@ impl Eventbus for MemoryBus {
                 }
             }
             -1
-        }.boxed()
+        }
+        .boxed()
     }
 
     fn at(&self, topic: Topic, offset: Offset, caller: CallerId) -> AsyncOptionMessage {
@@ -85,12 +83,12 @@ impl Eventbus for MemoryBus {
         async move {
             if let Ok(mut offsets) = offsets.write() {
                 if let Ok(topics) = topics.read() {
-                    if ! topics.contains_key(&topic) {
+                    if !topics.contains_key(&topic) {
                         return None;
                     }
                     let offset_handle = (topic, caller);
 
-                    if topics[&offset_handle.0].len() > (offset as usize ){
+                    if topics[&offset_handle.0].len() > (offset as usize) {
                         let result = Some(topics[&offset_handle.0][offset as usize].clone());
                         offsets.insert(offset_handle, (offset as Offset) + 1);
                         return result;
@@ -98,7 +96,8 @@ impl Eventbus for MemoryBus {
                 }
             }
             None
-        }.boxed()
+        }
+        .boxed()
     }
 
     fn retrieve(&self, topic: Topic, caller: CallerId) -> AsyncOptionMessage {
@@ -111,7 +110,7 @@ impl Eventbus for MemoryBus {
                     /*
                      * If the topic doesn't exist, None!
                      */
-                    if ! topics.contains_key(&topic) {
+                    if !topics.contains_key(&topic) {
                         return None;
                     }
 
@@ -121,12 +120,22 @@ impl Eventbus for MemoryBus {
                      * This caller has never read from this topic, so give them the
                      * first message
                      */
-                    if ! offsets.contains_key(&offset_handle) {
+                    if !offsets.contains_key(&offset_handle) {
                         let result = Some(topics[&offset_handle.0][0].clone());
                         offsets.insert(offset_handle, 1);
                         return result;
-                    }
-                    else {
+                    } else {
+                        /*
+                         * This is basically duplicate functionality to what is in .at
+                         * unfortunately I am not yet smart enough to figure out
+                         * how to invoke other functions on this self from within
+                         * the async block just yet
+                         *
+                         * Whenever I get back to this, the invoke of at() will
+                         * have to come out of this block so that the RwLockGuard
+                         * is properly dropped before invoking at().await, since
+                         * it cannot live across the await
+                         */
                         let offset = offsets[&offset_handle] as usize;
                         if topics[&offset_handle.0].len() > offset {
                             let result = Some(topics[&offset_handle.0][offset as usize].clone());
@@ -137,15 +146,21 @@ impl Eventbus for MemoryBus {
                 }
             }
             None
-        }.boxed()
+        }
+        .boxed()
     }
 
-    fn publish(&mut self, topic: Topic, message: Message, caller: CallerId) -> Pin<Box<dyn Future<Output=Result<Offset, ()>> + Send>> {
+    fn publish(
+        &mut self,
+        topic: Topic,
+        message: Message,
+        caller: CallerId,
+    ) -> Pin<Box<dyn Future<Output = Result<Offset, ()>> + Send>> {
         let topics = self.topics.clone();
 
         async move {
             if let Ok(mut topics) = topics.write() {
-                if ! topics.contains_key(&topic) {
+                if !topics.contains_key(&topic) {
                     topics.insert(topic.clone(), vec![]);
                 }
 
@@ -155,7 +170,8 @@ impl Eventbus for MemoryBus {
                 }
             }
             Err(())
-        }.boxed()
+        }
+        .boxed()
     }
 }
 
