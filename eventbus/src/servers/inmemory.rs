@@ -14,7 +14,7 @@ use std::sync::Arc;
 
 fn main() -> Result<(), std::io::Error> {
     let eventbus = MemoryBus::default();
-    let mut server = meows::Server::with_state(eventbus);
+    let server = meows::Server::with_state(eventbus);
 
     smol::run(async move { server.serve("127.0.0.1:8105".to_string()).await })
 }
@@ -118,12 +118,11 @@ impl Eventbus for MemoryBus {
                 if msgs.len() > offset {
                     return Some(msgs[offset].clone());
                 }
-            }
-            else {
+            } else {
                 /*
-                * This caller has never read from this topic, so give them the
-                * first message
-                */
+                 * This caller has never read from this topic, so give them the
+                 * first message
+                 */
                 offsets.insert(offset_handle, 1);
                 return Some(msgs[0].clone());
             }
@@ -141,7 +140,7 @@ impl Eventbus for MemoryBus {
         let topics = self.topics.clone();
 
         async move {
-            if ! topics.contains_key(&topic) {
+            if !topics.contains_key(&topic) {
                 topics.insert(topic.clone(), vec![]);
             }
 
