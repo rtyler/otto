@@ -2,16 +2,21 @@
  * This is the simplest implementation of an Otto Eventbus, which keeps everything
  * only in memory
  */
+use dashmap::DashMap;
 use futures::future::FutureExt;
 use log::*;
+use meows;
 use otto_eventbus::server::*;
-use std::collections::HashMap;
+use smol;
 use std::future::Future;
 use std::pin::Pin;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 fn main() -> Result<(), std::io::Error> {
-    Ok(())
+    let eventbus = MemoryBus::default();
+    let mut server = meows::Server::with_state(eventbus);
+
+    smol::run(async move { server.serve("127.0.0.1:8105".to_string()).await })
 }
 
 /**
@@ -22,8 +27,8 @@ fn main() -> Result<(), std::io::Error> {
  * This is the most simple and primitive implementation of the Eventbus trait
  */
 struct MemoryBus {
-    topics: Arc<RwLock<HashMap<Topic, Vec<Message>>>>,
-    offsets: Arc<RwLock<HashMap<(Topic, CallerId), Offset>>>,
+    topics: Arc<DashMap<Topic, Vec<Message>>>,
+    offsets: Arc<DashMap<(Topic, CallerId), Offset>>,
 }
 
 impl Eventbus for MemoryBus {
@@ -32,32 +37,21 @@ impl Eventbus for MemoryBus {
         let offsets = self.offsets.clone();
 
         async move {
-            if let Ok(topics) = topics.read() {
-                /*
-                 * If the topic doesn't exist yet, we'll consider there to be
-                 * zero pending messages
+            if let Some(msgs) = topics.get(&topic) {
+                let latest = msgs.len() as i64;
+
+                if let Some(current) = offsets.get(&(topic, caller)) {
+                    return latest - current.value();
+                }
+                /* If the caller never showed up then our pending is basically everything
+                 * in the topic
                  */
-                if !topics.contains_key(&topic) {
-                    return 0;
-                }
-
-                let latest = topics[&topic].len() as i64;
-
-                if let Ok(offsets) = offsets.read() {
-                    if let Some(current) = offsets.get(&(topic, caller)) {
-                        return latest - current;
-                    } else {
-                        /* If the caller never showed up then our pending is basically everything
-                         * in the topic
-                         */
-                        return latest;
-                    }
-                } else {
-                    error!("Failed to get a read lock on the offsets");
-                }
-            } else {
-                error!("Failed to get a read lock on the topics");
+                return latest;
             }
+            /*
+             * If the topic doesn't exist yet, we'll consider there to be
+             * zero pending messages
+             */
             0
         }
         .boxed()
@@ -66,10 +60,8 @@ impl Eventbus for MemoryBus {
     fn latest(&self, topic: Topic) -> Pin<Box<dyn Future<Output = Offset> + Send>> {
         let topics = self.topics.clone();
         async move {
-            if let Ok(topics) = topics.read() {
-                if topics.contains_key(&topic) {
-                    return (topics[&topic].len() - 1) as Offset;
-                }
+            if let Some(msgs) = topics.get(&topic) {
+                return (msgs.len() - 1) as Offset;
             }
             -1
         }
@@ -81,18 +73,13 @@ impl Eventbus for MemoryBus {
         let offsets = self.offsets.clone();
 
         async move {
-            if let Ok(mut offsets) = offsets.write() {
-                if let Ok(topics) = topics.read() {
-                    if !topics.contains_key(&topic) {
-                        return None;
-                    }
-                    let offset_handle = (topic, caller);
+            if let Some(msgs) = topics.get(&topic) {
+                let offset_handle = (topic, caller);
 
-                    if topics[&offset_handle.0].len() > (offset as usize) {
-                        let result = Some(topics[&offset_handle.0][offset as usize].clone());
-                        offsets.insert(offset_handle, (offset as Offset) + 1);
-                        return result;
-                    }
+                if msgs.len() > (offset as usize) {
+                    let result = msgs[offset as usize].clone();
+                    offsets.insert(offset_handle, (offset as Offset) + 1);
+                    return Some(result);
                 }
             }
             None
@@ -105,45 +92,40 @@ impl Eventbus for MemoryBus {
         let offsets = self.offsets.clone();
 
         async move {
-            if let Ok(mut offsets) = offsets.write() {
-                if let Ok(topics) = topics.read() {
-                    /*
-                     * If the topic doesn't exist, None!
-                     */
-                    if !topics.contains_key(&topic) {
-                        return None;
-                    }
+            /*
+             * If the topic doesn't exist, None!
+             */
+            if !topics.contains_key(&topic) {
+                return None;
+            }
 
-                    let offset_handle = (topic, caller);
+            let msgs = topics.get(&topic).unwrap();
+            let offset_handle = (topic, caller);
 
-                    /*
-                     * This caller has never read from this topic, so give them the
-                     * first message
-                     */
-                    if !offsets.contains_key(&offset_handle) {
-                        let result = Some(topics[&offset_handle.0][0].clone());
-                        offsets.insert(offset_handle, 1);
-                        return result;
-                    } else {
-                        /*
-                         * This is basically duplicate functionality to what is in .at
-                         * unfortunately I am not yet smart enough to figure out
-                         * how to invoke other functions on this self from within
-                         * the async block just yet
-                         *
-                         * Whenever I get back to this, the invoke of at() will
-                         * have to come out of this block so that the RwLockGuard
-                         * is properly dropped before invoking at().await, since
-                         * it cannot live across the await
-                         */
-                        let offset = offsets[&offset_handle] as usize;
-                        if topics[&offset_handle.0].len() > offset {
-                            let result = Some(topics[&offset_handle.0][offset as usize].clone());
-                            offsets.insert(offset_handle, (offset as Offset) + 1);
-                            return result;
-                        }
-                    }
+            if let Some(offset) = offsets.get(&offset_handle) {
+                /*
+                 * This is basically duplicate functionality to what is in .at
+                 * unfortunately I am not yet smart enough to figure out
+                 * how to invoke other functions on this self from within
+                 * the async block just yet
+                 *
+                 * Whenever I get back to this, the invoke of at() will
+                 * have to come out of this block so that the RwLockGuard
+                 * is properly dropped before invoking at().await, since
+                 * it cannot live across the await
+                 */
+                let offset = *offset.value() as usize;
+                if msgs.len() > offset {
+                    return Some(msgs[offset].clone());
                 }
+            }
+            else {
+                /*
+                * This caller has never read from this topic, so give them the
+                * first message
+                */
+                offsets.insert(offset_handle, 1);
+                return Some(msgs[0].clone());
             }
             None
         }
@@ -159,15 +141,13 @@ impl Eventbus for MemoryBus {
         let topics = self.topics.clone();
 
         async move {
-            if let Ok(mut topics) = topics.write() {
-                if !topics.contains_key(&topic) {
-                    topics.insert(topic.clone(), vec![]);
-                }
+            if ! topics.contains_key(&topic) {
+                topics.insert(topic.clone(), vec![]);
+            }
 
-                if let Some(input) = topics.get_mut(&topic) {
-                    input.push(message);
-                    return Ok(input.len() as Offset);
-                }
+            if let Some(mut msgs) = topics.get_mut(&topic) {
+                msgs.push(message);
+                return Ok(msgs.len() as Offset);
             }
             Err(())
         }
@@ -178,8 +158,8 @@ impl Eventbus for MemoryBus {
 impl Default for MemoryBus {
     fn default() -> Self {
         Self {
-            topics: Arc::new(RwLock::new(HashMap::default())),
-            offsets: Arc::new(RwLock::new(HashMap::default())),
+            topics: Arc::new(DashMap::default()),
+            offsets: Arc::new(DashMap::default()),
         }
     }
 }

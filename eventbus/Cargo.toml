@@ -18,12 +18,17 @@ chrono = { version = "~0.4.10", features = ["serde"] }
 clap = { version = "~2.33.0", features = ["yaml"] }
 # Handling configuration overlays
 config = { version = "~0.10.1", features = ["yaml"] }
+# Used for fast in-memory hashmaps
+dashmap = "~3.11.4"
 futures = "~0.3.5"
 # Logging
 log = "~0.4.8"
+# WebSocket message exchange support
+meows = "~0.1.1"
 pretty_env_logger = "~0.3.1"
 # Needed for the nice bits in the cli
 rustyline = "~5.0.6"
+smol = "~0.1.12"
 # Library used for implementing HTTP APIs
 tide = "~0.11.0"
 
