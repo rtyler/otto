@@ -2,12 +2,17 @@
  * This is the simplest implementation of an Otto Engine, which keeps everything
  * only in memory
  */
+
 #[deny(unsafe_code)]
+extern crate async_std;
+extern crate dashmap;
+
 use dashmap::DashMap;
 use futures::future::FutureExt;
 use log::*;
 use meows;
 use otto_eventbus::server::*;
+use otto_eventbus::message;
 use smol;
 use std::future::Future;
 use std::pin::Pin;
@@ -15,10 +20,25 @@ use std::sync::Arc;
 
 async fn run_server(addr: String) -> Result<(), std::io::Error> {
     let eventbus = MemoryBus::default();
-    let server = meows::Server::with_state(eventbus);
+    let mut server = meows::Server::<Arc<MemoryBus>, ()>::with_state(eventbus);
+    server.on("subscribe", subscribe_client);
+    server.default(default_handler);
 
     info!("Starting eventbus on {}", addr);
     server.serve(addr).await
+}
+
+
+async fn default_handler(message: String, _state : Arc<Arc<MemoryBus>>) -> Option<meows::Message> {
+    debug!("Received a message I cannot handle: {}", message);
+    None
+}
+
+async fn subscribe_client(mut req: meows::Request<Arc<MemoryBus>, ()>) -> Option<meows::Message> {
+    if let Some(subscribe) = req.from_value::<message::Subscribe>() {
+        info!("Subscribe received: {:?}", subscribe);
+    }
+    None
 }
 
 fn main() -> Result<(), std::io::Error> {
@@ -37,6 +57,7 @@ fn main() -> Result<(), std::io::Error> {
  */
 struct MemoryBus {
     topics: Arc<DashMap<Topic, Vec<Message>>>,
+    //subscribers: Arc<DashMap<Topic, Sender<Message>>>,
     offsets: Arc<DashMap<(Topic, CallerId), Offset>>,
 }
 
@@ -163,6 +184,7 @@ impl Engine for MemoryBus {
         Arc::new(Self {
             topics: Arc::new(DashMap::default()),
             offsets: Arc::new(DashMap::default()),
+            //subscribers: Arc::new(DashMap::default()),
         })
     }
 }
@@ -185,21 +207,21 @@ mod tests {
         Bus::new(MemoryBus::default())
     }
 
-    #[test]
-    fn test_simple_pending() {
+    #[async_std::test]
+    async fn test_simple_pending() {
         let bus = test_bus();
 
-        let result = smol::run(bus.pending(test_topic(), test_caller()));
+        let result = bus.pending(test_topic(), test_caller()).await;
         assert_eq!(0, result);
     }
 
-    #[test]
-    fn test_publish_pending() {
+    #[async_std::test]
+    async fn test_publish_pending() {
         let bus = test_bus();
         let msg = String::from("hello world");
-        let start_latest = smol::run(bus.latest(test_topic()));
+        let start_latest = bus.latest(test_topic()).await;
 
-        let pub_res = smol::run(bus.publish(test_topic(), msg, test_caller()));
+        let pub_res = bus.publish(test_topic(), msg, test_caller()).await;
         assert!(pub_res.is_ok());
         assert!(start_latest < pub_res.unwrap());
 
@@ -207,83 +229,83 @@ mod tests {
         assert_eq!(1, pending);
     }
 
-    #[test]
-    fn test_retrieve_no_topic() {
+    #[async_std::test]
+    async fn test_retrieve_no_topic() {
         let bus = test_bus();
-        let retrieved = smol::run(bus.retrieve(test_topic(), test_caller()));
+        let retrieved = bus.retrieve(test_topic(), test_caller()).await;
         assert!(retrieved.is_none());
     }
 
-    #[test]
-    fn test_publish_retrieve() {
+    #[async_std::test]
+    async fn test_publish_retrieve() {
         let bus = test_bus();
 
-        let pub_res = smol::run(bus.publish(test_topic(), "hello".to_string(), test_caller()));
+        let pub_res = bus.publish(test_topic(), "hello".to_string(), test_caller()).await;
         assert!(pub_res.is_ok());
 
-        let retrieved = smol::run(bus.retrieve(test_topic(), test_caller()));
+        let retrieved = bus.retrieve(test_topic(), test_caller()).await;
         assert!(retrieved.is_some());
         assert_eq!("hello", retrieved.unwrap());
     }
 
-    #[test]
-    fn test_publish_retrieve_twice() {
+    #[async_std::test]
+    async fn test_publish_retrieve_twice() {
         let bus = test_bus();
 
-        smol::run(bus.publish(test_topic(), "hello".to_string(), test_caller())).unwrap();
-        smol::run(bus.publish(test_topic(), "world".to_string(), test_caller())).unwrap();
+        bus.publish(test_topic(), "hello".to_string(), test_caller()).await;
+        bus.publish(test_topic(), "world".to_string(), test_caller()).await;
 
-        let retrieved = smol::run(bus.retrieve(test_topic(), test_caller()));
+        let retrieved = bus.retrieve(test_topic(), test_caller()).await;
         assert!(retrieved.is_some());
         assert_eq!("hello", retrieved.unwrap());
 
-        let retrieved = smol::run(bus.retrieve(test_topic(), test_caller()));
+        let retrieved = bus.retrieve(test_topic(), test_caller()).await;
         assert!(retrieved.is_some());
         assert_eq!("world", retrieved.unwrap());
     }
 
-    #[test]
-    fn test_multiple_retrieve() {
+    #[async_std::test]
+    async fn test_multiple_retrieve() {
         let bus = test_bus();
 
-        smol::run(bus.publish(test_topic(), "hello".to_string(), test_caller())).unwrap();
+        bus.publish(test_topic(), "hello".to_string(), test_caller()).await;
 
-        let retrieved = smol::run(bus.retrieve(test_topic(), test_caller()));
+        let retrieved = bus.retrieve(test_topic(), test_caller()).await;
         assert!(retrieved.is_some());
         assert_eq!("hello", retrieved.unwrap());
 
-        let retrieved = smol::run(bus.retrieve(test_topic(), test_caller()));
+        let retrieved = bus.retrieve(test_topic(), test_caller()).await;
         assert!(retrieved.is_none());
     }
 
-    #[test]
-    fn test_latest_empty() {
+    #[async_std::test]
+    async fn test_latest_empty() {
         let bus = test_bus();
-        let result = smol::run(bus.latest(test_topic()));
+        let result = bus.latest(test_topic()).await;
         assert_eq!(-1, result);
     }
 
-    #[test]
-    fn test_latest_with_data() {
+    #[async_std::test]
+    async fn test_latest_with_data() {
         let bus = test_bus();
-        smol::run(bus.publish(test_topic(), "hello".to_string(), test_caller())).unwrap();
-        let result = smol::run(bus.latest(test_topic()));
+        bus.publish(test_topic(), "hello".to_string(), test_caller()).await;
+        let result = bus.latest(test_topic()).await;
         assert_eq!(0, result);
     }
 
-    #[test]
-    fn test_at_empty() {
+    #[async_std::test]
+    async fn test_at_empty() {
         let bus = test_bus();
-        let result = smol::run(bus.at(test_topic(), 0, test_caller()));
+        let result = bus.at(test_topic(), 0, test_caller()).await;
         assert!(result.is_none());
     }
 
-    #[test]
-    fn test_at_with_data() {
+    #[async_std::test]
+    async fn test_at_with_data() {
         let bus = test_bus();
-        smol::run(bus.publish(test_topic(), "hello".to_string(), test_caller())).unwrap();
+        bus.publish(test_topic(), "hello".to_string(), test_caller()).await;
 
-        let result = smol::run(bus.at(test_topic(), 0, test_caller()));
+        let result = bus.at(test_topic(), 0, test_caller()).await;
         assert!(result.is_some());
     }
 }

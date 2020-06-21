@@ -1,0 +1,21 @@
+[package]
+name = "eventbus-inmemory"
+version = "0.1.0"
+authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
+edition = "2018"
+
+[dependencies]
+async-std = { version = "1.6.0", features = ["attributes"] }
+# Used for fast in-memory hashmaps
+dashmap = "~3.11.4"
+futures = "~0.3.5"
+log = "~0.4.8"
+pretty_env_logger = "~0.4.0"
+# WebSocket message exchange support
+meows = "~0.2.0"
+otto-eventbus = { path = "../eventbus" }
+smol = "~0.1.12"
+
+[dev-dependencies]
+tungstenite = "~0.11.0"
+url = "~2.1.1"
