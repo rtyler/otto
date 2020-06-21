@@ -8,7 +8,6 @@ extern crate serde_derive;
 // TODO
 pub mod client {}
 
-
 pub mod message {
     #[derive(Debug, Deserialize, Serialize)]
     pub struct Register {
@@ -25,8 +24,6 @@ pub mod message {
         uuid: String,
         token: String,
     }
-
-
 }
 
 pub mod server {
@@ -46,10 +43,8 @@ pub mod server {
     }
 
     impl Bus {
-        pub fn new(inner: Arc<dyn Eventbus>)-> Self {
-            Self {
-                inner,
-            }
+        pub fn new(inner: Arc<dyn Eventbus>) -> Self {
+            Self { inner }
         }
         pub fn pending(
             &self,
@@ -89,20 +84,31 @@ pub mod server {
      * topic, such as with Kafka consumer groups
      */
     pub trait Eventbus {
+        /**
+         * Return the number of messages the caller has not yet consumed
+         */
         fn pending(
             self: Arc<Self>,
             topic: Topic,
             caller: CallerId,
         ) -> Pin<Box<dyn Future<Output = i64> + Send>>;
+
         /**
          * Fetch the latest offset for the given topic
+         *
+         * This should increment the caller's offset
          */
         fn latest(self: Arc<Self>, topic: Topic) -> Pin<Box<dyn Future<Output = Offset> + Send>>;
 
         /**
          * Retrieve the message at the specified offset
          */
-        fn at(self: Arc<Self>, topic: Topic, offset: Offset, caller: CallerId) -> AsyncOptionMessage;
+        fn at(
+            self: Arc<Self>,
+            topic: Topic,
+            offset: Offset,
+            caller: CallerId,
+        ) -> AsyncOptionMessage;
 
         /**
          * Retrieve the latest message
@@ -121,6 +127,15 @@ pub mod server {
             message: Message,
             caller: CallerId,
         ) -> Pin<Box<dyn Future<Output = Result<Offset, ()>> + Send>>;
+
+        /**
+         * Return a wrapped version of the implementation which can be invoked
+         *
+         * This is the preferred means of creating things
+         */
+        fn default() -> Arc<Self>
+        where
+            Self: Sized;
     }
 }
 

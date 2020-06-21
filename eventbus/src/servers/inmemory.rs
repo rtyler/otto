@@ -13,7 +13,6 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
-
 async fn run_server(addr: String) -> Result<(), std::io::Error> {
     let eventbus = MemoryBus::default();
     let server = meows::Server::with_state(eventbus);
@@ -42,7 +41,11 @@ struct MemoryBus {
 }
 
 impl Eventbus for MemoryBus {
-    fn pending(self: Arc<Self>, topic: Topic, caller: CallerId) -> Pin<Box<dyn Future<Output = i64> + Send>> {
+    fn pending(
+        self: Arc<Self>,
+        topic: Topic,
+        caller: CallerId,
+    ) -> Pin<Box<dyn Future<Output = i64> + Send>> {
         let topics = self.topics.clone();
         let offsets = self.offsets.clone();
 
@@ -112,16 +115,17 @@ impl Eventbus for MemoryBus {
             let msgs = topics.get(&topic).unwrap();
             let offset_handle = (topic, caller);
 
-            if let Some(offset) = offsets.get(&offset_handle) {
-                return self.at(offset_handle.0, *offset.value(), offset_handle.1).await;
-            } else {
-                /*
-                 * This caller has never read from this topic, so give them the
-                 * first message
-                 */
+            if !offsets.contains_key(&offset_handle) {
                 offsets.insert(offset_handle, 1);
                 return Some(msgs[0].clone());
             }
+
+            let offset = offsets.get(&offset_handle).unwrap();
+            let off = *offset.value();
+            // Need to explicitly drop offset to drop the reference into dashmap
+            // and avoid a deadlock in dashmap by our async function call below
+            std::mem::drop(offset);
+            return self.at(offset_handle.0, off, offset_handle.1).await;
         }
         .boxed()
     }
@@ -151,14 +155,15 @@ impl Eventbus for MemoryBus {
         }
         .boxed()
     }
-}
 
-impl Default for MemoryBus {
-    fn default() -> Self {
-        Self {
+    fn default() -> Arc<Self>
+    where
+        Self: Sized,
+    {
+        Arc::new(Self {
             topics: Arc::new(DashMap::default()),
             offsets: Arc::new(DashMap::default()),
-        }
+        })
     }
 }
 
@@ -177,7 +182,7 @@ mod tests {
     }
 
     fn test_bus() -> Bus {
-        Bus::new(Arc::new(MemoryBus::default()))
+        Bus::new(MemoryBus::default())
     }
 
     #[test]
