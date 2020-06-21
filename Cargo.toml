@@ -3,5 +3,6 @@
 members = [
     "auctioneer",
     "eventbus",
+    "eventbus-cli",
     "processors/travis-ci",
 ]
