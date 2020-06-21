@@ -39,11 +39,11 @@ pub mod server {
     pub type AsyncOptionMessage = Pin<Box<dyn Future<Output = Option<Message>> + Send + 'static>>;
 
     pub struct Bus {
-        inner: Arc<dyn Eventbus>,
+        inner: Arc<dyn Engine>,
     }
 
     impl Bus {
-        pub fn new(inner: Arc<dyn Eventbus>) -> Self {
+        pub fn new(inner: Arc<dyn Engine>) -> Self {
             Self { inner }
         }
         pub fn pending(
@@ -73,7 +73,7 @@ pub mod server {
     }
 
     /**
-     * The Eventbus trait should be implemented by the servers which need to
+     * The Engine trait should be implemented by the servers which need to
      * implement their own backing stores for an Otto eventbus.
      *
      * Each function is expected to return some sort of future that the caller
@@ -83,7 +83,7 @@ pub mod server {
      * can be used in many cases to help differentiate between consumers of the same
      * topic, such as with Kafka consumer groups
      */
-    pub trait Eventbus {
+    pub trait Engine {
         /**
          * Return the number of messages the caller has not yet consumed
          */

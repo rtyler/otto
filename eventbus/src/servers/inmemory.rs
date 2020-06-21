@@ -1,5 +1,5 @@
 /**
- * This is the simplest implementation of an Otto Eventbus, which keeps everything
+ * This is the simplest implementation of an Otto Engine, which keeps everything
  * only in memory
  */
 #[deny(unsafe_code)]
@@ -29,18 +29,18 @@ fn main() -> Result<(), std::io::Error> {
 }
 
 /**
- * The MemoryBus is a simple implementation of the Eventbus trait for a totally
+ * The MemoryBus is a simple implementation of the Engine trait for a totally
  * in-memory eventbus. There is no backing store and all data will be lost between
  * restarts of the application.
  *
- * This is the most simple and primitive implementation of the Eventbus trait
+ * This is the most simple and primitive implementation of the Engine trait
  */
 struct MemoryBus {
     topics: Arc<DashMap<Topic, Vec<Message>>>,
     offsets: Arc<DashMap<(Topic, CallerId), Offset>>,
 }
 
-impl Eventbus for MemoryBus {
+impl Engine for MemoryBus {
     fn pending(
         self: Arc<Self>,
         topic: Topic,
