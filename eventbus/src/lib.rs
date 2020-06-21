@@ -1,14 +1,38 @@
 /**
  * The main eventbus module
  */
-use log::*;
+
+#[macro_use]
+extern crate serde_derive;
 
 // TODO
 pub mod client {}
 
+
+pub mod message {
+    #[derive(Debug, Deserialize, Serialize)]
+    pub struct Register {
+        uuid: String,
+        token: Option<String>,
+    }
+    #[derive(Debug, Deserialize, Serialize)]
+    pub struct Subscribe {
+        client: ClientHeader,
+        channel: String,
+    }
+    #[derive(Debug, Deserialize, Serialize)]
+    pub struct ClientHeader {
+        uuid: String,
+        token: String,
+    }
+
+
+}
+
 pub mod server {
     use std::future::Future;
     use std::pin::Pin;
+    use std::sync::Arc;
 
     pub type Offset = i64;
     pub type Topic = String;
@@ -16,6 +40,42 @@ pub mod server {
     pub type Message = String;
 
     pub type AsyncOptionMessage = Pin<Box<dyn Future<Output = Option<Message>> + Send + 'static>>;
+
+    pub struct Bus {
+        inner: Arc<dyn Eventbus>,
+    }
+
+    impl Bus {
+        pub fn new(inner: Arc<dyn Eventbus>)-> Self {
+            Self {
+                inner,
+            }
+        }
+        pub fn pending(
+            &self,
+            topic: Topic,
+            caller: CallerId,
+        ) -> Pin<Box<dyn Future<Output = i64> + Send>> {
+            self.inner.clone().pending(topic, caller)
+        }
+        pub fn latest(&self, topic: Topic) -> Pin<Box<dyn Future<Output = Offset> + Send>> {
+            self.inner.clone().latest(topic)
+        }
+        pub fn at(&self, topic: Topic, offset: Offset, caller: CallerId) -> AsyncOptionMessage {
+            self.inner.clone().at(topic, offset, caller)
+        }
+        pub fn retrieve(&self, topic: Topic, caller: CallerId) -> AsyncOptionMessage {
+            self.inner.clone().retrieve(topic, caller)
+        }
+        pub fn publish(
+            &self,
+            topic: Topic,
+            message: Message,
+            caller: CallerId,
+        ) -> Pin<Box<dyn Future<Output = Result<Offset, ()>> + Send>> {
+            self.inner.clone().publish(topic, message, caller)
+        }
+    }
 
     /**
      * The Eventbus trait should be implemented by the servers which need to
@@ -30,24 +90,24 @@ pub mod server {
      */
     pub trait Eventbus {
         fn pending(
-            &self,
+            self: Arc<Self>,
             topic: Topic,
             caller: CallerId,
         ) -> Pin<Box<dyn Future<Output = i64> + Send>>;
         /**
          * Fetch the latest offset for the given topic
          */
-        fn latest(&self, topic: Topic) -> Pin<Box<dyn Future<Output = Offset> + Send>>;
+        fn latest(self: Arc<Self>, topic: Topic) -> Pin<Box<dyn Future<Output = Offset> + Send>>;
 
         /**
          * Retrieve the message at the specified offset
          */
-        fn at(&self, topic: Topic, offset: Offset, caller: CallerId) -> AsyncOptionMessage;
+        fn at(self: Arc<Self>, topic: Topic, offset: Offset, caller: CallerId) -> AsyncOptionMessage;
 
         /**
          * Retrieve the latest message
          */
-        fn retrieve(&self, topic: Topic, caller: CallerId) -> AsyncOptionMessage;
+        fn retrieve(self: Arc<Self>, topic: Topic, caller: CallerId) -> AsyncOptionMessage;
 
         /**
          * Publish a message to the given topic
@@ -56,7 +116,7 @@ pub mod server {
          * new latest offset on the topic
          */
         fn publish(
-            &mut self,
+            self: Arc<Self>,
             topic: Topic,
             message: Message,
             caller: CallerId,

@@ -4,20 +4,18 @@ version = "0.1.0"
 authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-serde = "~1.0.103"
-serde_json = "~1.0.0"
-serde_yaml = "~0.8.11"
+# Handling command line options
+clap = { version = "~2.33.0", features = ["yaml"] }
 
 log = "~0.4.8"
 pretty_env_logger = "~0.3.1"
 
-# Handling command line options
-clap = { version = "~2.33.0", features = ["yaml"] }
+otto-eventbus = { path = "../../eventbus" }
+
+serde = "~1.0.103"
+serde_json = "~1.0.0"
+serde_yaml = "~0.8.11"
 
 # Needed for generating uuids
 uuid = { version = "~0.8.1", features = ["serde", "v4"] }
-
-otto-eventbus = { path = "../../eventbus" }

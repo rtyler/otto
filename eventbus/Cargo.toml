@@ -28,6 +28,9 @@ meows = "~0.1.1"
 pretty_env_logger = "~0.3.1"
 # Needed for the nice bits in the cli
 rustyline = "~5.0.6"
+serde = { version = "~1.0.111", features = ["rc"] }
+serde_derive = "~1.0.106"
+serde_json = "~1.0.53"
 smol = "~0.1.12"
 # Library used for implementing HTTP APIs
 tide = "~0.11.0"
