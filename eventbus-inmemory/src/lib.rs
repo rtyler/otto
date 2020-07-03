@@ -4,15 +4,20 @@ use log::*;
 use meows;
 use otto_eventbus::server::*;
 use otto_eventbus::message;
+use serde_json;
 use smol;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
+use uuid::Uuid;
 
 pub async fn run_server(addr: String) -> Result<(), std::io::Error> {
     let eventbus = MemoryBus::default();
     let mut server = meows::Server::<Arc<MemoryBus>, ()>::with_state(eventbus);
+
+    server.on("register", register_client);
     server.on("subscribe", subscribe_client);
+
     server.default(default_handler);
 
     info!("Starting eventbus on {}", addr);
@@ -21,15 +26,40 @@ pub async fn run_server(addr: String) -> Result<(), std::io::Error> {
 
 
 async fn default_handler(message: String, _state : Arc<Arc<MemoryBus>>) -> Option<meows::Message> {
-    debug!("Received a message I cannot handle: {}", message);
+    warn!("Received a message I cannot handle: {}", message);
     None
+}
+
+async fn register_client(mut req: meows::Request<Arc<MemoryBus>, ()>) -> Option<meows::Message> {
+    if let Some(register) = req.from_value::<message::Register>() {
+        info!("Registration received for client {}", register.uuid);
+        /*
+         * Just using a random uuid as the authentication token, I don't beleive
+         * we need much more "security" in these tokens other than that.
+         */
+        let response = message::Registered {
+            token: Uuid::new_v4()
+        };
+
+        // TODO: implement a TryFrom or TryInto for the messages defined by the eventbus
+        Some(meows::Message::text(
+                serde_json::to_string(&response).expect("Failed to parse registered")
+        ))
+    }
+    else {
+        None
+    }
 }
 
 async fn subscribe_client(mut req: meows::Request<Arc<MemoryBus>, ()>) -> Option<meows::Message> {
     if let Some(subscribe) = req.from_value::<message::Subscribe>() {
         info!("Subscribe received: {:?}", subscribe);
+        // TODO: What is the right protocol response for a subscribe?
+        Some(meows::Message::text("ack"))
     }
-    None
+    else {
+        None
+    }
 }
 
 

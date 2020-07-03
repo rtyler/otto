@@ -11,8 +11,12 @@ pub mod client {}
 pub mod message {
     #[derive(Debug, Deserialize, Serialize)]
     pub struct Register {
-        uuid: String,
-        token: Option<String>,
+        pub uuid: uuid::Uuid,
+        pub token: Option<uuid::Uuid>,
+    }
+    #[derive(Debug, Deserialize, Serialize)]
+    pub struct Registered {
+        pub token: uuid::Uuid,
     }
     #[derive(Debug, Deserialize, Serialize)]
     pub struct Subscribe {
