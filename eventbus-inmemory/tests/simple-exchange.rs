@@ -48,7 +48,7 @@ async fn simple_connect() -> std::io::Result<()> {
         };
         let buffer = serde_json::to_string(&envelope).expect("Failed to serialize the register");
 
-        socket.write_message(Message::text(buffer))
+        socket.write_message(Message::text(&buffer))
             .expect("Failed to send message to test server");
 
         if let Ok(m) = socket.read_message() {
@@ -65,6 +65,20 @@ async fn simple_connect() -> std::io::Result<()> {
             assert!(!registered.token.is_nil());
             assert!(register.uuid != registered.token);
         }
+
+        /*
+         * On the second iteration, the register event should return an error
+         */
+        socket.write_message(Message::text(buffer))
+            .expect("Failed to send message to test server");
+        if let Ok(m) = socket.read_message() {
+            info!("Read second response from server: {:?}", m);
+            assert!(m.is_text());
+            let text = m.into_text().expect("Failed to convert message payload to text");
+            let error: otto_eventbus::message::Error = serde_json::from_str(&text).expect("Failed to deserialize the response");
+            assert_eq!(error.code, "eventbus.already_registered");
+        }
+
         socket.close(None)
             .expect("Failed to cleanly close connection");
     }

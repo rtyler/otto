@@ -44,6 +44,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-channel"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "concurrent-queue 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "event-listener 2.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "futures-core 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "async-std"
 version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -354,14 +364,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "event-listener"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "eventbus-inmemory"
 version = "0.1.0"
 dependencies = [
+ "async-channel 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "async-std 1.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "dashmap 3.11.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "meows 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "meows 0.3.0 (git+https://github.com/rtyler/meows)",
  "otto-eventbus 0.1.0",
  "pretty_env_logger 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.113 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -652,9 +668,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "meows"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+version = "0.3.0"
+source = "git+https://github.com/rtyler/meows#71e48ad9e92d032754daeede50447b2ceefae1d9"
 dependencies = [
+ "async-channel 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "async-tungstenite 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1565,6 +1582,7 @@ dependencies = [
 "checksum arrayref 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)" = "a4c527152e37cf757a3f78aae5a06fbeefdb07ccc535c980a3208ee3060dd544"
 "checksum arrayvec 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "cff77d8686867eceff3105329d4698d96c2391c176d5d03adc90c7389162b5b8"
 "checksum async-attributes 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "efd3d156917d94862e779f356c5acae312b08fd3121e792c857d7928c8088423"
+"checksum async-channel 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "ee81ba99bee79f3c8ae114ae4baa7eaa326f63447cf2ec65e4393618b63f8770"
 "checksum async-std 1.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "00d68a33ebc8b57800847d00787307f84a562224a14db069b0acefe4c2abbf5d"
 "checksum async-task 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c17772156ef2829aadc587461c7753af20b7e8db1529bc66855add962a3b35d3"
 "checksum async-tungstenite 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "182617e5bbfe7001b6f2317883506f239c77313171620a04cc11292704d3e171"
@@ -1601,6 +1619,7 @@ dependencies = [
 "checksum dtoa 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)" = "134951f4028bdadb9b84baf4232681efbf277da25144b9b0ad65df75946c422b"
 "checksum env_logger 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "aafcde04e90a5226a6443b7aabdb016ba2f8307c847d524724bd9b346dd1a2d3"
 "checksum env_logger 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)" = "44533bbbb3bb3c1fa17d9f2e4e38bbbaf8396ba82193c4cb1b6445d711445d36"
+"checksum event-listener 2.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "699d84875f1b72b4da017e6b0f77dfa88c0137f089958a88974d15938cbc2976"
 "checksum fake-simd 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "e88a8acf291dafb59c2d96e8f59828f3838bb1a70398823ade51a84de6a6deed"
 "checksum fastrand 1.2.4 (registry+https://github.com/rust-lang/crates.io-index)" = "a64b0126b293b050395b37b10489951590ed024c03d7df4f249d219c8ded7cbf"
 "checksum fnv 1.0.7 (registry+https://github.com/rust-lang/crates.io-index)" = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
@@ -1636,7 +1655,7 @@ dependencies = [
 "checksum loom 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)" = "4ecc775857611e1df29abba5c41355cdf540e7e9d4acfdf0f355eefee82330b7"
 "checksum matches 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)" = "7ffc5c5338469d4d3ea17d269fa8ea3512ad247247c30bd2df69e68309ed0a08"
 "checksum memchr 2.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400"
-"checksum meows 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "773ddc8541c0c320c5ddf54ee4692711e3ceeb1399323fe9daf8e044d8a37941"
+"checksum meows 0.3.0 (git+https://github.com/rtyler/meows)" = "<none>"
 "checksum native-tls 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)" = "2b0d88c06fe90d5ee94048ba40409ef1d9315d86f6f38c2efdaad4fb50c58b2d"
 "checksum nix 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)" = "6c722bee1037d430d0f8e687bbdbf222f27cc6e4e68d5caf630857bb2b6dbdce"
 "checksum nom 5.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "ffb4262d26ed83a1c0a33a38fe2bb15797329c85770da05e6b828ddb782627af"

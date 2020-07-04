@@ -1,3 +1,8 @@
+/**
+ * This module contains the majority of the in-memory eventbus functionality
+ */
+
+use async_channel::Sender;
 use dashmap::DashMap;
 use futures::future::FutureExt;
 use log::*;
@@ -33,13 +38,36 @@ async fn default_handler(message: String, _state : Arc<Arc<MemoryBus>>) -> Optio
 async fn register_client(mut req: meows::Request<Arc<MemoryBus>, ()>) -> Option<meows::Message> {
     if let Some(register) = req.from_value::<message::Register>() {
         info!("Registration received for client {}", register.uuid);
+
+        /*
+         * Check for a duplicate registration
+         */
+        if req.state.clients.contains_key(&register.uuid) {
+            let error = otto_eventbus::message::Error {
+                code: "eventbus.already_registered".to_string(),
+                data: None,
+            };
+
+            return Some(
+                meows::Message::text(
+                    serde_json::to_string(&error).expect("Failed to serialize error")
+                )
+            );
+        }
+
         /*
          * Just using a random uuid as the authentication token, I don't beleive
          * we need much more "security" in these tokens other than that.
          */
-        let response = message::Registered {
-            token: Uuid::new_v4()
+        let token = Uuid::new_v4();
+        let response = message::Registered { token };
+
+        let client = Client {
+            token,
+            sink: req.sink.clone(),
         };
+
+        req.state.add_client(register.uuid, client);
 
         // TODO: implement a TryFrom or TryInto for the messages defined by the eventbus
         Some(meows::Message::text(
@@ -64,6 +92,27 @@ async fn subscribe_client(mut req: meows::Request<Arc<MemoryBus>, ()>) -> Option
 
 
 /**
+ * The ClientId is the agreed upon uuid that the client(s) will use to identify
+ * their registration, subscription, etc requests
+ */
+type ClientId = Uuid;
+/**
+ * The client struct represents the server side state the eventbus needs to
+ * affiliate with each websocket connection.
+ */
+struct Client {
+    /**
+     * The token is used to verify protected actions from the client
+     */
+    token: Uuid,
+    /**
+     * The sink allows for writing Message objects back to the client's
+     * connected websocket
+     */
+    sink: Sender<meows::Message>,
+}
+
+/**
  * The MemoryBus is a simple implementation of the Engine trait for a totally
  * in-memory eventbus. There is no backing store and all data will be lost between
  * restarts of the application.
@@ -71,9 +120,15 @@ async fn subscribe_client(mut req: meows::Request<Arc<MemoryBus>, ()>) -> Option
  * This is the most simple and primitive implementation of the Engine trait
  */
 struct MemoryBus {
+    clients: Arc<DashMap<ClientId, Client>>,
     topics: Arc<DashMap<Topic, Vec<Message>>>,
-    //subscribers: Arc<DashMap<Topic, Sender<Message>>>,
     offsets: Arc<DashMap<(Topic, CallerId), Offset>>,
+}
+
+impl MemoryBus {
+    pub fn add_client(&self, id: ClientId, client: Client) {
+        self.clients.insert(id, client);
+    }
 }
 
 impl Engine for MemoryBus {
@@ -197,9 +252,9 @@ impl Engine for MemoryBus {
         Self: Sized,
     {
         Arc::new(Self {
+            clients: Arc::new(DashMap::default()),
             topics: Arc::new(DashMap::default()),
             offsets: Arc::new(DashMap::default()),
-            //subscribers: Arc::new(DashMap::default()),
         })
     }
 }

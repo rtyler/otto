@@ -9,6 +9,8 @@ extern crate serde_derive;
 pub mod client {}
 
 pub mod message {
+    use std::collections::HashMap;
+
     #[derive(Debug, Deserialize, Serialize)]
     pub struct Register {
         pub uuid: uuid::Uuid,
@@ -18,6 +20,13 @@ pub mod message {
     pub struct Registered {
         pub token: uuid::Uuid,
     }
+
+    #[derive(Debug, Deserialize, Serialize)]
+    pub struct Error {
+        pub code: String,
+        pub data: Option<HashMap<String, String>>,
+    }
+
     #[derive(Debug, Deserialize, Serialize)]
     pub struct Subscribe {
         client: ClientHeader,
