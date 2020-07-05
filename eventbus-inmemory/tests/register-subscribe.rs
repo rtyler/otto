@@ -16,14 +16,13 @@ async fn register_and_subscribe() -> std::io::Result<()> {
         info!("Connected to the server");
         let client = Uuid::new_v4();
         let _auth = register_client(client, &mut socket);
-        socket.close(None)
+        socket
+            .close(None)
             .expect("Failed to cleanly close connection");
-    }
-    else {
+    } else {
         error!("Failed to connect to the websocket server");
         assert!(false);
     }
 
     Ok(())
 }
-

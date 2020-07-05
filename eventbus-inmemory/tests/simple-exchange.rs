@@ -20,13 +20,10 @@ async fn register_test() -> std::io::Result<()> {
 
     if let Ok((mut socket, _response)) = ws_connect() {
         info!("Connected to the server");
-        let uuid =  Uuid::new_v4();
+        let uuid = Uuid::new_v4();
         let _token = register_client(uuid, &mut socket);
 
-        let register = Register {
-            uuid,
-            token: None,
-        };
+        let register = Register { uuid, token: None };
 
         let envelope = meows::Envelope {
             ttype: "register".to_string(),
@@ -37,21 +34,25 @@ async fn register_test() -> std::io::Result<()> {
         /*
          * On the second iteration, the register event should return an error
          */
-        socket.write_message(Message::text(buffer))
+        socket
+            .write_message(Message::text(buffer))
             .expect("Failed to send message to test server");
 
         if let Ok(m) = socket.read_message() {
             info!("Read second response from server: {:?}", m);
             assert!(m.is_text());
-            let text = m.into_text().expect("Failed to convert message payload to text");
-            let error: otto_eventbus::message::Error = serde_json::from_str(&text).expect("Failed to deserialize the response");
+            let text = m
+                .into_text()
+                .expect("Failed to convert message payload to text");
+            let error: otto_eventbus::message::Error =
+                serde_json::from_str(&text).expect("Failed to deserialize the response");
             assert_eq!(error.code, "eventbus.already_registered");
         }
 
-        socket.close(None)
+        socket
+            .close(None)
             .expect("Failed to cleanly close connection");
-    }
-    else {
+    } else {
         error!("Failed to connect to local server");
         assert!(false);
     }

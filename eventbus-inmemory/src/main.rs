@@ -4,7 +4,6 @@
  */
 
 #[deny(unsafe_code)]
-
 extern crate eventbus_inmemory;
 
 use smol;
@@ -16,4 +15,3 @@ fn main() -> Result<(), std::io::Error> {
     let server = eventbus_inmemory::create_server();
     smol::run(eventbus_inmemory::run_server(server, addr))
 }
-

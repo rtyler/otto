@@ -1,22 +1,20 @@
 /**
  * This module contains the majority of the in-memory eventbus functionality
  */
-
 use dashmap::DashMap;
 use futures::channel::mpsc::Sender;
 use futures::future::FutureExt;
 use futures::sink::SinkExt;
 use log::*;
 use meows;
-use otto_eventbus::server::*;
 use otto_eventbus::message;
+use otto_eventbus::server::*;
 use serde_json;
 use smol;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 use uuid::Uuid;
-
 
 pub type EventbusServer = meows::Server<Arc<MemoryBus>, ()>;
 
@@ -35,8 +33,7 @@ pub async fn run_server(mut server: EventbusServer, addr: String) -> Result<(), 
     server.serve(addr).await
 }
 
-
-async fn default_handler(message: String, _state : Arc<Arc<MemoryBus>>) -> Option<meows::Message> {
+async fn default_handler(message: String, _state: Arc<Arc<MemoryBus>>) -> Option<meows::Message> {
     warn!("Received a message I cannot handle: {}", message);
     None
 }
@@ -54,11 +51,9 @@ async fn register_client(mut req: meows::Request<Arc<MemoryBus>, ()>) -> Option<
                 data: None,
             };
 
-            return Some(
-                meows::Message::text(
-                    serde_json::to_string(&error).expect("Failed to serialize error")
-                )
-            );
+            return Some(meows::Message::text(
+                serde_json::to_string(&error).expect("Failed to serialize error"),
+            ));
         }
 
         /*
@@ -77,10 +72,9 @@ async fn register_client(mut req: meows::Request<Arc<MemoryBus>, ()>) -> Option<
 
         // TODO: implement a TryFrom or TryInto for the messages defined by the eventbus
         Some(meows::Message::text(
-                serde_json::to_string(&response).expect("Failed to parse registered")
+            serde_json::to_string(&response).expect("Failed to parse registered"),
         ))
-    }
-    else {
+    } else {
         None
     }
 }
@@ -90,12 +84,10 @@ async fn subscribe_client(mut req: meows::Request<Arc<MemoryBus>, ()>) -> Option
         info!("Subscribe received: {:?}", subscribe);
         // TODO: What is the right protocol response for a subscribe?
         Some(meows::Message::text("ack"))
-    }
-    else {
+    } else {
         None
     }
 }
-
 
 /**
  * The ClientId is the agreed upon uuid that the client(s) will use to identify
@@ -316,7 +308,9 @@ mod tests {
     async fn test_publish_retrieve() {
         let bus = test_bus();
 
-        let pub_res = bus.publish(test_topic(), "hello".to_string(), test_caller()).await;
+        let pub_res = bus
+            .publish(test_topic(), "hello".to_string(), test_caller())
+            .await;
         assert!(pub_res.is_ok());
 
         let retrieved = bus.retrieve(test_topic(), test_caller()).await;
@@ -328,8 +322,10 @@ mod tests {
     async fn test_publish_retrieve_twice() {
         let bus = test_bus();
 
-        bus.publish(test_topic(), "hello".to_string(), test_caller()).await;
-        bus.publish(test_topic(), "world".to_string(), test_caller()).await;
+        bus.publish(test_topic(), "hello".to_string(), test_caller())
+            .await;
+        bus.publish(test_topic(), "world".to_string(), test_caller())
+            .await;
 
         let retrieved = bus.retrieve(test_topic(), test_caller()).await;
         assert!(retrieved.is_some());
@@ -344,7 +340,8 @@ mod tests {
     async fn test_multiple_retrieve() {
         let bus = test_bus();
 
-        bus.publish(test_topic(), "hello".to_string(), test_caller()).await;
+        bus.publish(test_topic(), "hello".to_string(), test_caller())
+            .await;
 
         let retrieved = bus.retrieve(test_topic(), test_caller()).await;
         assert!(retrieved.is_some());
@@ -364,7 +361,8 @@ mod tests {
     #[async_std::test]
     async fn test_latest_with_data() {
         let bus = test_bus();
-        bus.publish(test_topic(), "hello".to_string(), test_caller()).await;
+        bus.publish(test_topic(), "hello".to_string(), test_caller())
+            .await;
         let result = bus.latest(test_topic()).await;
         assert_eq!(0, result);
     }
@@ -379,7 +377,8 @@ mod tests {
     #[async_std::test]
     async fn test_at_with_data() {
         let bus = test_bus();
-        bus.publish(test_topic(), "hello".to_string(), test_caller()).await;
+        bus.publish(test_topic(), "hello".to_string(), test_caller())
+            .await;
 
         let result = bus.at(test_topic(), 0, test_caller()).await;
         assert!(result.is_some());
