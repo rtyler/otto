@@ -2,9 +2,10 @@
  * This module contains the majority of the in-memory eventbus functionality
  */
 
-use async_channel::Sender;
 use dashmap::DashMap;
+use futures::channel::mpsc::Sender;
 use futures::future::FutureExt;
+use futures::sink::SinkExt;
 use log::*;
 use meows;
 use otto_eventbus::server::*;
@@ -16,7 +17,10 @@ use std::pin::Pin;
 use std::sync::Arc;
 use uuid::Uuid;
 
-pub async fn run_server(addr: String) -> Result<(), std::io::Error> {
+
+pub type EventbusServer = meows::Server<Arc<MemoryBus>, ()>;
+
+pub fn create_server() -> EventbusServer {
     let eventbus = MemoryBus::default();
     let mut server = meows::Server::<Arc<MemoryBus>, ()>::with_state(eventbus);
 
@@ -24,8 +28,10 @@ pub async fn run_server(addr: String) -> Result<(), std::io::Error> {
     server.on("subscribe", subscribe_client);
 
     server.default(default_handler);
+    server
+}
 
-    info!("Starting eventbus on {}", addr);
+pub async fn run_server(mut server: EventbusServer, addr: String) -> Result<(), std::io::Error> {
     server.serve(addr).await
 }
 
@@ -100,7 +106,7 @@ type ClientId = Uuid;
  * The client struct represents the server side state the eventbus needs to
  * affiliate with each websocket connection.
  */
-struct Client {
+pub struct Client {
     /**
      * The token is used to verify protected actions from the client
      */
@@ -119,7 +125,7 @@ struct Client {
  *
  * This is the most simple and primitive implementation of the Engine trait
  */
-struct MemoryBus {
+pub struct MemoryBus {
     clients: Arc<DashMap<ClientId, Client>>,
     topics: Arc<DashMap<Topic, Vec<Message>>>,
     offsets: Arc<DashMap<(Topic, CallerId), Offset>>,
