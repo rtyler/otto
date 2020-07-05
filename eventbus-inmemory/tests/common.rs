@@ -54,12 +54,7 @@ pub fn bootstrap_server() -> Sender<meows::Control> {
  */
 pub fn register_client(uuid: Uuid, socket: &mut WebSocket<AutoStream>) -> Option<Uuid> {
     let register = Register { uuid, token: None };
-
-    let envelope = meows::Envelope {
-        ttype: "register".to_string(),
-        value: serde_json::to_value(&register).expect("Failed to convert to value"),
-    };
-    let buffer = serde_json::to_string(&envelope).expect("Failed to serialize the register");
+    let buffer = wrap_in_envelope("register".to_string(), &register);
 
     socket
         .write_message(Message::text(&buffer))
@@ -81,7 +76,19 @@ pub fn register_client(uuid: Uuid, socket: &mut WebSocket<AutoStream>) -> Option
 
         assert!(!registered.token.is_nil());
         assert!(register.uuid != registered.token);
-        return Some(register.uuid);
+        return Some(registered.token);
     }
     None
+}
+
+/**
+ * This function will wrap the given message in a meows envelope and give you
+ * the string you need to write to a socket back
+ */
+pub fn wrap_in_envelope<T: serde::ser::Serialize>(name: String, message: &T) -> String {
+    let envelope = meows::Envelope {
+        ttype: name,
+        value: serde_json::to_value(&message).expect("Failed to convert to value"),
+    };
+    serde_json::to_string(&envelope).expect("Failed to serialize the register")
 }

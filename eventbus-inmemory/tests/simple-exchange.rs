@@ -24,12 +24,7 @@ async fn register_test() -> std::io::Result<()> {
         let _token = register_client(uuid, &mut socket);
 
         let register = Register { uuid, token: None };
-
-        let envelope = meows::Envelope {
-            ttype: "register".to_string(),
-            value: serde_json::to_value(&register).expect("Failed to convert to value"),
-        };
-        let buffer = serde_json::to_string(&envelope).expect("Failed to serialize the register");
+        let buffer = wrap_in_envelope("register".to_string(), &register);
 
         /*
          * On the second iteration, the register event should return an error
