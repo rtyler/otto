@@ -1,15 +1,23 @@
 # This manifest captures the basic functionality of the Jenkins Pipeline `sh`
 # step
 ---
+# The symbol defines how this step should present in the pipeline
+symbol: sh
+# Description is help text
 description: |
   The `sh` step executes a shell script within the given execution context
+
+# List all the files/globs to include in the packaged artifact
+includes:
+  - name: target/release/sh-step
+    strip_prefix: true
 
 # The entrypoint tells the Otto agent which actual binary to use when
 # executing.
 #
 # This should be something that 
 entrypoint:
-  path: bin/sh-step
+  path: sh-step
   # Multiarch tells the agent that this should be executed on all platforms. In
   # which case case it may be "blindly" invoked.
   #
