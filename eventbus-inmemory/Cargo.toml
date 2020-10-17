@@ -15,6 +15,7 @@ pretty_env_logger = "~0.4.0"
 # WebSocket message exchange support
 meows = {"git" = "https://github.com/rtyler/meows", "branch" = "master" }
 otto-eventbus = { path = "../eventbus" }
+parking_lot = "~0.11.0"
 serde = { version = "~1.0.111", features = ["rc"] }
 serde_json = "~1.0.53"
 smol = "~0.1.12"

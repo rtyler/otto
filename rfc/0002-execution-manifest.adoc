@@ -182,6 +182,28 @@ The store operation will persist some specified pattern of files into the Otto o
   "type"     : "STORE",
   "data" : {
     "pattern"   : "build/*.tar.gz",
+    "permanent" : true,
+  }
+}
+----
+
+Properties:
+
+* **pattern**:
+* **permanent**: (_optional_) mark the files to persist past the termination of the CI/CD
+  process
+
+==== `FETCH`
+
+The fetch operation will retrieve persisted files from the Otto object store.
+
+[source,json]
+----
+{
+  "op_id"    : "uuid",
+  "type"     : "FETCH",
+  "data" : {
+    "pattern"   : "build/*.tar.gz",
     "permanent" : true
   }
 }

@@ -29,13 +29,19 @@ pub mod message {
 
     #[derive(Debug, Deserialize, Serialize)]
     pub struct Subscribe {
-        client: ClientHeader,
-        channel: String,
+        pub header: ClientHeader,
+        pub channel: String,
     }
     #[derive(Debug, Deserialize, Serialize)]
+    pub struct Publish {
+        pub header: ClientHeader,
+        pub channel: String,
+        pub value: serde_json::Value,
+    }
+    #[derive(Clone, Debug, Deserialize, Serialize)]
     pub struct ClientHeader {
-        uuid: String,
-        token: String,
+        pub uuid: uuid::Uuid,
+        pub token: uuid::Uuid,
     }
 }
 
