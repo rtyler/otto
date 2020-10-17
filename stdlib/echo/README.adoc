@@ -1,0 +1,11 @@
+= echo step
+
+The `echo` step is a simple step that just echoes a string into the log.
+
+
+[NOTE]
+====
+This is currently _not_ cross-platform to explicitly provide a step to test
+multiarch step libraries
+====
+

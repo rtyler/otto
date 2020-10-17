@@ -1,0 +1,19 @@
+---
+symbol: echo
+description: |
+  The `echo` step is a simple step that just echoes a string into the log.
+
+includes:
+  - name: ./echo-step
+  - name: ./README.adoc
+
+entrypoint:
+  path: echo-step
+  multiarch: true
+
+parameters:
+  - name: message
+    required: true
+    type: string
+    description: |
+      The message to echo

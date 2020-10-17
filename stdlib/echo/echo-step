@@ -1,0 +1,4 @@
+#!/bin/bash
+
+
+cat $1 | gawk 'match($0, /\s+message:\s+["](.*)?["]/, a) {print a[1]}'
