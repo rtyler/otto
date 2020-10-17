@@ -25,7 +25,17 @@ impl Manifest {
         tar.append_file(format!("{}/manifest.yml", self.symbol), &mut manifest)?;
 
         for include in self.includes.iter() {
-            let mut f = File::open(&include.name)?;
+            let mut f = File::open(match include.name.starts_with("./") {
+                true => {
+                    // Relative to dir
+                    dir.join(&include.name)
+                },
+                false => {
+                    // Relative to $PWD
+                    Path::new(&include.name).to_path_buf()
+                },
+            })?;
+
             let archive_path = format!("{}/{}",
                                     self.symbol,
                                     match include.flatten {
