@@ -1,0 +1,47 @@
+# This manifest captures the basic functionality of the Jenkins Pipeline `sh`
+# step
+---
+description: |
+  The `sh` step executes a shell script within the given execution context
+
+# The entrypoint tells the Otto agent which actual binary to use when
+# executing.
+#
+# This should be something that 
+entrypoint:
+  path: bin/sh-step
+  # Multiarch tells the agent that this should be executed on all platforms. In
+  # which case case it may be "blindly" invoked.
+  #
+  # Non-multiarch steps will be attempt to be invoked with
+  # `${entrypoint.path}-${arch}-${vendor}-${system}-${abi}` similar to how
+  # Rust manages target triples: https://doc.rust-lang.org/nightly/rustc/platform-support.html
+  multiarch: false
+
+parameters:
+  script:
+    required: true
+    type: string
+    description: |
+      Runs a Bourne shell script, typically on a Unix node. Multiple lines are accepted.
+
+      An interpreter selector may be used, for example: `#!/usr/bin/perl`
+
+      Otherwise the system default shell will be run, using the `-xe` flags (you can specify `set +e` and/or `set +x` to disable those).
+
+  encoding:
+    description:
+    type: string
+    required: false
+  label:
+    description:
+    type: string
+    required: false
+  returnStatus:
+    description:
+    type: boolean
+    required: false
+  returnStdout:
+    description:
+    type: boolean
+    required: false
