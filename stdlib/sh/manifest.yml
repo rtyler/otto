@@ -10,12 +10,12 @@ description: |
 # List all the files/globs to include in the packaged artifact
 includes:
   - name: target/release/sh-step
+    # Steps the entire prefix of the file name, placing the file in the root of
+    # the artifact
     strip_prefix: true
 
 # The entrypoint tells the Otto agent which actual binary to use when
 # executing.
-#
-# This should be something that 
 entrypoint:
   path: sh-step
   # Multiarch tells the agent that this should be executed on all platforms. In
@@ -27,7 +27,7 @@ entrypoint:
   multiarch: false
 
 parameters:
-  script:
+  - name: script
     required: true
     type: string
     description: |
@@ -37,19 +37,25 @@ parameters:
 
       Otherwise the system default shell will be run, using the `-xe` flags (you can specify `set +e` and/or `set +x` to disable those).
 
-  encoding:
-    description:
+  - name: encoding
+    description: |
+      Encoding of the stdout/stderr output, not typically needed as the system will
+      default to whatever `LC_TYPE` is defined.
     type: string
     required: false
-  label:
-    description:
+
+  - name: label
+    description: |
+      A label to identify the shell step in a GUI.
     type: string
     required: false
-  returnStatus:
-    description:
+
+  - name: returnStatus
+    description: Compatibility support only, doesn't do anything
     type: boolean
     required: false
-  returnStdout:
-    description:
+
+  - name: returnStdout
+    description: Compatibility support only, doesn't do anything
     type: boolean
     required: false

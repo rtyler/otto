@@ -4,10 +4,12 @@ The `sh` step is a fundamental building block and can effectively execute
 arbitrary scripts passed in by the user.
 
 
-.Example parameters file passed to entrypoint
+.Example invocation file passed to entrypoint
 [source,yaml]
 ----
 ---
+env:
+  SOME_VAR: 'value'
 parameters:
   script: 'ls -lah'
 ----

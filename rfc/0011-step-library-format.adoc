@@ -1,0 +1,256 @@
+= RFC-0011: Step Library Packaging Format
+:toc: preamble
+:toclevels: 3
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+.**RFC Template**
+
+.Metadata
+[cols="1h,1"]
+|===
+| RFC
+| 0011
+
+| Title
+| Step Library Packaging Format
+
+| Sponsor
+| link:https://github.com/rtyler[R Tyler Croy]
+
+| Status
+| Not Submitted :information_source:
+
+| Type
+| Standards
+
+| Created
+| 2020-10-17
+
+|===
+
+== Abstract
+
+In order to provide for a simple and extensible way to implement steps, the
+step library packaging format allows for native tools and scripts to be
+distributed and loaded by agents.
+
+
+== Specification
+
+Each step effectively has an `entrypoint` which is a binary executable. The
+agents in Otto will execute this file with an <<invocation-file>> containing
+all the necessary configuration and parameters.
+
+[[manifest-file]]
+== Manifest file
+
+The `manifest.yml` file is the step library package description. It contains
+all the information on how the step can be invokoed, but also details about how
+the build tooling should package the artifact for use within Otto.
+
+.Example manifest file
+[source,yaml]
+----
+# This manifest captures the basic functionality of the Jenkins Pipeline `sh`
+# step
+---
+# The symbol defines how this step should present in the pipeline
+symbol: sh
+# Description is help text
+description: |
+  The `sh` step executes a shell script within the given execution context
+
+# List all the files/globs to include in the packaged artifact
+includes:
+  - name: target/release/sh-step
+    # Steps the entire prefix of the file name, placing the file in the root of
+    # the artifact
+    strip_prefix: true
+
+# The entrypoint tells the Otto agent which actual binary to use when
+# executing.
+entrypoint:
+  path: sh-step
+  # Multiarch tells the agent that this should be executed on all platforms. In
+  # which case case it may be "blindly" invoked.
+  #
+  # Non-multiarch steps will be attempt to be invoked with
+  # `${entrypoint.path}-${arch}-${vendor}-${system}-${abi}` similar to how
+  # Rust manages target triples: https://doc.rust-lang.org/nightly/rustc/platform-support.html
+  multiarch: false
+
+# The configuration helps the step self-express the configuration variables it
+# requires from Otto in order to execute properly
+#
+# The names of these variables are to be considered globally flat by default,
+# allowing for multiple steps to share the same configuration values. Should a
+# step wish to _not_ share its configuration values, it should namespace them
+# in the key name with the convention of `{step}.{key}` (e.g.
+# `sh.default_shell`)
+#
+# The configuration variables are also a means of requesting credentials from
+# Otto.
+configuration:
+  default_shell:
+    description: |
+      The default shell to use for the invocation of `sh` steps
+    required: false
+    default: '/bin/sh'
+
+# The parameters array allows for keyword invocation and positional invocation
+# of the step
+parameters:
+  - name: script
+    required: true
+    type: string
+    description: |
+      Runs a Bourne shell script, typically on a Unix node. Multiple lines are accepted.
+
+      An interpreter selector may be used, for example: `#!/usr/bin/perl`
+
+      Otherwise the system default shell will be run, using the `-xe` flags (you can specify `set +e` and/or `set +x` to disable those).
+
+  - name: encoding
+    description: |
+      Encoding of the stdout/stderr output, not typically needed as the system will
+      default to whatever `LC_TYPE` is defined.
+    type: string
+    required: false
+
+  - name: label
+    description: |
+      A label to identify the shell step in a GUI.
+    type: string
+    required: false
+
+  - name: returnStatus
+    description: Compatibility support only, doesn't do anything
+    type: boolean
+    required: false
+
+  - name: returnStdout
+    description: Compatibility support only, doesn't do anything
+    type: boolean
+    required: false
+----
+
+
+[[invocation-file]]
+=== Invocation file
+
+The invocation file is a YAML file generated at runtime and made available to
+the step binary on the agent. The invocation file should carry all parameters,
+environment variables, and internal configuration necessary for the step binary
+to execute correctly.
+
+.Example invocation file passed to entrypoint
+[source,yaml]
+----
+---
+env:
+  SOME_VAR: 'value'
+parameters:
+  script: 'ls -lah'
+----
+
+== Motivation
+
+[TIP]
+====
+Explain why the existing code base or process is inadequate to address the problem that the RFC solves.
+This section may also contain any historal context such as how things were done before this proposal.
+
+* Do not discuss design choices or alternative designs that were rejected, those belong in the Reasoning section.
+====
+
+== Reasoning
+
+[TIP]
+====
+Explain why particular design decisions were made.
+Describe alternate designs that were considered and related work, e.g. how the feature is supported in other systems.
+Provide evidence of consensus within the community and discuss important objections or concerns raised during discussion.
+
+* Use sub-headings to organize this section for ease of readability.
+* Do not talk about history or why this needs to be done, that is part of Motivation section.
+====
+
+== Backwards Compatibility
+
+[TIP]
+====
+Describe any incompatibilities and their severity.
+Describe how the RFC proposes to deal with these incompatibilities.
+
+If there are no backwards compatibility concerns, this section may simply say:
+There are no backwards compatibility concerns related to this proposal.
+====
+
+== Security
+
+[TIP]
+====
+Describe the security impact of this proposal.
+Outline what was done to identify and evaluate security issues,
+discuss of potential security issues and how they are mitigated or prevented,
+and how the RFC interacts with existing permissions, authentication, authorization, etc.
+
+If this proposal will have no impact on security, this section may simply say:
+There are no security risks related to this proposal.
+====
+
+
+== Testing
+
+[TIP]
+====
+If the RFC involves any kind of behavioral change to code give a summary of how
+its correctness (and, if applicable, compatibility, security, etc.) can be
+tested.
+
+In the preferred case that automated tests can be developed to cover all
+significant changes, simply give a short summary of the nature of these tests.
+
+If some or all of changes will require human interaction to verify, explain why
+automated tests are considered impractical.  Then summarize what kinds of test
+cases might be required: user scenarios with action steps and expected
+outcomes.  Might behavior vary by platform (operating system, servlet
+container, web browser, etc.)?  Are there foreseeable interactions between
+different permissible versions of components?
+Are any special tools, proprietary software, or online service accounts
+required to exercise a related code path (Active Directory server, GitHub
+login, etc.)?  When will testing take place relative to merging code changes,
+and might retesting be required if other changes are made to this area in the
+future?
+
+If this proposal requires no testing, this section may simply say:
+There are no testing issues related to this proposal.
+====
+
+== Prototype Implementation
+
+[TIP]
+====
+Link to any open source reference implementation of code changes for this proposal.
+The implementation need not be completed before the RFC is accepted
+but must be completed before the RFC is given "final" status.
+
+RFCs which will not include code changes may omit this section.
+====
+
+== References
+
+[TIP]
+====
+Provide links to any related documents.  This will include links to discussions
+on the mailing list, pull requests, and meeting notes.
+====
+
+
+
