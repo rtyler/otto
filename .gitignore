@@ -5,3 +5,4 @@ node_modules/
 .cargo/
 build/
 .otto-ebc-history
+*.tar.gz
