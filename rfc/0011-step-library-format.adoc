@@ -68,10 +68,13 @@ description: |
 
 # List all the files/globs to include in the packaged artifact
 includes:
+  # Paths are treated as relative from wherever osp is invoked from
   - name: target/release/sh-step
     # Steps the entire prefix of the file name, placing the file in the root of
     # the artifact
-    strip_prefix: true
+    flatten: true
+  # A name starting with ./ is treated to be relative to the manifest.yml
+  - name: ./README.adoc
 
 # The entrypoint tells the Otto agent which actual binary to use when
 # executing.
