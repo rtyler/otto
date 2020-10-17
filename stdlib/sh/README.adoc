@@ -8,8 +8,6 @@ arbitrary scripts passed in by the user.
 [source,yaml]
 ----
 ---
-env:
-  SOME_VAR: 'value'
 parameters:
   script: 'ls -lah'
 ----

@@ -9,7 +9,7 @@ use std::process::Command;
 use tempfile::NamedTempFile;
 
 #[derive(Clone, Debug, Deserialize)]
-struct Config {
+struct Invocation {
     parameters: Parameters,
 }
 
@@ -24,8 +24,6 @@ struct Parameters {
     return_stdout: Option<bool>,
 }
 
-
-
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = std::env::args().collect();
 
@@ -35,31 +33,30 @@ fn main() -> std::io::Result<()> {
 
     let file = File::open(&args[1])?;
 
-    match serde_yaml::from_reader::<File, Config>(file) {
+    match serde_yaml::from_reader::<File, Invocation>(file) {
         Err(e) => {
             panic!("Failed to parse parameters file: {:#?}", e);
-        },
-        Ok(config) => {
+        }
+        Ok(invoke) => {
             // Create a file inside of `std::env::temp_dir()`.
             let mut file = NamedTempFile::new()?;
-            writeln!(file, "{}", config.parameters.script)
+            writeln!(file, "{}", invoke.parameters.script)
                 .expect("Failed to write temporary file for script");
 
-
             let output = Command::new("/bin/sh")
-                            .arg(file.path())
-                            .output()
-                            .expect("Failed to invoke the script");
+                .arg(file.path())
+                .output()
+                .expect("Failed to invoke the script");
 
             stdout().write_all(&output.stdout).unwrap();
             stderr().write_all(&output.stderr).unwrap();
 
-            if output.status.success() {
-                return Ok(());
-            }
-            else {
-                std::process::exit(output.status.code().expect("Failed to get status code of script"));
-            }
-        },
+            std::process::exit(
+                output
+                    .status
+                    .code()
+                    .expect("Failed to get status code of script"),
+            );
+        }
     }
 }
