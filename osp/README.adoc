@@ -1,0 +1,5 @@
+= Otto Step Packager
+
+This directory contains the step library packaging tool `osp` which will read a
+`manifest.yml` and then package up an artifact suitable for consumption by Otto
+agents.

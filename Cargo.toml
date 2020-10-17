@@ -6,5 +6,6 @@ members = [
     "eventbus-cli",
     "eventbus-inmemory",
     "processors/travis-ci",
+    "osp",
     "stdlib/sh",
 ]
