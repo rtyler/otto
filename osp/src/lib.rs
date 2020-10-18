@@ -6,11 +6,11 @@ use std::path::{Path, PathBuf};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Manifest {
-    symbol: String,
-    description: String,
-    includes: Vec<Include>,
-    entrypoint: Entrypoint,
-    parameters: Vec<Parameter>,
+    pub symbol: String,
+    pub description: String,
+    pub includes: Vec<Include>,
+    pub entrypoint: Entrypoint,
+    pub parameters: Vec<Parameter>,
 }
 
 impl Manifest {
@@ -52,21 +52,21 @@ impl Manifest {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-struct Include {
+pub struct Include {
     name: String,
     #[serde(default = "default_false")]
     flatten: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-struct Entrypoint {
-    path: PathBuf,
+pub struct Entrypoint {
+    pub path: PathBuf,
     #[serde(default = "default_false")]
     multiarch: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-struct Parameter {
+pub struct Parameter {
     name: String,
     required: bool,
     #[serde(rename = "type")]
@@ -75,7 +75,7 @@ struct Parameter {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-enum ParameterType {
+pub enum ParameterType {
     #[serde(rename = "string")]
     StringParameter,
     #[serde(rename = "boolean")]

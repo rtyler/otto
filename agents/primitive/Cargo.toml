@@ -1,5 +1,5 @@
 [package]
-name = "primitive"
+name = "primitive-agent"
 version = "0.1.0"
 authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
@@ -8,3 +8,4 @@ edition = "2018"
 serde_yaml = "~0.8.13"
 serde = {version = "~1.0.117", features = ["rc", "derive"]}
 osp = { path = "../../osp" }
+tempfile = "~3.1.0"
