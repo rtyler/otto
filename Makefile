@@ -3,7 +3,7 @@
 # and helps organize the various tasks for preparation, compilation, and
 # testing.
 #
-# Execute `make` to get help ffor the various targets
+# Execute `make` to get help for the various targets
 ################################################################################
 
 ################################################################################
