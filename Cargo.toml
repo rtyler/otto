@@ -2,11 +2,17 @@
 
 members = [
     "auctioneer",
+
+    "agents/primitive",
+
     "eventbus",
     "eventbus-cli",
     "eventbus-inmemory",
+
     "processors/travis-ci",
+
     "osp",
+
     "stdlib/sh",
 ]
 
