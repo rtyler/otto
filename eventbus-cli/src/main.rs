@@ -1,7 +1,7 @@
-fn main() {}
 /*
  * The CLI is meant to be used for manual testing and verification of the eventbus only.
 extern crate rustyline;
+*/
 
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
@@ -11,7 +11,7 @@ use tungstenite::*;
 use url::Url;
 
 fn ws_connect() -> Result<(WebSocket<AutoStream>, Response)> {
-    return connect(Url::parse("ws://localhost:8000/ws/").unwrap());
+    return connect(Url::parse("ws://localhost:8105/").unwrap());
 }
 
 fn main() {
@@ -49,6 +49,8 @@ fn main() {
                         Ok(_) => {}
                         Err(e) => {
                             println!("Failed to write: {}", e);
+                            let (sock, _response) = ws_connect().unwrap();
+                            socket = sock;
                         }
                     }
                 }
@@ -69,4 +71,3 @@ fn main() {
     }
     rl.save_history(history).unwrap();
 }
-*/

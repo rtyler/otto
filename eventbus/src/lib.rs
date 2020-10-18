@@ -1,214 +1,164 @@
-#![allow(unused_imports)]
-#![deny(unsafe_code)]
 /**
- * The Otto Eventbus module contains public interfaces for sending messages, constructing clients,
- * and constructing new backend eventbus implementations
+ * The main eventbus module
  */
-pub mod client;
-pub mod msg;
 
-use log::*;
+#[macro_use]
+extern crate serde_derive;
 
-use std::collections::HashMap;
-use std::sync::Arc;
+// TODO
+pub mod client {}
 
-/**
- * The maximum number of items in transit for each channel
- */
-const MAX_CHANNEL_QUEUE: usize = 16;
-pub static CHANNEL_ALL: &str = "all";
+pub mod message {
+    use std::collections::HashMap;
 
-#[derive(Debug, PartialEq)]
-pub struct Event {
-    pub m: Arc<msg::Output>,
-}
+    #[derive(Debug, Deserialize, Serialize)]
+    pub struct Register {
+        pub uuid: uuid::Uuid,
+        pub token: Option<uuid::Uuid>,
+    }
+    #[derive(Debug, Deserialize, Serialize)]
+    pub struct Registered {
+        pub token: uuid::Uuid,
+    }
 
-impl Default for Event {
-    fn default() -> Event {
-        let md = msg::Output::default();
-        Event { m: Arc::new(md) }
+    #[derive(Debug, Deserialize, Serialize)]
+    pub struct Error {
+        pub code: String,
+        pub data: Option<HashMap<String, String>>,
+    }
+
+    #[derive(Debug, Deserialize, Serialize)]
+    pub struct Subscribe {
+        pub header: ClientHeader,
+        pub channel: String,
+    }
+    #[derive(Debug, Deserialize, Serialize)]
+    pub struct Publish {
+        pub header: ClientHeader,
+        pub channel: String,
+        pub value: serde_json::Value,
+    }
+    #[derive(Clone, Debug, Deserialize, Serialize)]
+    pub struct ClientHeader {
+        pub uuid: uuid::Uuid,
+        pub token: uuid::Uuid,
     }
 }
 
-pub type SendableEvent = Arc<Event>;
+pub mod server {
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
 
-/*
+    pub type Offset = i64;
+    pub type Topic = String;
+    pub type CallerId = String;
+    pub type Message = String;
 
+    pub type AsyncOptionMessage = Pin<Box<dyn Future<Output = Option<Message>> + Send + 'static>>;
 
-/**
- * A channel is named and typed with the type of messages it should be carrying
- */
-#[derive(Debug)]
-struct Channel {
-    name: String,
-    stateful: bool,
-    sender: Sender<Arc<Event>>,
-    receiver: Receiver<Arc<Event>>,
-}
-
-impl Channel {
-    fn send(&self, ev: SendableEvent) -> Result<usize, SendError<SendableEvent>> {
-        self.sender.send(ev)
+    pub struct Bus {
+        inner: Arc<dyn Engine>,
     }
 
-    pub fn new(name: String, stateful: bool) -> Self {
-        Channel {
-            name,
-            stateful,
-            sender,
-            receiver,
+    impl Bus {
+        pub fn new(inner: Arc<dyn Engine>) -> Self {
+            Self { inner }
+        }
+        pub fn pending(
+            &self,
+            topic: Topic,
+            caller: CallerId,
+        ) -> Pin<Box<dyn Future<Output = i64> + Send>> {
+            self.inner.clone().pending(topic, caller)
+        }
+        pub fn latest(&self, topic: Topic) -> Pin<Box<dyn Future<Output = Offset> + Send>> {
+            self.inner.clone().latest(topic)
+        }
+        pub fn at(&self, topic: Topic, offset: Offset, caller: CallerId) -> AsyncOptionMessage {
+            self.inner.clone().at(topic, offset, caller)
+        }
+        pub fn retrieve(&self, topic: Topic, caller: CallerId) -> AsyncOptionMessage {
+            self.inner.clone().retrieve(topic, caller)
+        }
+        pub fn publish(
+            &self,
+            topic: Topic,
+            message: Message,
+            caller: CallerId,
+        ) -> Pin<Box<dyn Future<Output = Result<Offset, ()>> + Send>> {
+            self.inner.clone().publish(topic, message, caller)
         }
     }
 
-    pub fn stateful(name: String) -> Channel {
-        Channel::new(name, true)
-    }
-
-    pub fn stateless(name: String) -> Channel {
-        Channel::new(name, false)
-    }
-
-    pub fn is_stateful(&self) -> bool {
-        self.stateful == true
-    }
-}
-
-#[derive(Debug)]
-pub struct Bus {
     /**
-     * Channels are named and can implement a number of different types. This should
-     * allow the Bus to handle different channels with different message payloads
-     * while still taking advantage of compile-time checks
-     */
-    channels: HashMap<String, Channel>,
-}
-
-impl Bus {
-    pub fn new() -> Bus {
-        Bus {
-            channels: HashMap::new(),
-        }
-    }
-
-    /**
-     * Configure the bus with a number of stateless channels
+     * The Engine trait should be implemented by the servers which need to
+     * implement their own backing stores for an Otto eventbus.
      *
-     * Stateless channels are not intended to be persisted by the eventbus
+     * Each function is expected to return some sort of future that the caller
+     * can await upon.
+     *
+     * Additionally, many functions will accept the caller's identifier, which
+     * can be used in many cases to help differentiate between consumers of the same
+     * topic, such as with Kafka consumer groups
      */
-    pub fn stateless(&mut self, channels: Vec<String>) -> &mut Bus {
-        for channel in channels.iter() {
-            self.channels.insert(
-                channel.to_string(),
-                Channel::new(channel.to_string(), false),
-            );
-        }
-        self
-    }
+    pub trait Engine {
+        /**
+         * Return the number of messages the caller has not yet consumed
+         */
+        fn pending(
+            self: Arc<Self>,
+            topic: Topic,
+            caller: CallerId,
+        ) -> Pin<Box<dyn Future<Output = i64> + Send>>;
 
-    /**
-     * Configure the bus with a number of stateful channels
-     */
-    pub fn stateful(&mut self, channels: Vec<String>) -> &mut Bus {
-        for channel in channels.iter() {
-            self.channels
-                .insert(channel.to_string(), Channel::new(channel.to_string(), true));
-        }
-        self
-    }
+        /**
+         * Fetch the latest offset for the given topic
+         *
+         * This should increment the caller's offset
+         */
+        fn latest(self: Arc<Self>, topic: Topic) -> Pin<Box<dyn Future<Output = Offset> + Send>>;
 
-    /**
-     * Determine whether the named channel is configured in thebus
-     */
-    pub fn has_channel(&self, channel: &str) -> bool {
-        self.channels.contains_key(channel)
-    }
+        /**
+         * Retrieve the message at the specified offset
+         */
+        fn at(
+            self: Arc<Self>,
+            topic: Topic,
+            offset: Offset,
+            caller: CallerId,
+        ) -> AsyncOptionMessage;
 
-    /**
-     * Send an event to the named channel
-     */
-    pub fn send(
-        &self,
-        channel: &String,
-        ev: SendableEvent,
-    ) -> Result<usize, SendError<SendableEvent>> {
-        if let Some(c) = self.channels.get(channel) {
-            c.send(ev)
-        } else {
-            Err(SendError(ev))
-        }
-    }
+        /**
+         * Retrieve the latest message
+         */
+        fn retrieve(self: Arc<Self>, topic: Topic, caller: CallerId) -> AsyncOptionMessage;
 
-    /**
-     * Create a new receiver for the named channel
-     */
-    pub fn receiver_for(&self, channel: &str) -> Result<Receiver<SendableEvent>, &str> {
-        debug!("receiver_for({})", channel);
-        if let Some(c) = self.channels.get(channel) {
-            Ok(c.sender.subscribe())
-        } else {
-            error!("Failed to get channel");
-            Err("Fail")
-        }
+        /**
+         * Publish a message to the given topic
+         *
+         * Will return a Result, if the publish was success the Ok will contain the
+         * new latest offset on the topic
+         */
+        fn publish(
+            self: Arc<Self>,
+            topic: Topic,
+            message: Message,
+            caller: CallerId,
+        ) -> Pin<Box<dyn Future<Output = Result<Offset, ()>> + Send>>;
+
+        /**
+         * Return a wrapped version of the implementation which can be invoked
+         *
+         * This is the preferred means of creating things
+         */
+        fn default() -> Arc<Self>
+        where
+            Self: Sized;
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_bus_send() {
-        let mut b = Bus::new();
-        let ch = "test".to_string();
-        b.stateless(vec!["test".to_string()]);
-
-        if let Ok(mut rx) = b.receiver_for(&ch) {
-            let e = Event::default();
-            let p = Arc::new(e);
-            if let Ok(value) = b.send(&ch, p.clone()) {
-                let value = rx.try_recv().unwrap();
-                assert_eq!(p, value);
-            } else {
-                assert!(false);
-            }
-        } else {
-            /*
-             * This branch should never execute unless the test should fail
-             */
-            assert!(false);
-        }
-    }
-
-    #[test]
-    fn test_bus_stateless() {
-        let mut b = Bus::new();
-        b.stateless(vec!["test".to_string()]);
-        assert!(b.has_channel("test"));
-    }
-
-    #[test]
-    fn test_bus_stateful() {
-        let mut b = Bus::new();
-        b.stateful(vec!["test".to_string()]);
-        assert!(b.has_channel("test"));
-    }
-
-    #[test]
-    fn test_channel_ctor() {
-        let c = Channel::new("test".to_string(), false);
-    }
-
-    #[test]
-    fn test_channel_stateful() {
-        let c = Channel::stateful("test".to_string());
-        assert!(c.is_stateful());
-    }
-
-    #[test]
-    fn test_channel_stateless() {
-        let c = Channel::stateless("test".to_string());
-        assert!(!c.is_stateful());
-    }
 }
-
-*/

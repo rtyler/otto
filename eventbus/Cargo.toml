@@ -4,47 +4,11 @@ version = "0.1.0"
 authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
-[[bin]]
-name = "otto-eventbus"
-path = "src/server/main.rs"
-
-[[bin]]
-name = "otto-ebc"
-path = "src/cli/main.rs"
-
 [dependencies]
-async-std = "~1.5.0"
-# Library used for implementing HTTP APIs
-tide = "~0.6.0"
-mime = "~0.3.16"
-http = "~0.1.19"
-# Used for managing the websocket channels
-async-tungstenite = { version = "~0.4.0", features = ["async-std"] }
-futures = "~0.3.4"
-
-handlebars = "~2.0.2"
-# Need to embed static resources into the binary for serving at runtime
-rust-embed = { version = "~5.2.0", features = ["interpolate-folder-path"] }
-
-# Used for formatting times in messages
-chrono = { version = "~0.4.10", features = ["serde"] }
-
-# Handling command line options
-clap = { version = "~2.33.0", features = ["yaml"] }
-# Handling configuration overlays
-config = { version = "~0.10.1", features = ["yaml"] }
-
-# Logging
 log = "~0.4.8"
-pretty_env_logger = "~0.3.1"
-
-# Adding the "rc" feature so we can serialize/deserialize Arc<T> and Rc<T>
-serde = { version = "~1.0.103", features = ["rc"] }
-serde_json = "~1.0.0"
-
-# Needed for the nice bits in the cli
-rustyline = "~5.0.6"
-
+serde = { version = "~1.0.111", features = ["rc"] }
+serde_derive = "~1.0.106"
+serde_json = "~1.0.53"
+uuid = { version = "~0.8.1", features = ["serde", "v4"] }
 
 [dev-dependencies]
-regex = "1"

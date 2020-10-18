@@ -3,5 +3,7 @@
 members = [
     "auctioneer",
     "eventbus",
+    "eventbus-cli",
+    "eventbus-inmemory",
     "processors/travis-ci",
 ]
