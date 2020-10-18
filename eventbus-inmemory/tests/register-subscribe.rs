@@ -39,8 +39,8 @@ async fn register_and_subscribe() -> std::io::Result<()> {
             .write_message(Message::text(buffer))
             .expect("Failed to send message to test server");
 
-        let value = serde_json::from_str(r#"{"hello":"world"}"#)
-            .expect("Failed to generate test value");
+        let value =
+            serde_json::from_str(r#"{"hello":"world"}"#).expect("Failed to generate test value");
         let publish = Publish {
             header: header.clone(),
             channel: channel.clone(),
