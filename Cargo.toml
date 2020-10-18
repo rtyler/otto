@@ -7,7 +7,9 @@ members = [
 
     "eventbus",
     "eventbus-cli",
-    "eventbus-inmemory",
+
+    # Disabled, not compiling at the moment
+    # "eventbus-inmemory",
 
     "processors/travis-ci",
 
