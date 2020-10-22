@@ -48,7 +48,7 @@ agents in Otto will execute this file with an <<invocation-file>> containing
 all the necessary configuration and parameters.
 
 [[manifest-file]]
-== Manifest file
+=== Manifest file
 
 The `manifest.yml` file is the step library package description. It contains
 all the information on how the step can be invokoed, but also details about how
