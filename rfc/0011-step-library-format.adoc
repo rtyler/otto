@@ -156,11 +156,100 @@ to execute correctly.
 [source,yaml]
 ----
 ---
-env:
-  SOME_VAR: 'value'
+configuration:
+    ipc: 'ipc:///tmp/agent-5171.ipc'
 parameters:
   script: 'ls -lah'
 ----
+
+
+[[control-socket]]
+=== Agent Control Socket
+
+Each agent will open up a control socket for the steps it launches to safely
+communicate back with the long-lived agent daemon. The agent _may_ create a
+single long-lived IPC socket which is open for all steps, or generate a unique
+IPC connection for each step. The messages must be JSON structured and steps
+should wait for a response before proceeding to their next operation.
+
+
+Examples of requests are detailed below.
+
+[CAUTION]
+====
+The exact IPC mechanism between agents and steps has yet to be determined and
+requires some experimentation.
+====
+
+.Response
+[source,json]
+----
+{
+    "type" : "Received"
+}
+----
+
+==== Manage pipeline status
+
+The total number of pipeline status is subject of another document, but for example
+purposes assume there are: `SUCCESS`, `FAILURE`, `UNSTABLE`, and `ABORTED`.
+
+.Change the status
+[source,json]
+----
+{
+    "type" : "SetPipelineStatus",
+    "status" : "UNSTABLE"
+}
+----
+
+.Terminate the pipeline
+[source,json]
+----
+{
+    "type" : "TerminatePipeline"
+}
+----
+.
+==== Variables
+
+Capturing variables should be pretty straightforward.
+
+.Example step capturing a variable
+[source]
+----
+prompt msg: 'What color should the bike shed be?', into: 'color'
+----
+
+.Variable capture message
+[source,json]
+----
+{
+    "type" : "CaptureVariable",
+    "name" : "color",
+    "value" : "blue"
+}
+----
+
+These can then be accessed in the steps remaining in the scope (e.g. a stage)
+via a special environment variable: `VAR_COLOR`
+
+Storing a new variable should replace it, but a `drop` step should also exist, e.g.:
+
+[source]
+----
+drop name: 'color'
+----
+
+.Drop variable message
+[source,json]
+----
+{
+    "type" : "DropVariable",
+    "name" : "color"
+}
+----
+
 
 == Motivation
 
