@@ -1,0 +1,13 @@
+= sh step
+
+The `sh` step is a fundamental building block and can effectively execute
+arbitrary scripts passed in by the user.
+
+
+.Example invocation file passed to entrypoint
+[source,yaml]
+----
+---
+parameters:
+  script: 'ls -lah'
+----
