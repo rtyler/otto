@@ -1,0 +1,24 @@
+= dir step
+
+The `dir` step allows for executing a block-scoped set of steps inside the
+user-specified directory.
+
+.Example usage
+[source]
+----
+dir 'deploy', [
+    sh 'pwd'
+]
+----
+
+.Example invocation file passed to entrypoint
+[source,yaml]
+----
+---
+parameters:
+  directory: 'deploy'
+  block:
+    - symbol: sh
+      parameters:
+        script: 'pwd'
+----

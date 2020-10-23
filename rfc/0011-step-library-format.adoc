@@ -210,7 +210,7 @@ purposes assume there are: `SUCCESS`, `FAILURE`, `UNSTABLE`, and `ABORTED`.
     "type" : "TerminatePipeline"
 }
 ----
-.
+
 ==== Variables
 
 Capturing variables should be pretty straightforward.

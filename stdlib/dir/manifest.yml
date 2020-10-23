@@ -1,0 +1,64 @@
+# This manifest captures the basic functionality of the Jenkins Pipeline `sh`
+# step
+---
+# The symbol defines how this step should present in the pipeline
+symbol: sh
+# Description is help text
+description: |
+  The `sh` step executes a shell script within the given execution context
+
+# List all the files/globs to include in the packaged artifact
+includes:
+  # Paths are treated as relative from wherever osp is invoked from
+  - name: target/release/sh-step
+    # Steps the entire prefix of the file name, placing the file in the root of
+    # the artifact
+    flatten: true
+  # A name starting with ./ is treated to be relative to the manifest.yml
+  - name: ./README.adoc
+
+# The entrypoint tells the Otto agent which actual binary to use when
+# executing.
+entrypoint:
+  path: sh-step
+  # Multiarch tells the agent that this should be executed on all platforms. In
+  # which case case it may be "blindly" invoked.
+  #
+  # Non-multiarch steps will be attempt to be invoked with
+  # `${entrypoint.path}-${arch}-${vendor}-${system}-${abi}` similar to how
+  # Rust manages target triples: https://doc.rust-lang.org/nightly/rustc/platform-support.html
+  multiarch: false
+
+parameters:
+  - name: script
+    required: true
+    type: string
+    description: |
+      Runs a Bourne shell script, typically on a Unix node. Multiple lines are accepted.
+
+      An interpreter selector may be used, for example: `#!/usr/bin/perl`
+
+      Otherwise the system default shell will be run, using the `-xe` flags (you can specify `set +e` and/or `set +x` to disable those).
+
+  - name: encoding
+    description: |
+      Encoding of the stdout/stderr output, not typically needed as the system will
+      default to whatever `LC_TYPE` is defined.
+    type: string
+    required: false
+
+  - name: label
+    description: |
+      A label to identify the shell step in a GUI.
+    type: string
+    required: false
+
+  - name: returnStatus
+    description: Compatibility support only, doesn't do anything
+    type: boolean
+    required: false
+
+  - name: returnStdout
+    description: Compatibility support only, doesn't do anything
+    type: boolean
+    required: false
