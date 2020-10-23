@@ -3,7 +3,7 @@
 members = [
     "auctioneer",
 
-    "agents/primitive",
+    "agent",
 
     "eventbus",
     "eventbus-cli",

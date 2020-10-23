@@ -1,5 +1,4 @@
 
-
 use serde::Deserialize;
 use serde_yaml::Value;
 use std::collections::HashMap;
@@ -10,17 +9,17 @@ use std::process::Command;
 use tempfile::NamedTempFile;
 
 #[derive(Clone, Debug, Deserialize)]
-struct Pipeline {
-    steps: Vec<Step>,
+pub struct Pipeline {
+    pub steps: Vec<Step>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
-struct Step {
-    symbol: String,
-    parameters: Value,
+pub struct Step {
+    pub symbol: String,
+    pub parameters: Value,
 }
 
-fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
+pub fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
     let dir = Path::new(steps_dir);
 
     if ! dir.is_dir() {
@@ -55,7 +54,6 @@ fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
         if let Some(runner) = manifests.get(&step.symbol) {
             let m_path = m_paths.get(&step.symbol).expect("Failed to grab the step library path");
             let entrypoint = m_path.join(&runner.entrypoint.path);
-            println!("entry: {:?}", entrypoint);
 
             let mut file = NamedTempFile::new()?;
             let mut step_args = HashMap::new();
@@ -76,23 +74,7 @@ fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
     Ok(())
 }
 
-fn main() -> std::io::Result<()>{
-    let args: Vec<String> = std::env::args().collect();
-    let steps_dir = std::env::var("STEPS_DIR").expect("STEPS_DIR must be defined");
 
-    if args.len() != 2 {
-        panic!("The sh step can only accept a single argument: the parameters file path");
-    }
-
-    let file = File::open(&args[1])?;
-
-    match serde_yaml::from_reader::<File, Pipeline>(file) {
-        Err(e) => {
-            panic!("Failed to parse parameters file: {:#?}", e);
-        }
-        Ok(invoke) => {
-            run(&steps_dir, &invoke.steps);
-        },
-    };
-    Ok(())
+#[cfg(test)]
+mod tests {
 }

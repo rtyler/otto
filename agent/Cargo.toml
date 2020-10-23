@@ -1,12 +1,20 @@
 [package]
-name = "primitive-agent"
+name = "otto-agent"
 version = "0.1.0"
 authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
+[lib]
+name = "ottoagent"
+path = "src/lib.rs"
+
+[[bin]]
+name = "otto-agent"
+path = "src/main.rs"
+
 [dependencies]
 serde_yaml = "~0.8.13"
 serde = {version = "~1.0.117", features = ["rc", "derive"]}
-osp = { path = "../../osp" }
+osp = { path = "../osp" }
 tempfile = "~3.1.0"
 nanomsg = "0.7.2"

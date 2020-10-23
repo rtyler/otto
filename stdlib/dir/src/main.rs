@@ -3,8 +3,9 @@
  */
 
 use serde::Deserialize;
-use serde_yaml::Value;
 use std::fs::File;
+
+use ottoagent::*;
 
 #[derive(Clone, Debug, Deserialize)]
 struct Invocation {
@@ -17,12 +18,9 @@ struct Parameters {
     block: Vec<Step>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
-struct Step {
-    symbol: String,
-    parameters: Value,
-}
 fn main() -> std::io::Result<()> {
+    let steps_dir = std::env::var("STEPS_DIR").expect("STEPS_DIR must be defined");
+
     let args: Vec<String> = std::env::args().collect();
 
     if args.len() != 2 {
@@ -37,6 +35,9 @@ fn main() -> std::io::Result<()> {
         }
         Ok(invoke) => {
             // do things
+            std::env::set_current_dir(&invoke.parameters.directory)
+                .expect("Failed to set current directory, perhaps it doesn't exist");
+            run(&steps_dir, &invoke.parameters.block);
             Ok(())
         }
     }

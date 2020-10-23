@@ -215,6 +215,7 @@ dependencies = [
 name = "dir-step"
 version = "0.1.0"
 dependencies = [
+ "otto-agent 0.1.0",
  "serde 1.0.117 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_yaml 0.8.13 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -611,6 +612,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "otto-agent"
+version = "0.1.0"
+dependencies = [
+ "nanomsg 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "osp 0.1.0",
+ "serde 1.0.117 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_yaml 0.8.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tempfile 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "otto-auctioneer"
 version = "0.1.0"
 dependencies = [
@@ -666,17 +678,6 @@ dependencies = [
  "chrono 0.4.12 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "primitive-agent"
-version = "0.1.0"
-dependencies = [
- "nanomsg 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "osp 0.1.0",
- "serde 1.0.117 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_yaml 0.8.13 (registry+https://github.com/rust-lang/crates.io-index)",
- "tempfile 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

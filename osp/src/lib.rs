@@ -80,6 +80,8 @@ pub enum ParameterType {
     StringParameter,
     #[serde(rename = "boolean")]
     BoolParameter,
+    #[serde(rename = "block")]
+    BlockParameter,
 }
 
 /** Simple function for serde defaults */
