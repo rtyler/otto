@@ -1,12 +1,12 @@
 
 use log::*;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_yaml::Value;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{stdout, stderr, Write};
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Stdio};
 use tempfile::NamedTempFile;
 use uuid::Uuid;
 
@@ -45,6 +45,35 @@ pub struct Step {
     pub symbol: String,
     pub parameters: Value,
 }
+
+/**
+ * Log is a data structure which captures the necessary metadata for logging a single line
+ */
+#[derive(Clone, Debug, Serialize)]
+pub enum Log {
+    StepStart {
+        symbol: String,
+        uuid: Uuid,
+    },
+    StepOutput {
+        symbol: String,
+        uuid: Uuid,
+        buffer: String,
+        stream: LogStream,
+    },
+    StepEnd {
+        symbol: String,
+        uuid: Uuid,
+    },
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub enum LogStream {
+    Stdout,
+    Stderr,
+}
+
+
 
 /**
  * Generate a UUID v4 for use in structs, etc
@@ -96,17 +125,53 @@ pub fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
             serde_yaml::to_writer(&mut file, &step_args)
                 .expect("Failed to write temporary file for script");
 
-            let output = Command::new(entrypoint)
-                .arg(file.path())
-                .output()
-                .expect("Failed to invoke the script");
-            stdout().write_all(&output.stdout).unwrap();
-            stderr().write_all(&output.stderr).unwrap();
+            use os_pipe::pipe;
+            use std::io::{BufReader, BufRead};
+            let mut cmd = Command::new(entrypoint);
+            cmd.arg(file.path());
+            let (mut reader, writer) = pipe().unwrap();
+            let writer_clone = writer.try_clone().unwrap();
+            cmd.stdout(writer);
+            cmd.stderr(writer_clone);
+
+
+            let log = Log::StepStart { symbol: step.symbol.clone(), uuid: step.uuid };
+            println!("{:?}", log);
+
+            let mut handle = cmd.spawn()?;
+            drop(cmd);
+
+            let bufr = BufReader::new(reader);
+            for line in bufr.lines() {
+                if let Ok(buffer) = line {
+                    if "dir" == step.symbol {
+                        println!("{}", buffer);
+                    }
+                    else {
+                        let log = Log::StepOutput {
+                            // TODO: Remove this allocation
+                            symbol: step.symbol.clone(),
+                            uuid: step.uuid,
+                            stream: LogStream::Stdout,
+                            buffer,
+                        };
+                        // TODO: send this to a log service
+                        println!("{:?}", log);
+                    }
+                }
+            }
+
+            handle.wait()?;
+
+            let log = Log::StepEnd { symbol: step.symbol.clone(), uuid: step.uuid };
+            println!("{:?}", log);
+
         }
     }
 
     Ok(())
 }
+
 
 
 #[cfg(test)]
