@@ -79,34 +79,42 @@ fn generate_uuid() -> Uuid {
     Uuid::new_v4()
 }
 
-/**
- * The run method is the "core" of the agent which will run a series of steps
- * passed in.
- *
- * Currently it is very simple and primitive
- */
-pub fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
+#[derive(Clone, Debug)]
+struct LoadedManifest {
+    manifest: osp::Manifest,
+    path: PathBuf,
+}
+fn load_manifests_for(
+    steps_dir: &str,
+    steps: &Vec<Step>,
+) -> std::io::Result<HashMap<String, LoadedManifest>> {
+    use std::io::{Error, ErrorKind};
+
     let dir = Path::new(steps_dir);
+    let dir = std::fs::canonicalize(dir)?;
 
     if !dir.is_dir() {
-        panic!("STEPS_DIR must be a directory! {:?}", dir);
+        error!("STEPS_DIR must be a directory! {:?}", dir);
+        return Err(Error::new(
+            ErrorKind::InvalidInput,
+            "STEPS_DIR not a directory",
+        ));
     }
 
-    let mut manifests: HashMap<String, osp::Manifest> = HashMap::new();
-    let mut m_paths: HashMap<String, PathBuf> = HashMap::new();
+    let mut manifests = HashMap::new();
 
     for step in steps.iter() {
         let manifest_file = dir.join(&step.symbol).join("manifest.yml");
 
         if manifest_file.is_file() {
             let file = File::open(manifest_file)?;
-            // TODO: This is dumb and inefficient
-            m_paths.insert(step.symbol.clone(), dir.join(&step.symbol).to_path_buf());
-            manifests.insert(
-                step.symbol.clone(),
-                serde_yaml::from_reader::<File, osp::Manifest>(file)
-                    .expect("Failed to parse manifest"),
-            );
+            if let Ok(manifest) = serde_yaml::from_reader::<File, osp::Manifest>(file) {
+                let manifest = LoadedManifest {
+                    manifest,
+                    path: dir.join(&step.symbol).to_path_buf(),
+                };
+                manifests.insert(step.symbol.clone(), manifest);
+            }
         } else {
             warn!(
                 "{}/manifest.yml does not exist, step cannot execute",
@@ -114,14 +122,22 @@ pub fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
             );
         }
     }
+    Ok(manifests)
+}
+
+/**
+ * The run method is the "core" of the agent which will run a series of steps
+ * passed in.
+ *
+ * Currently it is very simple and primitive
+ */
+pub fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
+    let manifests = load_manifests_for(steps_dir, steps)?;
 
     // Now that things are valid and collected, let's executed
     for step in steps.iter() {
         if let Some(runner) = manifests.get(&step.symbol) {
-            let m_path = m_paths
-                .get(&step.symbol)
-                .expect("Failed to grab the step library path");
-            let entrypoint = m_path.join(&runner.entrypoint.path);
+            let entrypoint = runner.path.join(&runner.manifest.entrypoint.path);
 
             let mut file = NamedTempFile::new()?;
             let mut step_args = HashMap::new();
@@ -181,4 +197,32 @@ pub fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use super::*;
+
+    #[test]
+    fn load_manifests_invalid_dir() {
+        let manifests = load_manifests_for("Cargo.toml", &vec![]);
+        assert!(manifests.is_err());
+    }
+
+    #[test]
+    fn load_manifests_empty_dir() {
+        let manifests = load_manifests_for("src", &vec![]).expect("Failed to look into .git?");
+        assert_eq!(manifests.len(), 0);
+    }
+
+    #[test]
+    fn load_manifests_stdlib() {
+        let params = serde_yaml::Value::Null;
+        let step = Step {
+            symbol: "echo".to_string(),
+            uuid: generate_uuid(),
+            context: generate_uuid(),
+            parameters: params,
+        };
+        let manifests =
+            load_manifests_for("../stdlib", &vec![step]).expect("Failed to look into stdlib?");
+        assert!(manifests.len() > 0);
+    }
+}
