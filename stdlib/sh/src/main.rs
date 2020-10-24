@@ -44,6 +44,7 @@ fn main() -> std::io::Result<()> {
                 .expect("Failed to write temporary file for script");
 
             let output = Command::new("/bin/sh")
+                .arg("-xe")
                 .arg(file.path())
                 .output()
                 .expect("Failed to invoke the script");

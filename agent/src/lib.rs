@@ -1,4 +1,5 @@
 
+use log::*;
 use serde::Deserialize;
 use serde_yaml::Value;
 use std::collections::HashMap;
@@ -7,18 +8,55 @@ use std::io::{stdout, stderr, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use tempfile::NamedTempFile;
+use uuid::Uuid;
 
+/**
+ * A Pipeline contains the total configuration and steps for a single pipeline run
+ */
 #[derive(Clone, Debug, Deserialize)]
 pub struct Pipeline {
+    #[serde(default = "generate_uuid")]
+    pub uuid: Uuid,
+    pub contexts: Vec<Context>,
     pub steps: Vec<Step>,
 }
 
+/**
+ * A context is some bucket of variables and configuration within a pipeline
+ * this will most frequently be a "stage" in the conventional sense
+ */
+#[derive(Clone, Debug, Deserialize)]
+pub struct Context {
+    #[serde(default = "generate_uuid")]
+    pub uuid: Uuid,
+    pub name: String,
+    pub environment: Option<HashMap<String, String>>,
+}
+
+/**
+ * A step is the smallest unit of execution for the pipeline
+ */
 #[derive(Clone, Debug, Deserialize)]
 pub struct Step {
+    #[serde(default = "generate_uuid")]
+    pub uuid: Uuid,
+    /// The uuid of the context to which this step is associated
+    pub context: Uuid,
     pub symbol: String,
     pub parameters: Value,
 }
 
+/**
+ * Generate a UUID v4 for use in structs, etc
+ */
+fn generate_uuid() -> Uuid { Uuid::new_v4() }
+
+/**
+ * The run method is the "core" of the agent which will run a series of steps
+ * passed in.
+ *
+ * Currently it is very simple and primitive
+ */
 pub fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
     let dir = Path::new(steps_dir);
 
@@ -33,8 +71,6 @@ pub fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
         let manifest_file = dir.join(&step.symbol).join("manifest.yml");
 
         if manifest_file.is_file() {
-            println!("{} exists", step.symbol);
-
             let file = File::open(manifest_file)?;
             // TODO: This is dumb and inefficient
             m_paths.insert(step.symbol.clone(), dir.join(&step.symbol).to_path_buf());
@@ -43,11 +79,9 @@ pub fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
             );
         }
         else {
-            println!("{}/manifest.yml does not exist, step cannot execute", step.symbol);
-            println!("NORMALLY THIS WOULD ERROR BEFORE ANYTHING EXECUTES");
+            warn!("{}/manifest.yml does not exist, step cannot execute", step.symbol);
         }
     }
-    println!("---");
 
     // Now that things are valid and collected, let's executed
     for step in steps.iter() {
