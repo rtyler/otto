@@ -1,5 +1,5 @@
-use flate2::Compression;
 use flate2::write::GzEncoder;
+use flate2::Compression;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::path::{Path, PathBuf};
@@ -29,22 +29,24 @@ impl Manifest {
                 true => {
                     // Relative to dir
                     dir.join(&include.name)
-                },
+                }
                 false => {
                     // Relative to $PWD
                     Path::new(&include.name).to_path_buf()
-                },
+                }
             })?;
 
-            let archive_path = format!("{}/{}",
-                                    self.symbol,
-                                    match include.flatten {
-                                        true => {
-                                            let p = Path::new(&include.name);
-                                            p.file_name().unwrap().to_str().unwrap()
-                                        },
-                                        false => &include.name,
-                                    });
+            let archive_path = format!(
+                "{}/{}",
+                self.symbol,
+                match include.flatten {
+                    true => {
+                        let p = Path::new(&include.name);
+                        p.file_name().unwrap().to_str().unwrap()
+                    }
+                    false => &include.name,
+                }
+            );
             tar.append_file(archive_path, &mut f);
         }
         Ok(())
@@ -85,8 +87,9 @@ pub enum ParameterType {
 }
 
 /** Simple function for serde defaults */
-fn default_false() -> bool { false }
+fn default_false() -> bool {
+    false
+}
 
 #[cfg(test)]
-mod tests {
-}
+mod tests {}

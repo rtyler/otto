@@ -2,7 +2,7 @@ use std::fs::File;
 
 use ottoagent::*;
 
-fn main() -> std::io::Result<()>{
+fn main() -> std::io::Result<()> {
     let args: Vec<String> = std::env::args().collect();
     let steps_dir = std::env::var("STEPS_DIR").expect("STEPS_DIR must be defined");
 
@@ -18,7 +18,7 @@ fn main() -> std::io::Result<()>{
         }
         Ok(invoke) => {
             run(&steps_dir, &invoke.steps);
-        },
+        }
     };
     Ok(())
 }

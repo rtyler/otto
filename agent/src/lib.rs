@@ -1,10 +1,9 @@
-
 use log::*;
 use serde::{Deserialize, Serialize};
 use serde_yaml::Value;
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{stdout, stderr, Write};
+use std::io::{stderr, stdout, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use tempfile::NamedTempFile;
@@ -73,12 +72,12 @@ pub enum LogStream {
     Stderr,
 }
 
-
-
 /**
  * Generate a UUID v4 for use in structs, etc
  */
-fn generate_uuid() -> Uuid { Uuid::new_v4() }
+fn generate_uuid() -> Uuid {
+    Uuid::new_v4()
+}
 
 /**
  * The run method is the "core" of the agent which will run a series of steps
@@ -89,7 +88,7 @@ fn generate_uuid() -> Uuid { Uuid::new_v4() }
 pub fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
     let dir = Path::new(steps_dir);
 
-    if ! dir.is_dir() {
+    if !dir.is_dir() {
         panic!("STEPS_DIR must be a directory! {:?}", dir);
     }
 
@@ -103,19 +102,25 @@ pub fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
             let file = File::open(manifest_file)?;
             // TODO: This is dumb and inefficient
             m_paths.insert(step.symbol.clone(), dir.join(&step.symbol).to_path_buf());
-            manifests.insert(step.symbol.clone(),
-                serde_yaml::from_reader::<File, osp::Manifest>(file).expect("Failed to parse manifest")
+            manifests.insert(
+                step.symbol.clone(),
+                serde_yaml::from_reader::<File, osp::Manifest>(file)
+                    .expect("Failed to parse manifest"),
             );
-        }
-        else {
-            warn!("{}/manifest.yml does not exist, step cannot execute", step.symbol);
+        } else {
+            warn!(
+                "{}/manifest.yml does not exist, step cannot execute",
+                step.symbol
+            );
         }
     }
 
     // Now that things are valid and collected, let's executed
     for step in steps.iter() {
         if let Some(runner) = manifests.get(&step.symbol) {
-            let m_path = m_paths.get(&step.symbol).expect("Failed to grab the step library path");
+            let m_path = m_paths
+                .get(&step.symbol)
+                .expect("Failed to grab the step library path");
             let entrypoint = m_path.join(&runner.entrypoint.path);
 
             let mut file = NamedTempFile::new()?;
@@ -126,7 +131,7 @@ pub fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
                 .expect("Failed to write temporary file for script");
 
             use os_pipe::pipe;
-            use std::io::{BufReader, BufRead};
+            use std::io::{BufRead, BufReader};
             let mut cmd = Command::new(entrypoint);
             cmd.arg(file.path());
             let (mut reader, writer) = pipe().unwrap();
@@ -134,8 +139,10 @@ pub fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
             cmd.stdout(writer);
             cmd.stderr(writer_clone);
 
-
-            let log = Log::StepStart { symbol: step.symbol.clone(), uuid: step.uuid };
+            let log = Log::StepStart {
+                symbol: step.symbol.clone(),
+                uuid: step.uuid,
+            };
             println!("{:?}", log);
 
             let mut handle = cmd.spawn()?;
@@ -146,8 +153,7 @@ pub fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
                 if let Ok(buffer) = line {
                     if "dir" == step.symbol {
                         println!("{}", buffer);
-                    }
-                    else {
+                    } else {
                         let log = Log::StepOutput {
                             // TODO: Remove this allocation
                             symbol: step.symbol.clone(),
@@ -163,17 +169,16 @@ pub fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
 
             handle.wait()?;
 
-            let log = Log::StepEnd { symbol: step.symbol.clone(), uuid: step.uuid };
+            let log = Log::StepEnd {
+                symbol: step.symbol.clone(),
+                uuid: step.uuid,
+            };
             println!("{:?}", log);
-
         }
     }
 
     Ok(())
 }
 
-
-
 #[cfg(test)]
-mod tests {
-}
+mod tests {}
