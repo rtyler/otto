@@ -1,3 +1,4 @@
+use async_std::sync::Receiver;
 use log::*;
 use serde::{Deserialize, Serialize};
 use serde_yaml::Value;
@@ -133,11 +134,28 @@ fn load_manifests_for(
  *
  * Currently it is very simple and primitive
  */
-pub fn run(steps_dir: &str, steps: &Vec<Step>) -> std::io::Result<()> {
+pub fn run(
+    steps_dir: &str,
+    steps: &Vec<Step>,
+    controller: Option<Receiver<control::Request>>,
+) -> std::io::Result<()> {
     let manifests = load_manifests_for(steps_dir, steps)?;
 
     // Now that things are valid and collected, let's executed
     for step in steps.iter() {
+        if let Some(ref ctl) = controller {
+            while !ctl.is_empty() {
+                if let Ok(msg) = ctl.try_recv() {
+                    debug!("Processing control message in runloop: {:#?}", msg);
+                    match msg {
+                        control::Request::Terminate => {
+                            info!("Runloop has been asked to terminate, exiting");
+                            return Ok(());
+                        }
+                    }
+                }
+            }
+        }
         if let Some(runner) = manifests.get(&step.symbol) {
             let entrypoint = runner.path.join(&runner.manifest.entrypoint.path);
 

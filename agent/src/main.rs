@@ -1,6 +1,20 @@
+/*
+ * This file contains the entrypoint for the agent binary.
+ *
+ * Most of the logic _should_ be contained within lib.rs and the surrounding modules
+ */
+use async_std::sync::channel;
 use std::fs::File;
 
 use ottoagent::*;
+
+/**
+ * The maximum number of pending controll messages allowed
+ *
+ * If the number of pending messages exceeds this number, the requests to the
+ * control socket will block until the pending messages are cleared out
+ */
+const MAX_CONTROl_MSGS: usize = 64;
 
 #[async_std::main]
 async fn main() -> std::io::Result<()> {
@@ -13,6 +27,7 @@ async fn main() -> std::io::Result<()> {
     }
 
     let file = File::open(&args[1])?;
+    let (sender, receiver) = channel(MAX_CONTROl_MSGS);
 
     match serde_yaml::from_reader::<File, Pipeline>(file) {
         Err(e) => {
@@ -21,11 +36,10 @@ async fn main() -> std::io::Result<()> {
         Ok(invoke) => {
             async_std::task::spawn(async {
                 // TODO better error handling and behavior
-                control::run().await
-                    .expect("Failed to bind control?");
+                control::run(sender).await.expect("Failed to bind control?");
             });
 
-            run(&steps_dir, &invoke.steps);
+            run(&steps_dir, &invoke.steps, Some(receiver));
         }
     };
     Ok(())

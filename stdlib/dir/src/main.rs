@@ -37,7 +37,7 @@ fn main() -> std::io::Result<()> {
             // do things
             std::env::set_current_dir(&invoke.parameters.directory)
                 .expect("Failed to set current directory, perhaps it doesn't exist");
-            run(&steps_dir, &invoke.parameters.block);
+            run(&steps_dir, &invoke.parameters.block, None);
             Ok(())
         }
     }
