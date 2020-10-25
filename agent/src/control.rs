@@ -29,7 +29,7 @@ async fn handle_request(mut req: tide::Request<State>) -> tide::Result {
 
 pub async fn run(sender: Sender<Request>) -> tide::Result<()> {
     info!("Starting the agent control server");
-    let sock = "agent.sock";
+    let sock = agent_socket();
     let state = State { sender };
     let mut app = tide::with_state(state);
 
@@ -47,4 +47,23 @@ pub async fn run(sender: Sender<Request>) -> tide::Result<()> {
     app.listen(format!("http+unix://{}", sock)).await?;
 
     Ok(())
+}
+
+/**
+ * Return a string representing the absolute path of this agent's control socket
+ */
+pub fn agent_socket() -> String {
+    let path = std::env::current_dir().expect("Failed to get current directory");
+    path.join("agent.sock").to_string_lossy().into_owned()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_agent_sock() {
+        let buf = agent_socket();
+        assert!(buf.ends_with("agent.sock"));
+    }
 }

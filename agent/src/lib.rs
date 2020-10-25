@@ -161,6 +161,9 @@ pub fn run(
 
             let mut file = NamedTempFile::new()?;
             let mut step_args = HashMap::new();
+            // TODO: This is going to be wrong on nested steps
+            let sock = Value::String(control::agent_socket());
+            step_args.insert("control", &sock);
             step_args.insert("parameters", &step.parameters);
 
             serde_yaml::to_writer(&mut file, &step_args)

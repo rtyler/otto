@@ -1,0 +1,19 @@
+---
+symbol: error
+description: |
+  The `error` step is a simple step that exits the pipeline
+
+includes:
+  - name: ./error-step
+  - name: ./README.adoc
+
+entrypoint:
+  path: error-step
+  multiarch: true
+
+parameters:
+  - name: message
+    required: true
+    type: string
+    description: |
+      The message to print when exiting the pipelin

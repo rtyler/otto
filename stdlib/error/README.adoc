@@ -1,0 +1,3 @@
+= error
+
+The error step will simply abort the pipeline early

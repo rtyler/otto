@@ -14,7 +14,7 @@ use ottoagent::*;
  * If the number of pending messages exceeds this number, the requests to the
  * control socket will block until the pending messages are cleared out
  */
-const MAX_CONTROl_MSGS: usize = 64;
+const MAX_CONTROL_MSGS: usize = 64;
 
 #[async_std::main]
 async fn main() -> std::io::Result<()> {
@@ -27,7 +27,7 @@ async fn main() -> std::io::Result<()> {
     }
 
     let file = File::open(&args[1])?;
-    let (sender, receiver) = channel(MAX_CONTROl_MSGS);
+    let (sender, receiver) = channel(MAX_CONTROL_MSGS);
 
     match serde_yaml::from_reader::<File, Pipeline>(file) {
         Err(e) => {
