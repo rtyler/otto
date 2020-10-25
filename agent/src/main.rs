@@ -2,7 +2,9 @@ use std::fs::File;
 
 use ottoagent::*;
 
-fn main() -> std::io::Result<()> {
+#[async_std::main]
+async fn main() -> std::io::Result<()> {
+    pretty_env_logger::init();
     let args: Vec<String> = std::env::args().collect();
     let steps_dir = std::env::var("STEPS_DIR").expect("STEPS_DIR must be defined");
 
@@ -17,6 +19,12 @@ fn main() -> std::io::Result<()> {
             panic!("Failed to parse parameters file: {:#?}", e);
         }
         Ok(invoke) => {
+            async_std::task::spawn(async {
+                // TODO better error handling and behavior
+                control::run().await
+                    .expect("Failed to bind control?");
+            });
+
             run(&steps_dir, &invoke.steps);
         }
     };

@@ -9,6 +9,8 @@ use std::process::{Command, Stdio};
 use tempfile::NamedTempFile;
 use uuid::Uuid;
 
+pub mod control;
+
 /**
  * A Pipeline contains the total configuration and steps for a single pipeline run
  */
