@@ -150,6 +150,8 @@ pub fn run(
                     debug!("Processing control message in runloop: {:#?}", msg);
                     match msg {
                         control::Request::Terminate => {
+                            // TODO: this needs to halt the entire pipeline, not just what is
+                            // executing on this agent
                             info!("Runloop has been asked to terminate, exiting");
                             return Ok(());
                         }
@@ -162,8 +164,10 @@ pub fn run(
 
             let mut file = NamedTempFile::new()?;
             let mut step_args = HashMap::new();
+
             // TODO: This is going to be wrong on nested steps
             let sock = Value::String(control::agent_socket());
+
             step_args.insert("control", &sock);
             step_args.insert("parameters", &step.parameters);
 
@@ -207,13 +211,21 @@ pub fn run(
                 }
             }
 
-            handle.wait()?;
+            let status = handle.wait()?;
 
             let log = Log::StepEnd {
                 symbol: step.symbol.clone(),
                 uuid: step.uuid,
             };
+
             println!("{:?}", log);
+
+            if ! status.success() {
+                info!("Step was not successful, exiting the runloop");
+                // TODO: this needs to halt the entire pipeline, not just what is executing on this
+                // agent
+                return Ok(());
+            }
         }
     }
 
