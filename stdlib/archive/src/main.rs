@@ -34,15 +34,24 @@ fn artifact_matches(pattern: &str) -> Vec<PathBuf> {
 /**
  * This function will create a tarball based on the given paths
  */
-fn create_tarball(output: &str, paths: &Vec<PathBuf>) -> std::io::Result<()> {
-    let tar_gz = File::create(output)?;
+fn create_tarball(output: &str, paths: &Vec<PathBuf>) -> std::io::Result<PathBuf> {
+    let output = format!("{}.tar.gz", output);
+    let path = Path::new(&output);
+    let tar_gz = File::create(&output)?;
     let enc = GzEncoder::new(tar_gz, Compression::default());
+
     let mut tar = tar::Builder::new(enc);
     for path in paths.iter() {
-        tar.append_path(path).expect(&format!("Failed to add {:#?} to the tarball", path));
+        if path.is_dir() {
+            tar.append_dir_all(".", path).expect(&format!("Failed to add {:#?} to the tarball", path));
+        }
+        else {
+            tar.append_path(path).expect(&format!("Failed to add {:#?} to the tarball", path));
+        }
     }
+    tar.finish()?;
 
-    Ok(())
+    Ok(path.to_path_buf())
 }
 
 /**
@@ -99,7 +108,10 @@ fn main() -> std::io::Result<()> {
         1 => {
             // no tarball, unless it's a directory
             let file = &artifacts[0];
-            let name = file.as_path().file_name().expect("Failed to determine the file name for the archive");
+            let name = match invoke.parameters.name {
+                None => file.as_path().file_name().expect("Failed to determine the file name for the archive").to_string_lossy().into_owned(),
+                Some(name) => name,
+            };
 
             // No archiving /etc/passwd you silly goose
             if ! is_child_path(&file) {
@@ -107,7 +119,7 @@ fn main() -> std::io::Result<()> {
             }
 
             if file.is_dir() {
-                create_tarball(&name.to_string_lossy(), &artifacts);
+                create_tarball(&name, &artifacts);
             }
             else {
                 archive(file);
@@ -124,7 +136,7 @@ fn main() -> std::io::Result<()> {
                     // TODO handle
                 },
                 Ok(file) => {
-                    //archive(file);
+                    archive(&file);
                 }
             }
         },

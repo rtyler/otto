@@ -30,4 +30,16 @@ EOF
     assertFalse "step should fail when invoked with an absolute path" "archive-step $INVOCATION_FILE"
 }
 
+test_fail_with_path_traversal() {
+    cat > $INVOCATION_FILE<<EOF
+---
+configuration:
+  ipc: unix:///dev/null
+parameters:
+  artifacts: ../../../
+EOF
+
+    assertFalse "step should fail when invoked with an absolute path" "archive-step $INVOCATION_FILE"
+}
+
 . $(dirname $0)/../../../contrib/shunit2/shunit2
