@@ -6,3 +6,4 @@ node_modules/
 build/
 .otto-ebc-history
 *.tar.gz
+tmp*

@@ -3,14 +3,19 @@
  * running pipeline
  */
 
+use flate2::write::GzEncoder;
+use flate2::Compression;
 use glob::glob;
 use serde::Deserialize;
+use std::fs::File;
 use std::path::PathBuf;
 use ottoagent::step::*;
 
 #[derive(Clone, Debug, Deserialize)]
 struct Parameters {
     artifacts: String,
+    /// The name to be used when storing the artifact
+    name: Option<String>,
     #[serde(rename = "followSymlinks")]
     follow_symlinks: Option<bool>,
 }
@@ -29,7 +34,14 @@ fn artifact_matches(pattern: &str) -> Vec<PathBuf> {
 /**
  * This function will create a tarball based on the given paths
  */
-fn create_tarball(paths: Vec<PathBuf>) -> std::io::Result<()> {
+fn create_tarball(output: &str, paths: &Vec<PathBuf>) -> std::io::Result<()> {
+    let tar_gz = File::create(output)?;
+    let enc = GzEncoder::new(tar_gz, Compression::default());
+    let mut tar = tar::Builder::new(enc);
+    for path in paths.iter() {
+        tar.append_path(path).expect(&format!("Failed to add {:#?} to the tarball", path));
+    }
+
     Ok(())
 }
 
@@ -55,15 +67,27 @@ fn main() -> std::io::Result<()> {
         1 => {
             // no tarball, unless it's a directory
             let file = &artifacts[0];
+            let name = file.as_path().file_name().expect("Failed to determine the file name for the archive");
+
+            // No archiving /etc/passwd you silly goose
+            if file.is_absolute() {
+                panic!("the archive step cannot archive absolute paths");
+            }
+
             if file.is_dir() {
-                create_tarball(artifacts);
+                create_tarball(&name.to_string_lossy(), &artifacts);
             }
             else {
                 archive(file);
             }
         },
         _ => {
-            match create_tarball(artifacts) {
+            let name = match invoke.parameters.name {
+                None => "archive".to_string(),
+                Some(name) => name,
+            };
+
+            match create_tarball(&name, &artifacts) {
                 Err(e) => {
                     // TODO handle
                 },

@@ -20,6 +20,18 @@ parameters:
 
       Glob patterns will result in a tarball storing the matching files.
 
+  - name: name
+    required: false
+    type: string
+    description: |
+      The name to give the artifact. This will be used for generating a file name
+      when the artifact is persisted into the object store.
+
+      If this parameter is omitted for a directory, that directory name will be used for the artifact.
+
+      If this parameter is omitted for a pattern of files, the files will be stored under the name "archive"
+
+
   - name: followSymlinks
     description: |
       Whether the archive step should follow symbolic links in the archive proces

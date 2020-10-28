@@ -20,6 +20,14 @@ steps: release
 		./target/release/osp $$dir; \
 	done;
 
+test: ## Run the acceptance tests for steps
+	@for t in $$(find stdlib -iname "tests" -type d); do \
+		echo ">> Running acceptance tests for $$t"; \
+		for f in $$(find $$t -iname "*.sh" -type f); do \
+			PATH="target/debug:$(PATH)" "$$f"; \
+		done; \
+	done;
+
 # Cute hack thanks to:
 # https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help: ## Display this help text
