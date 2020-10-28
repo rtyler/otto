@@ -165,9 +165,7 @@ pub fn run(
 
             // TODO: This is going to be wrong on nested steps
             let sock = control::agent_socket();
-            let configuration = step::Configuration {
-                ipc: sock,
-            };
+            let configuration = step::Configuration { ipc: sock };
             let invocation: step::Invocation<Value> = step::Invocation {
                 configuration,
                 parameters: step.parameters.clone(),
@@ -222,7 +220,7 @@ pub fn run(
 
             println!("{:?}", log);
 
-            if ! status.success() {
+            if !status.success() {
                 info!("Step was not successful, exiting the runloop");
                 // TODO: this needs to halt the entire pipeline, not just what is executing on this
                 // agent

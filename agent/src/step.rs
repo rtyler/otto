@@ -35,13 +35,18 @@ pub struct Configuration {
  * This function will handle parsing the command line arguments passed to the step
  * and return the desired Invocation struct
  */
-pub fn invocation_from_args<P: serde::de::DeserializeOwned>(args: &Vec<String>) -> Result<Invocation<P>, std::io::Error> {
+pub fn invocation_from_args<P: serde::de::DeserializeOwned>(
+    args: &Vec<String>,
+) -> Result<Invocation<P>, std::io::Error> {
     use std::fs::File;
     use std::io::{Error, ErrorKind};
 
     if args.len() != 2 {
         error!("A step should only be invoked with a single argument: the invocation file path");
-        return Err(Error::new(ErrorKind::InvalidData, "Step must only be invoked with a single argument"))
+        return Err(Error::new(
+            ErrorKind::InvalidData,
+            "Step must only be invoked with a single argument",
+        ));
     }
 
     let file = File::open(&args[1])?;
@@ -50,8 +55,7 @@ pub fn invocation_from_args<P: serde::de::DeserializeOwned>(args: &Vec<String>) 
         Err(e) => {
             error!("Failed to deserialize invocation file: {:#?}", e);
             Err(Error::new(ErrorKind::InvalidData, e))
-        },
+        }
         Ok(invoke) => Ok(invoke),
     }
 }
-

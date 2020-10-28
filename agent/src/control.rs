@@ -44,7 +44,8 @@ pub async fn run(sender: Sender<Request>) -> tide::Result<()> {
         );
     }
 
-    app.listen(format!("http+unix://{}", sock.to_string_lossy())).await?;
+    app.listen(format!("http+unix://{}", sock.to_string_lossy()))
+        .await?;
 
     Ok(())
 }

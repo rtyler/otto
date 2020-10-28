@@ -2,8 +2,8 @@
  * A step which will invoke steps inside a directory
  */
 
-use serde::Deserialize;
 use ottoagent::step::*;
+use serde::Deserialize;
 
 #[derive(Clone, Debug, Deserialize)]
 struct Parameters {
