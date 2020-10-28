@@ -6,10 +6,10 @@
 use flate2::write::GzEncoder;
 use flate2::Compression;
 use glob::glob;
+use ottoagent::step::*;
 use serde::Deserialize;
 use std::fs::File;
 use std::path::{Path, PathBuf};
-use ottoagent::step::*;
 
 #[derive(Clone, Debug, Deserialize)]
 struct Parameters {
@@ -26,9 +26,11 @@ struct Parameters {
  * If the pattern is an invalid glob, there will be a panic and the step will exit
  */
 fn artifact_matches(pattern: &str) -> Vec<PathBuf> {
-    glob(pattern).expect("Failed to read glob pattern")
+    glob(pattern)
+        .expect("Failed to read glob pattern")
         .filter_map(std::result::Result::ok)
-        .map( |p| p ).collect()
+        .map(|p| p)
+        .collect()
 }
 
 /**
@@ -43,10 +45,11 @@ fn create_tarball(output: &str, paths: &Vec<PathBuf>) -> std::io::Result<PathBuf
     let mut tar = tar::Builder::new(enc);
     for path in paths.iter() {
         if path.is_dir() {
-            tar.append_dir_all(".", path).expect(&format!("Failed to add {:#?} to the tarball", path));
-        }
-        else {
-            tar.append_path(path).expect(&format!("Failed to add {:#?} to the tarball", path));
+            tar.append_dir_all(".", path)
+                .expect(&format!("Failed to add {:#?} to the tarball", path));
+        } else {
+            tar.append_path(path)
+                .expect(&format!("Failed to add {:#?} to the tarball", path));
         }
     }
     tar.finish()?;
@@ -60,7 +63,8 @@ fn create_tarball(output: &str, paths: &Vec<PathBuf>) -> std::io::Result<PathBuf
  * Will return false if a path traversal attack is being attempted
  */
 fn is_child_path(path: &Path) -> bool {
-    let current = std::env::current_dir().expect("Failed to get current_dir, cannot safely execute");
+    let current =
+        std::env::current_dir().expect("Failed to get current_dir, cannot safely execute");
     let current_components = current.components().collect::<Vec<_>>();
 
     if let Ok(canonical) = path.canonicalize() {
@@ -103,28 +107,35 @@ fn main() -> std::io::Result<()> {
 
     match artifacts.len() {
         0 => {
-            panic!("The `archive` step was given a pattern ({}) which doesn't match any files", invoke.parameters.artifacts);
-        },
+            panic!(
+                "The `archive` step was given a pattern ({}) which doesn't match any files",
+                invoke.parameters.artifacts
+            );
+        }
         1 => {
             // no tarball, unless it's a directory
             let file = &artifacts[0];
             let name = match invoke.parameters.name {
-                None => file.as_path().file_name().expect("Failed to determine the file name for the archive").to_string_lossy().into_owned(),
+                None => file
+                    .as_path()
+                    .file_name()
+                    .expect("Failed to determine the file name for the archive")
+                    .to_string_lossy()
+                    .into_owned(),
                 Some(name) => name,
             };
 
             // No archiving /etc/passwd you silly goose
-            if ! is_child_path(&file) {
+            if !is_child_path(&file) {
                 panic!("the archive step cannot archive paths outside of its current directory");
             }
 
             if file.is_dir() {
                 create_tarball(&name, &artifacts);
-            }
-            else {
+            } else {
                 archive(file);
             }
-        },
+        }
         _ => {
             let name = match invoke.parameters.name {
                 None => "archive".to_string(),
@@ -134,12 +145,12 @@ fn main() -> std::io::Result<()> {
             match create_tarball(&name, &artifacts) {
                 Err(e) => {
                     // TODO handle
-                },
+                }
                 Ok(file) => {
                     archive(&file);
                 }
             }
-        },
+        }
     }
 
     Ok(())
