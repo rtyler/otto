@@ -1,0 +1,3 @@
+[submodule "contrib/shunit2"]
+	path = contrib/shunit2
+	url = https://github.com/kward/shunit2/
