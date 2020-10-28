@@ -1,10 +1,12 @@
 [package]
-name = "sh-step"
+name = "archive-step"
 version = "0.1.0"
 authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
 [dependencies]
+flate2 = "~1.0.18"
+glob = "~0.3.0"
 otto-agent = { path = "../../agent" }
 serde = {version = "~1.0.117", features = ["derive"]}
-tempfile = "~3.1.0"
+tar = "~0.4.30"

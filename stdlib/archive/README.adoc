@@ -1,0 +1,6 @@
+= archive
+
+The `archive` step will store files or file patterns associated with the
+running pipeline in the Otto object store.
+
+This can be helpful for persisting logs, or built artifacts.

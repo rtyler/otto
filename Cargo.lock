@@ -76,6 +76,17 @@ version = "1.0.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "archive-step"
+version = "0.1.0"
+dependencies = [
+ "flate2 1.0.18 (registry+https://github.com/rust-lang/crates.io-index)",
+ "glob 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "otto-agent 0.1.0",
+ "serde 1.0.117 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tar 0.4.30 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "arrayref"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -772,6 +783,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "polyval 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "glob"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "gloo-timers"
@@ -1593,7 +1609,6 @@ version = "0.1.0"
 dependencies = [
  "otto-agent 0.1.0",
  "serde 1.0.117 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_yaml 0.8.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "tempfile 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -2206,6 +2221,7 @@ dependencies = [
 "checksum generic-array 0.14.4 (registry+https://github.com/rust-lang/crates.io-index)" = "501466ecc8a30d1d3b7fc9229b122b2ce8ed6e9d9223f1138d4babb253e51817"
 "checksum getrandom 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)" = "fc587bc0ec293155d5bfa6b9891ec18a1e330c234f896ea47fbada4cadbe47e6"
 "checksum ghash 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d6e27f0689a6e15944bdce7e45425efb87eaa8ab0c6e87f11d0987a9133e2531"
+"checksum glob 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 "checksum gloo-timers 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "47204a46aaff920a1ea58b11d03dec6f704287d27561724a4631e450654a891f"
 "checksum gumdrop 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "46571f5d540478cf70d2a42dd0d6d8e9f4b9cc7531544b93311e657b86568a0b"
 "checksum gumdrop_derive 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "915ef07c710d84733522461de2a734d4d62a3fd39a4d4f404c2f385ef8618d05"

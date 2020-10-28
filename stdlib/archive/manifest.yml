@@ -1,0 +1,27 @@
+---
+symbol: archive
+description: |
+  The `archive` step will archive a globbed pattern of artifacts
+
+includes:
+  - name: target/release/archive-step
+    flatten: true
+
+entrypoint:
+  path: archive-step
+  multiarch: false
+
+parameters:
+  - name: artifacts
+    required: true
+    type: string
+    description: |
+      A simple string or glob pattern identifying the artifacts to archive
+
+      Glob patterns will result in a tarball storing the matching files.
+
+  - name: followSymlinks
+    description: |
+      Whether the archive step should follow symbolic links in the archive proces
+    type: boolean
+    required: false
