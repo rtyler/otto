@@ -8,7 +8,7 @@ use flate2::Compression;
 use glob::glob;
 use serde::Deserialize;
 use std::fs::File;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use ottoagent::step::*;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -46,6 +46,38 @@ fn create_tarball(output: &str, paths: &Vec<PathBuf>) -> std::io::Result<()> {
 }
 
 /**
+ * Determines whether the path provided actually lives inside of current_dir()
+ *
+ * Will return false if a path traversal attack is being attempted
+ */
+fn is_child_path(path: &Path) -> bool {
+    let current = std::env::current_dir().expect("Failed to get current_dir, cannot safely execute");
+    let current_components = current.components().collect::<Vec<_>>();
+
+    if let Ok(canonical) = path.canonicalize() {
+        let components = canonical.components().collect::<Vec<_>>();
+
+        // This clearly isn't a subdirectory or file of our current root
+        if components.len() < current_components.len() {
+            return false;
+        }
+
+        for (index, part) in current_components.iter().enumerate() {
+            if components[index] != *part {
+                return false;
+            }
+        }
+        // If we have more components than current_components but they all have a common root, then
+        // that's fine
+        return true;
+    }
+
+    // Default to false, basically if this cannot prove it's not a path traversal
+    // then assume it is.
+    return false;
+}
+
+/**
  * Actually archive the named file into the object store
  *
  * The path should be the path to a single file, or a generated tarball
@@ -70,8 +102,8 @@ fn main() -> std::io::Result<()> {
             let name = file.as_path().file_name().expect("Failed to determine the file name for the archive");
 
             // No archiving /etc/passwd you silly goose
-            if file.is_absolute() {
-                panic!("the archive step cannot archive absolute paths");
+            if ! is_child_path(&file) {
+                panic!("the archive step cannot archive paths outside of its current directory");
             }
 
             if file.is_dir() {
@@ -104,6 +136,7 @@ fn main() -> std::io::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
 
     #[test]
     fn artifact_matches_empty_pattern() {
@@ -121,5 +154,17 @@ mod tests {
     fn artifact_matches_wildcard() {
         let paths = artifact_matches("*");
         assert!(paths.len() > 1);
+    }
+
+    #[test]
+    fn is_child_path_attack() {
+        let path = Path::new("src/../../");
+        assert!(is_child_path(&path) == false);
+    }
+
+    #[test]
+    fn is_child_path_legit() {
+        let path = Path::new("src");
+        assert!(is_child_path(&path));
     }
 }
