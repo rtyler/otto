@@ -596,6 +596,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "error-step"
+version = "0.1.0"
+dependencies = [
+ "otto-agent 0.1.0",
+ "serde 1.0.117 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "event-listener"
 version = "2.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

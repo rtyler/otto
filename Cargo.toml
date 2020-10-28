@@ -16,6 +16,7 @@ members = [
     "osp",
 
     "stdlib/dir",
+    "stdlib/error",
     "stdlib/sh",
 ]
 
