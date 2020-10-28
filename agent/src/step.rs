@@ -13,9 +13,22 @@ use serde::{Deserialize, Serialize};
  * Steps should define their own parameter structs which can be passed in as a
  * generic parameter.
  */
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Invocation<P> {
+    /// Configuration contains general configuration for the step to utilize
+    pub configuration: Configuration,
+    /// Parameters are to be a step-defined type
     pub parameters: P,
+}
+
+/**
+ * The Configuration struct will carry important information about the Otto
+ * system into the step, such as the IPC path or endpoints where it can put data
+ * as needed
+ */
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Configuration {
+    pub ipc: std::path::PathBuf,
 }
 
 /**

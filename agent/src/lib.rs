@@ -163,15 +163,18 @@ pub fn run(
             let entrypoint = runner.path.join(&runner.manifest.entrypoint.path);
 
             let mut file = NamedTempFile::new()?;
-            let mut step_args = HashMap::new();
 
             // TODO: This is going to be wrong on nested steps
-            let sock = Value::String(control::agent_socket());
+            let sock = control::agent_socket();
+            let configuration = step::Configuration {
+                ipc: sock,
+            };
+            let invocation: step::Invocation<Value> = step::Invocation {
+                configuration,
+                parameters: step.parameters.clone(),
+            };
 
-            step_args.insert("control", &sock);
-            step_args.insert("parameters", &step.parameters);
-
-            serde_yaml::to_writer(&mut file, &step_args)
+            serde_yaml::to_writer(&mut file, &invocation)
                 .expect("Failed to write temporary file for script");
 
             use os_pipe::pipe;

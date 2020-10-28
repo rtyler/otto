@@ -39,12 +39,12 @@ pub async fn run(sender: Sender<Request>) -> tide::Result<()> {
 
     if let Err(e) = std::fs::remove_file(&sock) {
         warn!(
-            "Failed while trying to remove any previous {}, this might be okay",
-            &sock
+            "Failed while trying to remove any previous {:?}, this might be okay: {}",
+            &sock, e
         );
     }
 
-    app.listen(format!("http+unix://{}", sock)).await?;
+    app.listen(format!("http+unix://{}", sock.to_string_lossy())).await?;
 
     Ok(())
 }
@@ -52,9 +52,9 @@ pub async fn run(sender: Sender<Request>) -> tide::Result<()> {
 /**
  * Return a string representing the absolute path of this agent's control socket
  */
-pub fn agent_socket() -> String {
+pub fn agent_socket() -> std::path::PathBuf {
     let path = std::env::current_dir().expect("Failed to get current directory");
-    path.join("agent.sock").to_string_lossy().into_owned()
+    path.join("agent.sock").to_path_buf()
 }
 
 #[cfg(test)]
@@ -64,6 +64,6 @@ mod tests {
     #[test]
     fn test_agent_sock() {
         let buf = agent_socket();
-        assert!(buf.ends_with("agent.sock"));
+        assert!(buf.to_string_lossy().ends_with("agent.sock"));
     }
 }
