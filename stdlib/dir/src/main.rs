@@ -3,7 +3,6 @@
  */
 
 use serde::Deserialize;
-use std::fs::File;
 use ottoagent::step::*;
 
 #[derive(Clone, Debug, Deserialize)]

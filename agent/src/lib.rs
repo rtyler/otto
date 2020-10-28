@@ -4,9 +4,8 @@ use serde::{Deserialize, Serialize};
 use serde_yaml::Value;
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{stderr, stdout, Write};
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Command;
 use tempfile::NamedTempFile;
 use uuid::Uuid;
 
@@ -181,7 +180,7 @@ pub fn run(
             use std::io::{BufRead, BufReader};
             let mut cmd = Command::new(entrypoint);
             cmd.arg(file.path());
-            let (mut reader, writer) = pipe().unwrap();
+            let (reader, writer) = pipe().unwrap();
             let writer_clone = writer.try_clone().unwrap();
             cmd.stdout(writer);
             cmd.stderr(writer_clone);

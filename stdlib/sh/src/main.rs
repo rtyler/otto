@@ -3,7 +3,6 @@
  */
 
 use serde::Deserialize;
-use std::fs::File;
 use std::io::{stderr, stdout, Write};
 use std::process::Command;
 use tempfile::NamedTempFile;
