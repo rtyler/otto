@@ -5,6 +5,8 @@
 
 use log::*;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use url::Url;
 
 /**
  * The Invocation struct describes the structure of the invocation file which
@@ -29,6 +31,12 @@ pub struct Invocation<P> {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Configuration {
     pub ipc: std::path::PathBuf,
+    pub endpoints: HashMap<String, Endpoint>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Endpoint {
+    pub url: Url,
 }
 
 /**

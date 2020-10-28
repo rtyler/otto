@@ -23,6 +23,7 @@ test_fail_with_absolute_path() {
 ---
 configuration:
   ipc: unix:///dev/null
+  endpoints: {}
 parameters:
   artifacts: /etc/passwd
 EOF
@@ -35,6 +36,7 @@ test_fail_with_path_traversal() {
 ---
 configuration:
   ipc: unix:///dev/null
+  endpoints: {}
 parameters:
   artifacts: ../../../
 EOF

@@ -152,6 +152,10 @@ pub fn run(
 ) -> std::io::Result<Status> {
     let manifests = load_manifests_for(steps_dir, steps)?;
 
+    // XXX: hacks
+    let mut endpoints = HashMap::new();
+    endpoints.insert("objects".to_string(), step::Endpoint { url: url::Url::parse("http://localhost:8080").unwrap()  });
+
     // Now that things are valid and collected, let's executed
     for step in steps.iter() {
         if let Some(ref ctl) = controller {
@@ -176,7 +180,10 @@ pub fn run(
 
             // TODO: This is going to be wrong on nested steps
             let sock = control::agent_socket();
-            let configuration = step::Configuration { ipc: sock };
+            let configuration = step::Configuration {
+                ipc: sock,
+                endpoints: endpoints.clone(),
+            };
             let invocation: step::Invocation<Value> = step::Invocation {
                 configuration,
                 parameters: step.parameters.clone(),

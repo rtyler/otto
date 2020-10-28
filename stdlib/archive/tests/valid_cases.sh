@@ -14,6 +14,7 @@ test_fail_with_file() {
 ---
 configuration:
   ipc: unix:///dev/null
+  endpoints: {}
 parameters:
   artifacts: Cargo.toml
 EOF
@@ -26,6 +27,7 @@ test_fail_with_dir() {
 ---
 configuration:
   ipc: unix:///dev/null
+  endpoints: {}
 parameters:
   artifacts: $(dirname $0)
   name: ${TAR_NAME}
