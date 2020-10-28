@@ -1583,6 +1583,7 @@ dependencies = [
 name = "sh-step"
 version = "0.1.0"
 dependencies = [
+ "otto-agent 0.1.0",
  "serde 1.0.117 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_yaml 0.8.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "tempfile 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)",

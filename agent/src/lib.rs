@@ -11,6 +11,7 @@ use tempfile::NamedTempFile;
 use uuid::Uuid;
 
 pub mod control;
+pub mod step;
 
 /**
  * A Pipeline contains the total configuration and steps for a single pipeline run

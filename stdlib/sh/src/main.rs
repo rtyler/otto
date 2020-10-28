@@ -8,10 +8,7 @@ use std::io::{stderr, stdout, Write};
 use std::process::Command;
 use tempfile::NamedTempFile;
 
-#[derive(Clone, Debug, Deserialize)]
-struct Invocation {
-    parameters: Parameters,
-}
+use ottoagent::step::*;
 
 #[derive(Clone, Debug, Deserialize)]
 struct Parameters {
@@ -25,39 +22,27 @@ struct Parameters {
 }
 
 fn main() -> std::io::Result<()> {
-    let args: Vec<String> = std::env::args().collect();
+    let args = std::env::args().collect();
+    let invoke: Invocation<Parameters> = invocation_from_args(&args).unwrap();
 
-    if args.len() != 2 {
-        panic!("The sh step can only accept a single argument: the parameters file path");
-    }
+    // Create a file inside of `std::env::temp_dir()`.
+    let mut file = NamedTempFile::new()?;
+    writeln!(file, "{}", invoke.parameters.script)
+        .expect("Failed to write temporary file for script");
 
-    let file = File::open(&args[1])?;
+    let output = Command::new("/bin/sh")
+        .arg("-xe")
+        .arg(file.path())
+        .output()
+        .expect("Failed to invoke the script");
 
-    match serde_yaml::from_reader::<File, Invocation>(file) {
-        Err(e) => {
-            panic!("Failed to parse parameters file: {:#?}", e);
-        }
-        Ok(invoke) => {
-            // Create a file inside of `std::env::temp_dir()`.
-            let mut file = NamedTempFile::new()?;
-            writeln!(file, "{}", invoke.parameters.script)
-                .expect("Failed to write temporary file for script");
+    stdout().write_all(&output.stdout).unwrap();
+    stderr().write_all(&output.stderr).unwrap();
 
-            let output = Command::new("/bin/sh")
-                .arg("-xe")
-                .arg(file.path())
-                .output()
-                .expect("Failed to invoke the script");
-
-            stdout().write_all(&output.stdout).unwrap();
-            stderr().write_all(&output.stderr).unwrap();
-
-            std::process::exit(
-                output
-                    .status
-                    .code()
-                    .expect("Failed to get status code of script"),
-            );
-        }
-    }
+    std::process::exit(
+        output
+            .status
+            .code()
+            .expect("Failed to get status code of script"),
+    );
 }
