@@ -24,6 +24,17 @@ pub struct Pipeline {
 }
 
 /**
+ * Possible statuses that a Pipeline can have
+ */
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub enum Status {
+    Successful = 0,
+    Failed = 1,
+    Aborted = 2,
+    Unstable = 3,
+}
+
+/**
  * A context is some bucket of variables and configuration within a pipeline
  * this will most frequently be a "stage" in the conventional sense
  */
@@ -138,7 +149,7 @@ pub fn run(
     steps_dir: &str,
     steps: &Vec<Step>,
     controller: Option<Receiver<control::Request>>,
-) -> std::io::Result<()> {
+) -> std::io::Result<Status> {
     let manifests = load_manifests_for(steps_dir, steps)?;
 
     // Now that things are valid and collected, let's executed
@@ -152,7 +163,7 @@ pub fn run(
                             // TODO: this needs to halt the entire pipeline, not just what is
                             // executing on this agent
                             info!("Runloop has been asked to terminate, exiting");
-                            return Ok(());
+                            return Ok(Status::Failed);
                         }
                     }
                 }
@@ -224,12 +235,12 @@ pub fn run(
                 info!("Step was not successful, exiting the runloop");
                 // TODO: this needs to halt the entire pipeline, not just what is executing on this
                 // agent
-                return Ok(());
+                return Ok(Status::Failed);
             }
         }
     }
 
-    Ok(())
+    Ok(Status::Successful)
 }
 
 #[cfg(test)]
