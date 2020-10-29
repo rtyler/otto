@@ -38,7 +38,7 @@ clean: ## Clean all temporary/working files
 diagram: system.png system.dot ## Generate the diagrams describing otto
 	dot -Tpng -o system.png system.dot
 
-contrib/shunit2:
+contrib/shunit2/shunit2:
 	git submodule update --init
 
 ################################################################################
