@@ -20,7 +20,7 @@ steps: release
 		./target/release/osp $$dir; \
 	done;
 
-test: ## Run the acceptance tests for steps
+test: contrib/shunit2 ## Run the acceptance tests for steps
 	@for t in $$(find stdlib -iname "tests" -type d); do \
 		echo ">> Running acceptance tests for $$t"; \
 		for f in $$(find $$t -iname "*.sh" -type f); do \
@@ -37,6 +37,9 @@ clean: ## Clean all temporary/working files
 
 diagram: system.png system.dot ## Generate the diagrams describing otto
 	dot -Tpng -o system.png system.dot
+
+contrib/shunit2:
+	git submodule update --init
 
 ################################################################################
 
