@@ -154,7 +154,12 @@ pub fn run(
 
     // XXX: hacks
     let mut endpoints = HashMap::new();
-    endpoints.insert("objects".to_string(), step::Endpoint { url: url::Url::parse("http://localhost:8080").unwrap()  });
+    endpoints.insert(
+        "objects".to_string(),
+        step::Endpoint {
+            url: url::Url::parse("http://localhost:8080").unwrap(),
+        },
+    );
 
     // Now that things are valid and collected, let's executed
     for step in steps.iter() {
