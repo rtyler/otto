@@ -20,7 +20,7 @@ steps: release
 		./target/release/osp $$dir; \
 	done;
 
-test: contrib/shunit2 ## Run the acceptance tests for steps
+test: contrib/shunit2/shunit2 ## Run the acceptance tests for steps
 	@for t in $$(find stdlib -iname "tests" -type d); do \
 		echo ">> Running acceptance tests for $$t"; \
 		for f in $$(find $$t -iname "*.sh" -type f); do \
