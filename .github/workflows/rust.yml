@@ -13,17 +13,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Run cargo fmt
-      run: cargo fmt --all -- --check
-
     - name: Build
       run: cargo build
 
     - name: Run tests
       run: cargo test
 
-    - uses: actions-rs/clippy-check@v1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        args: --all-features
-
+    - name: Run integration tests
+      run: make test
