@@ -157,10 +157,18 @@ to execute correctly.
 ----
 ---
 configuration:
-    ipc: 'ipc:///tmp/agent-5171.ipc'
+  self: 'some-uuid-v4' # <1>
+  ipc: '/tmp/agent-5171.sock' # <2>
+  endpoints: # <3>
+    objects:
+      url: 'http://localhost:8080'
+
 parameters:
   script: 'ls -lah'
 ----
+<1> `self` contains the identifier the step can use to identify itself when interacting with the control socket or other services.
+<2> `ipc` will have a path to the agent's control socket, which speaks HTTP.
+<3> `endpoints` is a map of endpoints which the step may interact with to perform its functions.
 
 
 [[control-socket]]
@@ -192,14 +200,20 @@ requires some experimentation.
 ==== Manage pipeline status
 
 The total number of pipeline status is subject of another document, but for example
-purposes assume there are: `SUCCESS`, `FAILURE`, `UNSTABLE`, and `ABORTED`.
+purposes assume there are: `Success`, `Failure`, `Unstable`, and `Aborted`.
+
+[NOTE]
+====
+If the step returns a non-zero status, it will automatically set the status to `Failure`.
+See the `Status` enum in the agent code for a mapping of exit codes to status.
+====
 
 .Change the status
 [source,json]
 ----
 {
     "type" : "SetPipelineStatus",
-    "status" : "UNSTABLE"
+    "status" : "Unstable"
 }
 ----
 
