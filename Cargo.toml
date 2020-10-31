@@ -1,19 +1,14 @@
 [workspace]
 
 members = [
-    "auctioneer",
-
     "agent",
-
-    "eventbus",
-    "eventbus-cli",
-
-    # Disabled, not compiling at the moment
-    # "eventbus-inmemory",
 
     "processors/travis-ci",
 
     "osp",
+
+    "services/auctioneer",
+    "services/eventbus",
 
     "stdlib/archive",
     "stdlib/dir",
