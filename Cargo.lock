@@ -1301,20 +1301,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "processor-travis-ci"
-version = "0.1.0"
-dependencies = [
- "clap",
- "log",
- "otto-eventbus",
- "pretty_env_logger 0.3.1",
- "serde 1.0.117",
- "serde_json",
- "serde_yaml",
- "uuid",
-]
-
-[[package]]
 name = "quick-error"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

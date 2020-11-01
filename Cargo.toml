@@ -3,8 +3,6 @@
 members = [
     "agent",
 
-    "processors/travis-ci",
-
     "osp",
 
     "services/auctioneer",
