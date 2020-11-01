@@ -15,9 +15,11 @@ members = [
     "stdlib/sh",
 ]
 
-[profile.release]
-panic = "abort"
-lto = true
-codegen-units = 1
-incremental = false
-opt-level = "z"
+# Re-enable when closer to cutting actual releases, otherwise it's not worth
+# the compile-time slowdown
+#[profile.release]
+#panic = "abort"
+#lto = true
+#codegen-units = 1
+#incremental = false
+#opt-level = "z"
