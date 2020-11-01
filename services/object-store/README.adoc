@@ -1,0 +1,16 @@
+= Object Store
+
+The Otto Object Store is a _very_ simplistic implementation of an object store which
+foolishly stores disk on a local disk. The intent is that this implementation will
+more commonly be replaced by a commodity S3-like API in "real" deployments of Otto.
+
+
+.Environnment Variables
+|===
+| Name | Default | Description
+
+| `OTTO_OBJECT_DIR`
+| `tmp/`
+| The directory to store objects within, nested directory structures will be automatically created.
+
+|===

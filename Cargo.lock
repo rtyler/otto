@@ -1176,6 +1176,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "otto-object-store"
+version = "0.1.0"
+dependencies = [
+ "async-std",
+ "log",
+ "pretty_env_logger 0.4.0",
+ "tide",
+]
+
+[[package]]
 name = "parking"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

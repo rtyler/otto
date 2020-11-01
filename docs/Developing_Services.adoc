@@ -1,0 +1,23 @@
+= Developing Services
+
+Otto operates as a mesh (pronounced "mess") of services which work together
+over HTTP and typically exchange JSON formatted messages between one another.
+This document captures some details around developing these Otto services.
+
+
+.Port assignments
+|===
+| Port | Service Name | Notes
+
+
+| 7670
+| Dashboard
+| Placeholder for the web dashboard
+
+
+| 7671
+| Object Store
+| Service to put objects such as logs and artifacts
+
+|===
+

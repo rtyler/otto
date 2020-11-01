@@ -9,6 +9,7 @@ members = [
 
     "services/auctioneer",
     "services/eventbus",
+    "services/object-store",
 
     "stdlib/archive",
     "stdlib/dir",
