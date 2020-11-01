@@ -2204,6 +2204,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "373c8a200f9e67a0c95e62a4f52fbf80c23b4381c05a17845531982fa99e6b33"
 
 [[package]]
+name = "unarchive-step"
+version = "0.1.0"
+dependencies = [
+ "async-std",
+ "otto-agent",
+ "serde 1.0.117",
+ "surf",
+]
+
+[[package]]
 name = "unicase"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

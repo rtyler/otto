@@ -1,0 +1,21 @@
+---
+symbol: unarchive
+description: |
+  The `unarchive` step will retrieve a named artifact generated as part of this pipeline
+
+includes:
+  - name: target/release/unarchive-step
+    flatten: true
+
+entrypoint:
+  path: unarchive-step
+  multiarch: false
+
+parameters:
+  - name: name
+    required: true
+    type: string
+    description: |
+      The name to give the artifact to try to retrieve.
+
+      This should either be the file name passed to an `archive` command, _or_ the `name` passed to an `archive` with a glob pattern

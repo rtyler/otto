@@ -13,6 +13,7 @@ members = [
     "stdlib/dir",
     "stdlib/error",
     "stdlib/sh",
+    "stdlib/unarchive",
 ]
 
 # Re-enable when closer to cutting actual releases, otherwise it's not worth

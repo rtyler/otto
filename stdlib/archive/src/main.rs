@@ -98,7 +98,7 @@ fn is_child_path(path: &Path) -> bool {
 async fn archive(path: &PathBuf, endpoint: &Endpoint) -> std::io::Result<()> {
     use surf::Body;
 
-    println!("??? Archiving {:?} to {:?}", path, endpoint);
+    println!("Archiving {:?} to {:?}", path, endpoint);
     surf::put(format!("{}/{}", endpoint.url, path.to_string_lossy()))
         .body(Body::from_file(path).await?)
         .await
