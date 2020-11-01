@@ -95,13 +95,24 @@ fn is_child_path(path: &Path) -> bool {
  *
  * The path should be the path to a single file, or a generated tarball
  */
-fn archive(path: &PathBuf) -> std::io::Result<()> {
+async fn archive(path: &PathBuf, endpoint: &Endpoint) -> std::io::Result<()> {
+    use surf::Body;
+
+    println!("??? Archiving {:?} to {:?}", path, endpoint);
+    surf::put(
+        format!("{}/{}", endpoint.url, path.to_string_lossy())
+    ).body(Body::from_file(path).await?)
+        .await
+        .expect("Failed to upload artifact!");
     Ok(())
 }
 
-fn main() -> std::io::Result<()> {
+#[async_std::main]
+async fn main() -> std::io::Result<()> {
     let args = std::env::args().collect();
     let invoke: Invocation<Parameters> = invocation_from_args(&args).unwrap();
+
+    let endpoint = invoke.configuration.endpoints.get("objects").expect("Failed to get the `objects` endpoint!");
 
     let artifacts = artifact_matches(&invoke.parameters.artifacts);
 
@@ -133,7 +144,7 @@ fn main() -> std::io::Result<()> {
             if file.is_dir() {
                 create_tarball(&name, &artifacts);
             } else {
-                archive(file);
+                archive(file, &endpoint).await?;
             }
         }
         _ => {
@@ -143,11 +154,11 @@ fn main() -> std::io::Result<()> {
             };
 
             match create_tarball(&name, &artifacts) {
-                Err(e) => {
+                Err(_e) => {
                     // TODO handle
                 }
                 Ok(file) => {
-                    archive(&file);
+                    archive(&file, &endpoint).await?;
                 }
             }
         }

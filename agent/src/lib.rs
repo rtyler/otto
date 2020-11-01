@@ -140,6 +140,18 @@ fn load_manifests_for(
 }
 
 /**
+ * This conveninece function will just generate the endpoint with the object store URL for the
+ * given pipeline
+ */
+fn object_endpoint_for(pipeline: &Pipeline) -> step::Endpoint {
+    step::Endpoint {
+        url: url::Url::parse(
+                 &format!("http://localhost:7671/{}", pipeline.uuid)
+             ).expect("Failed for prepare the object endpoint for a pipeline")
+    }
+}
+
+/**
  * The run method is the "core" of the agent which will run a series of steps
  * passed in.
  *
@@ -154,12 +166,7 @@ pub fn run(
 
     // XXX: hacks
     let mut endpoints = HashMap::new();
-    endpoints.insert(
-        "objects".to_string(),
-        step::Endpoint {
-            url: url::Url::parse("http://localhost:8080").unwrap(),
-        },
-    );
+    endpoints.insert("objects".to_string(), object_endpoint_for(pipeline));
 
     // Now that things are valid and collected, let's executed
     for step in pipeline.steps.iter() {

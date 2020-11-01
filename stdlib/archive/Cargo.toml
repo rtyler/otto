@@ -5,8 +5,12 @@ authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
 [dependencies]
+async-std = { version = "~1.6.5", features = ["attributes"] }
 flate2 = "~1.0.18"
 glob = "~0.3.0"
 otto-agent = { path = "../../agent" }
 serde = {version = "~1.0.117", features = ["derive"]}
+# Not using the curl-client default feature to ensure that builds won't require
+# libcurl for now
+surf = { version = "~2.1.0", features = ["h1-client"]}
 tar = "~0.4.30"
