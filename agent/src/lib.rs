@@ -147,10 +147,10 @@ fn load_manifests_for(
  */
 pub fn run(
     steps_dir: &str,
-    steps: &Vec<Step>,
+    pipeline: &Pipeline,
     controller: Option<Receiver<control::Request>>,
 ) -> std::io::Result<Status> {
-    let manifests = load_manifests_for(steps_dir, steps)?;
+    let manifests = load_manifests_for(steps_dir, &pipeline.steps)?;
 
     // XXX: hacks
     let mut endpoints = HashMap::new();
@@ -162,7 +162,7 @@ pub fn run(
     );
 
     // Now that things are valid and collected, let's executed
-    for step in steps.iter() {
+    for step in pipeline.steps.iter() {
         if let Some(ref ctl) = controller {
             while !ctl.is_empty() {
                 if let Ok(msg) = ctl.try_recv() {
@@ -186,6 +186,8 @@ pub fn run(
             // TODO: This is going to be wrong on nested steps
             let sock = control::agent_socket();
             let configuration = step::Configuration {
+                pipeline: pipeline.uuid,
+                uuid: step.uuid,
                 ipc: sock,
                 endpoints: endpoints.clone(),
             };

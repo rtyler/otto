@@ -39,7 +39,7 @@ async fn main() -> std::io::Result<()> {
                 control::run(sender).await.expect("Failed to bind control?");
             });
 
-            run(&steps_dir, &invoke.steps, Some(receiver));
+            run(&steps_dir, &invoke, Some(receiver));
         }
     };
     Ok(())

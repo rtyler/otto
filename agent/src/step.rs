@@ -6,6 +6,7 @@
 use log::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use uuid::Uuid;
 use url::Url;
 
 /**
@@ -30,6 +31,10 @@ pub struct Invocation<P> {
  */
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Configuration {
+    /// The overall pipeline uuid
+    pub pipeline: Uuid,
+    /// The uuid of this specific step
+    pub uuid: Uuid,
     pub ipc: std::path::PathBuf,
     pub endpoints: HashMap<String, Endpoint>,
 }
