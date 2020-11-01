@@ -6,8 +6,8 @@
 use log::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use uuid::Uuid;
 use url::Url;
+use uuid::Uuid;
 
 /**
  * The Invocation struct describes the structure of the invocation file which

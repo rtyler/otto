@@ -145,9 +145,8 @@ fn load_manifests_for(
  */
 fn object_endpoint_for(pipeline: &Pipeline) -> step::Endpoint {
     step::Endpoint {
-        url: url::Url::parse(
-                 &format!("http://localhost:7671/{}", pipeline.uuid)
-             ).expect("Failed for prepare the object endpoint for a pipeline")
+        url: url::Url::parse(&format!("http://localhost:7671/{}", pipeline.uuid))
+            .expect("Failed for prepare the object endpoint for a pipeline"),
     }
 }
 

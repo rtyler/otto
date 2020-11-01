@@ -1,6 +1,6 @@
 use log::*;
-use tide::Request;
 use std::path::PathBuf;
+use tide::Request;
 
 #[derive(Clone, Debug)]
 pub struct State {
@@ -53,9 +53,10 @@ async fn get_object(req: Request<State>) -> tide::Result {
     let fs_path = req.state().upload_dir.join(key);
 
     if fs_path.exists() {
-        Ok(Response::builder(200).body(Body::from_file(&fs_path).await?).build())
-    }
-    else {
+        Ok(Response::builder(200)
+            .body(Body::from_file(&fs_path).await?)
+            .build())
+    } else {
         Err(tide::Error::from_str(404, "Failed to locate key"))
     }
 }
@@ -71,5 +72,4 @@ pub fn app(mut upload_dir: PathBuf) -> tide::Server<State> {
 }
 
 #[cfg(test)]
-mod tests {
-}
+mod tests {}

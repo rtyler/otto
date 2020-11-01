@@ -99,9 +99,8 @@ async fn archive(path: &PathBuf, endpoint: &Endpoint) -> std::io::Result<()> {
     use surf::Body;
 
     println!("??? Archiving {:?} to {:?}", path, endpoint);
-    surf::put(
-        format!("{}/{}", endpoint.url, path.to_string_lossy())
-    ).body(Body::from_file(path).await?)
+    surf::put(format!("{}/{}", endpoint.url, path.to_string_lossy()))
+        .body(Body::from_file(path).await?)
         .await
         .expect("Failed to upload artifact!");
     Ok(())
@@ -112,7 +111,11 @@ async fn main() -> std::io::Result<()> {
     let args = std::env::args().collect();
     let invoke: Invocation<Parameters> = invocation_from_args(&args).unwrap();
 
-    let endpoint = invoke.configuration.endpoints.get("objects").expect("Failed to get the `objects` endpoint!");
+    let endpoint = invoke
+        .configuration
+        .endpoints
+        .get("objects")
+        .expect("Failed to get the `objects` endpoint!");
 
     let artifacts = artifact_matches(&invoke.parameters.artifacts);
 
