@@ -11,15 +11,20 @@ stage = _{ "stage" ~
 
 
 steps = _{ "steps" ~ BLOCK_BEGIN ~ step+ ~ BLOCK_END }
-step = _{ ident ~ STR }
+step = _{ IDENT ~ (
+                    args
+                    | kwargs
+                    )
+        }
+args = _{ (STR ~ COMMA?)+ }
+kwargs = _{ (kwarg ~ COMMA?)+ }
+kwarg = _{ IDENT~ ":" ~ STR }
 
-ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
-
-
-BLOCK_BEGIN = _{ "{" }
-BLOCK_END = _{ "}" }
+IDENT = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+BLOCK_BEGIN = @{ "{" }
+BLOCK_END = @{ "}" }
 STR = @{ "'" ~ ( "''" | (!"'" ~ ANY) )* ~ "'" }
-
+COMMA = @{ "," }
 
 WHITESPACE = _{ (" " | NEWLINE) }
 COMMENT = _{ "#" }
