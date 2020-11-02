@@ -1,0 +1,25 @@
+// The pipeline PEG 
+
+pipeline = _{ SOI ~ "pipeline" ~ BLOCK_BEGIN ~ stages+ ~ BLOCK_END ~ EOI }
+
+stages = _{ "stages" ~ BLOCK_BEGIN ~ stage+ ~ BLOCK_END }
+stage = _{ "stage" ~
+        BLOCK_BEGIN ~ 
+        ("name" ~ "=" ~ STR) ~
+        steps ~
+        BLOCK_END }
+
+
+steps = _{ "steps" ~ BLOCK_BEGIN ~ step+ ~ BLOCK_END }
+step = _{ ident ~ STR }
+
+ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+
+
+BLOCK_BEGIN = _{ "{" }
+BLOCK_END = _{ "}" }
+STR = @{ "'" ~ ( "''" | (!"'" ~ ANY) )* ~ "'" }
+
+
+WHITESPACE = _{ (" " | NEWLINE) }
+COMMENT = _{ "#" }

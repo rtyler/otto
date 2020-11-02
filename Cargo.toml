@@ -5,6 +5,8 @@ members = [
 
     "osp",
 
+    "parser",
+
     "services/auctioneer",
     "services/eventbus",
     "services/object-store",
