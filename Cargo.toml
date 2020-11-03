@@ -2,9 +2,8 @@
 
 members = [
     "agent",
-
+    "models",
     "osp",
-
     "parser",
 
     "services/auctioneer",

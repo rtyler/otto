@@ -1,0 +1,10 @@
+[package]
+name = "otto-models"
+version = "0.1.0"
+authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
+edition = "2018"
+
+[dependencies]
+serde = {version = "~1.0.117", features = ["rc", "derive"]}
+serde_yaml = "~0.8.13"
+uuid = { version = "~0.8.1", features = ["v4", "serde"]}

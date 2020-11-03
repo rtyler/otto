@@ -6,7 +6,7 @@
 use async_std::sync::channel;
 use std::fs::File;
 
-use ottoagent::*;
+use otto_agent::*;
 
 /**
  * The maximum number of pending controll messages allowed
@@ -29,7 +29,7 @@ async fn main() -> std::io::Result<()> {
     let file = File::open(&args[1])?;
     let (sender, receiver) = channel(MAX_CONTROL_MSGS);
 
-    match serde_yaml::from_reader::<File, Pipeline>(file) {
+    match serde_yaml::from_reader::<File, otto_models::Pipeline>(file) {
         Err(e) => {
             panic!("Failed to parse parameters file: {:#?}", e);
         }

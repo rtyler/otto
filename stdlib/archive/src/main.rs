@@ -6,7 +6,7 @@
 use flate2::write::GzEncoder;
 use flate2::Compression;
 use glob::glob;
-use ottoagent::step::*;
+use otto_agent::step::*;
 use serde::Deserialize;
 use std::fs::File;
 use std::path::{Path, PathBuf};

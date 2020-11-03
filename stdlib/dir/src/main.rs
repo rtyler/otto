@@ -2,13 +2,13 @@
  * A step which will invoke steps inside a directory
  */
 
-use ottoagent::step::*;
+use otto_agent::step::*;
 use serde::Deserialize;
 
 #[derive(Clone, Debug, Deserialize)]
 struct Parameters {
     directory: String,
-    block: Vec<ottoagent::Step>,
+    block: Vec<otto_models::Step>,
 }
 
 fn main() -> std::io::Result<()> {
@@ -20,13 +20,13 @@ fn main() -> std::io::Result<()> {
         .expect("Failed to set current directory, perhaps it doesn't exist");
 
     // Construct a somewhat fabricated pipeline configuration
-    let pipeline = ottoagent::Pipeline {
+    let pipeline = otto_models::Pipeline {
         uuid: invoke.configuration.pipeline,
         contexts: vec![],
         steps: invoke.parameters.block,
     };
 
-    let status = ottoagent::run(&steps_dir, &pipeline, None).unwrap();
+    let status = otto_agent::run(&steps_dir, &pipeline, None).unwrap();
     // Pass our block-scoped status back up to the caller
     std::process::exit(status as i32);
 }

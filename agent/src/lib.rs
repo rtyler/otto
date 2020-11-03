@@ -1,6 +1,7 @@
 use async_std::sync::Receiver;
 use log::*;
-use serde::{Deserialize, Serialize};
+use otto_models::*;
+use serde::Serialize;
 use serde_yaml::Value;
 use std::collections::HashMap;
 use std::fs::File;
@@ -11,53 +12,6 @@ use uuid::Uuid;
 
 pub mod control;
 pub mod step;
-
-/**
- * A Pipeline contains the total configuration and steps for a single pipeline run
- */
-#[derive(Clone, Debug, Deserialize)]
-pub struct Pipeline {
-    #[serde(default = "generate_uuid")]
-    pub uuid: Uuid,
-    pub contexts: Vec<Context>,
-    pub steps: Vec<Step>,
-}
-
-/**
- * Possible statuses that a Pipeline can have
- */
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub enum Status {
-    Successful = 0,
-    Failed = 1,
-    Aborted = 2,
-    Unstable = 3,
-}
-
-/**
- * A context is some bucket of variables and configuration within a pipeline
- * this will most frequently be a "stage" in the conventional sense
- */
-#[derive(Clone, Debug, Deserialize)]
-pub struct Context {
-    #[serde(default = "generate_uuid")]
-    pub uuid: Uuid,
-    pub name: String,
-    pub environment: Option<HashMap<String, String>>,
-}
-
-/**
- * A step is the smallest unit of execution for the pipeline
- */
-#[derive(Clone, Debug, Deserialize)]
-pub struct Step {
-    #[serde(default = "generate_uuid")]
-    pub uuid: Uuid,
-    /// The uuid of the context to which this step is associated
-    pub context: Uuid,
-    pub symbol: String,
-    pub parameters: Value,
-}
 
 /**
  * Log is a data structure which captures the necessary metadata for logging a single line
@@ -86,12 +40,6 @@ pub enum LogStream {
     Stderr,
 }
 
-/**
- * Generate a UUID v4 for use in structs, etc
- */
-fn generate_uuid() -> Uuid {
-    Uuid::new_v4()
-}
 
 #[derive(Clone, Debug)]
 struct LoadedManifest {
@@ -284,8 +232,8 @@ mod tests {
         let params = serde_yaml::Value::Null;
         let step = Step {
             symbol: "echo".to_string(),
-            uuid: generate_uuid(),
-            context: generate_uuid(),
+            uuid: otto_models::generate_uuid(),
+            context: otto_models::generate_uuid(),
             parameters: params,
         };
         let manifests =

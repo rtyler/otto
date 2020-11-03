@@ -2,7 +2,7 @@
  * The error step is really really really simple
  */
 
-use ottoagent::step::*;
+use otto_agent::step::*;
 use serde::Deserialize;
 
 #[derive(Clone, Debug, Deserialize)]

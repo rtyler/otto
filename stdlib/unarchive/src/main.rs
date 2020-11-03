@@ -1,5 +1,5 @@
 use async_std::{fs::OpenOptions, io};
-use ottoagent::step::*;
+use otto_agent::step::*;
 use serde::Deserialize;
 use std::io::{Error, ErrorKind};
 

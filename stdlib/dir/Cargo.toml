@@ -8,3 +8,4 @@ edition = "2018"
 serde_yaml = "~0.8.13"
 serde = {version = "~1.0.117", features = ["derive"]}
 otto-agent = { path = "../../agent" }
+otto-models = { path = "../../models" }

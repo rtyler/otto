@@ -7,7 +7,7 @@ use std::io::{stderr, stdout, Write};
 use std::process::Command;
 use tempfile::NamedTempFile;
 
-use ottoagent::step::*;
+use otto_agent::step::*;
 
 #[derive(Clone, Debug, Deserialize)]
 struct Parameters {
