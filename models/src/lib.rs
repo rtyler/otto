@@ -49,15 +49,15 @@ pub enum Status {
 pub struct Context {
     #[serde(default = "generate_uuid")]
     pub uuid: Uuid,
-    pub name: String,
+    pub properties: HashMap<String, String>,
     pub environment: Option<HashMap<String, String>>,
 }
 
-impl Context {
-    pub fn new(name: String) -> Self {
+impl Default for Context {
+    fn default() -> Self {
         Self {
             uuid: generate_uuid(),
-            name,
+            properties: HashMap::default(),
             environment: None,
         }
     }

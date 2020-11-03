@@ -1497,6 +1497,7 @@ dependencies = [
  "otto-models",
  "pest",
  "pest_derive",
+ "pretty_env_logger 0.4.0",
  "serde_yaml",
 ]
 

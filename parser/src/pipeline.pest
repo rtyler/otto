@@ -5,7 +5,7 @@ pipeline = _{ SOI ~ "pipeline" ~ BLOCK_BEGIN ~ stages+ ~ BLOCK_END ~ EOI }
 stages = { "stages" ~ BLOCK_BEGIN ~ stage+ ~ BLOCK_END }
 stage = { "stage" ~
         BLOCK_BEGIN ~ 
-        ("name" ~ "=" ~ STR) ~
+        (property*) ~
         steps ~
         BLOCK_END }
 
@@ -16,9 +16,12 @@ step = { IDENT ~ (
                     | kwargs
                     )
         }
+
 args = _{ (STR ~ COMMA?)+ }
 kwargs = _{ (kwarg ~ COMMA?)+ }
 kwarg = _{ IDENT~ ":" ~ STR }
+property = { IDENT ~ "=" ~ STR }
+
 
 IDENT = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 BLOCK_BEGIN = @{ "{" }

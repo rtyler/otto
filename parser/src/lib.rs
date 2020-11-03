@@ -28,13 +28,33 @@ fn parse_str(parser: &mut pest::iterators::Pair<Rule>) -> String {
 fn parse_stage(parser: &mut Pairs<Rule>) -> (Context, Vec<Step>) {
     use pest::iterators::Pair;
 
-    let stage = Context::new("Fake".to_string());
+    let mut stage = Context::default();
     let mut steps: Vec<Step> = vec![];
 
     debug!("stage: {:?}", parser);
 
     while let Some(parsed) = parser.next() {
         match parsed.as_rule() {
+            Rule::property => {
+                let mut inner = parsed.into_inner();
+
+                while let Some(parsed) = inner.next() {
+                    match parsed.as_rule() {
+                        Rule::IDENT => {
+                            let key = parsed.as_str().to_string();
+
+                            // This pair should be a STR
+                            if let Some(pair) = inner.next() {
+                                let value = pair.into_inner().as_str().to_string();
+                                debug!("Adding to context key: {}, value: {}", key, value);
+                                stage.properties.insert(key, value);
+                            }
+                        },
+                        _ => {
+                        },
+                    }
+                }
+            },
             Rule::steps => {
                 let mut inner = parsed.into_inner();
 
@@ -194,6 +214,7 @@ mod tests {
         let pipeline = parse_pipeline_string(&buf).expect("Failed to parse");
         assert!(!pipeline.uuid.is_nil());
         assert_eq!(pipeline.contexts.len(), 1);
+        assert!(pipeline.contexts[0].properties.contains_key("name"));
         assert_eq!(pipeline.steps.len(), 1);
     }
 
