@@ -145,7 +145,7 @@ pub fn run(
                 ipc: sock,
                 endpoints: endpoints.clone(),
             };
-            let invocation: step::Invocation<Value> = step::Invocation {
+            let invocation: step::Invocation<StepParameters> = step::Invocation {
                 configuration,
                 parameters: step.parameters.clone(),
             };
@@ -234,7 +234,7 @@ mod tests {
             symbol: "echo".to_string(),
             uuid: otto_models::generate_uuid(),
             context: otto_models::generate_uuid(),
-            parameters: params,
+            parameters: StepParameters::Positional(vec![params]),
         };
         let manifests =
             load_manifests_for("../stdlib", &vec![step]).expect("Failed to look into stdlib?");

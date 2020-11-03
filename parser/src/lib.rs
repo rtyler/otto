@@ -50,6 +50,7 @@ fn parse_stage(parser: &mut Pairs<Rule>) -> (Context, Vec<Step>) {
                         let command = parse_str(&mut parts.pop().unwrap());
 
                         let parameters = serde_yaml::Value::String(command);
+                        let parameters = StepParameters::Positional(vec![parameters]);
                         let step = Step::new(stage.uuid, symbol, parameters);
                         steps.push(step);
                     }
