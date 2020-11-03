@@ -4,8 +4,8 @@ extern crate pest_derive;
 
 use log::*;
 use otto_models::*;
-use pest::Parser;
 use pest::iterators::Pairs;
+use pest::Parser;
 
 #[derive(Parser)]
 #[grammar = "pipeline.pest"]
@@ -18,9 +18,8 @@ fn parse_str(parser: &mut pest::iterators::Pair<Rule>) -> String {
         match parsed.as_rule() {
             Rule::STRV => {
                 return parsed.as_str().to_string();
-            },
-            _ => {
-            },
+            }
+            _ => {}
         }
     }
     "".to_string()
@@ -55,9 +54,8 @@ fn parse_stage(parser: &mut Pairs<Rule>) -> (Context, Vec<Step>) {
                         steps.push(step);
                     }
                 }
-            },
-            _ => {
-            },
+            }
+            _ => {}
         }
     }
     (stage, steps)
@@ -78,13 +76,11 @@ fn parse_pipeline_string(buffer: &str) -> Result<Pipeline, pest::error::Error<Ru
                             pipeline.contexts.push(ctx);
                             pipeline.steps.append(&mut steps);
                         }
-                        _ => {
-                        },
+                        _ => {}
                     }
                 }
-            },
-            _ => {
-            },
+            }
+            _ => {}
         }
     }
 
@@ -97,47 +93,64 @@ mod tests {
 
     #[test]
     fn parse_steps() {
-        let steps = PipelineParser::parse(Rule::steps,
+        let steps = PipelineParser::parse(
+            Rule::steps,
             r#"steps {
                 sh 'ls'
             }
-            "#)
-            .unwrap().next().unwrap();
+            "#,
+        )
+        .unwrap()
+        .next()
+        .unwrap();
     }
 
     #[test]
     fn parse_steps_positional_args() {
-        let steps = PipelineParser::parse(Rule::steps,
+        let steps = PipelineParser::parse(
+            Rule::steps,
             r#"steps {
                 sh 'ls', 'utf-8', 'lolwut'
             }
-            "#)
-            .unwrap().next().unwrap();
+            "#,
+        )
+        .unwrap()
+        .next()
+        .unwrap();
     }
 
     #[test]
     fn parse_steps_keyword_arg() {
-        let steps = PipelineParser::parse(Rule::steps,
+        let steps = PipelineParser::parse(
+            Rule::steps,
             r#"steps {
                 sh script: 'ls'
             }
-            "#)
-            .unwrap().next().unwrap();
+            "#,
+        )
+        .unwrap()
+        .next()
+        .unwrap();
     }
 
     #[test]
     fn parse_steps_keyword_args() {
-        let steps = PipelineParser::parse(Rule::steps,
+        let steps = PipelineParser::parse(
+            Rule::steps,
             r#"steps {
                 sh script: 'ls', label: 'lolwut'
             }
-            "#)
-            .unwrap().next().unwrap();
+            "#,
+        )
+        .unwrap()
+        .next()
+        .unwrap();
     }
 
     #[test]
     fn it_works() {
-        let pipeline = PipelineParser::parse(Rule::pipeline,
+        let pipeline = PipelineParser::parse(
+            Rule::pipeline,
             r#"
             pipeline {
                 stages {
@@ -157,7 +170,11 @@ mod tests {
                     }
                 }
             }
-            "#).unwrap().next().unwrap();
+            "#,
+        )
+        .unwrap()
+        .next()
+        .unwrap();
     }
 
     #[test]

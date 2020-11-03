@@ -21,7 +21,9 @@ async fn main() -> std::io::Result<()> {
 
     let artifact_path = format!("{}/{}", endpoint.url, invoke.parameters.name);
 
-    let response = surf::get(artifact_path).await.expect("Failed to query object-store");
+    let response = surf::get(artifact_path)
+        .await
+        .expect("Failed to query object-store");
 
     if response.status() == 200 {
         let file = OpenOptions::new()
@@ -30,11 +32,12 @@ async fn main() -> std::io::Result<()> {
             .open(&invoke.parameters.name)
             .await?;
         io::copy(response, file).await?;
-    }
-    else {
-        return Err(Error::new(ErrorKind::NotFound, "Could not locate the artifact"));
+    } else {
+        return Err(Error::new(
+            ErrorKind::NotFound,
+            "Could not locate the artifact",
+        ));
     }
 
     Ok(())
 }
-

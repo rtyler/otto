@@ -40,7 +40,6 @@ pub enum LogStream {
     Stderr,
 }
 
-
 #[derive(Clone, Debug)]
 struct LoadedManifest {
     manifest: osp::Manifest,

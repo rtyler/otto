@@ -26,6 +26,12 @@ impl Default for Pipeline {
 
 /**
  * Possible statuses that a Pipeline can have
+ *
+ * Each of the statuses are mapped to an i32 value such that shell exit codes can easily be used to
+ * set the pipeline status.
+ *
+ * For example, if a step's invocation returns a 3 exit code, then the agent should automatically
+ * know to the set the pipeline status to Unstable
  */
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum Status {
@@ -74,7 +80,9 @@ impl Step {
     pub fn new(context: Uuid, symbol: String, parameters: StepParameters) -> Self {
         Self {
             uuid: generate_uuid(),
-            context, symbol, parameters,
+            context,
+            symbol,
+            parameters,
         }
     }
 }
