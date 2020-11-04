@@ -19,5 +19,9 @@ This document captures some details around developing these Otto services.
 | Object Store
 | Service to put objects such as logs and artifacts
 
+| 7672
+| Parser
+| Service which parses .otto files and spits out the Otto intermediate execution format.
+
 |===
 

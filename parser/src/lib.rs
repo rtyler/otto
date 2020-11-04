@@ -112,7 +112,7 @@ mod tests {
 
     #[test]
     fn parse_steps() {
-        let steps = PipelineParser::parse(
+        let _steps = PipelineParser::parse(
             Rule::steps,
             r#"steps {
                 sh 'ls'
@@ -126,7 +126,7 @@ mod tests {
 
     #[test]
     fn parse_steps_positional_args() {
-        let steps = PipelineParser::parse(
+        let _steps = PipelineParser::parse(
             Rule::steps,
             r#"steps {
                 sh 'ls', 'utf-8', 'lolwut'
@@ -140,7 +140,7 @@ mod tests {
 
     #[test]
     fn parse_steps_keyword_arg() {
-        let steps = PipelineParser::parse(
+        let _steps = PipelineParser::parse(
             Rule::steps,
             r#"steps {
                 sh script: 'ls'
@@ -154,7 +154,7 @@ mod tests {
 
     #[test]
     fn parse_steps_keyword_args() {
-        let steps = PipelineParser::parse(
+        let _steps = PipelineParser::parse(
             Rule::steps,
             r#"steps {
                 sh script: 'ls', label: 'lolwut'
@@ -168,7 +168,7 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let pipeline = PipelineParser::parse(
+        let _pipeline = PipelineParser::parse(
             Rule::pipeline,
             r#"
             pipeline {
@@ -219,7 +219,6 @@ mod tests {
 
     #[test]
     fn parse_more_pipeline() {
-        use otto_models::*;
         let buf = r#"
             pipeline {
                 stages {

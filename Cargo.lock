@@ -1493,12 +1493,14 @@ dependencies = [
 name = "otto-parser"
 version = "0.1.0"
 dependencies = [
+ "async-std",
  "log",
  "otto-models",
  "pest",
  "pest_derive",
  "pretty_env_logger 0.4.0",
  "serde_yaml",
+ "tide",
 ]
 
 [[package]]
