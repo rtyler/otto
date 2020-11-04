@@ -1,0 +1,10 @@
+pipeline {
+    stages {
+        stage {
+            name = 'Build'
+            steps {
+                sh 'ls'
+            }
+        }
+    }
+}

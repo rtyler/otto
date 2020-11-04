@@ -49,12 +49,11 @@ fn parse_stage(parser: &mut Pairs<Rule>) -> (Context, Vec<Step>) {
                                 debug!("Adding to context key: {}, value: {}", key, value);
                                 stage.properties.insert(key, value);
                             }
-                        },
-                        _ => {
-                        },
+                        }
+                        _ => {}
                     }
                 }
-            },
+            }
             Rule::steps => {
                 let mut inner = parsed.into_inner();
 
@@ -81,7 +80,7 @@ fn parse_stage(parser: &mut Pairs<Rule>) -> (Context, Vec<Step>) {
     (stage, steps)
 }
 
-fn parse_pipeline_string(buffer: &str) -> Result<Pipeline, pest::error::Error<Rule>> {
+pub fn parse_pipeline_string(buffer: &str) -> Result<Pipeline, pest::error::Error<Rule>> {
     let mut parser = PipelineParser::parse(Rule::pipeline, buffer)?;
     let mut pipeline = Pipeline::default();
 
