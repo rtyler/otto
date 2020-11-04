@@ -13,7 +13,7 @@ name = "otto-agent"
 path = "src/main.rs"
 
 [dependencies]
-async-std = { version = "1.6.5", features = ["attributes"]}
+async-std = { version = "~1.7", features = ["attributes"]}
 log = "~0.4.8"
 otto-models = { path = "../models" }
 osp = { path = "../osp" }

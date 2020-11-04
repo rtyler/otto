@@ -5,7 +5,7 @@ authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
 [dependencies]
-async-std = { version = "~1.6.5", features = ["attributes"] }
+async-std = { version = "~1.7", features = ["attributes"] }
 flate2 = "~1.0.18"
 glob = "~0.3.0"
 otto-agent = { path = "../../agent" }

@@ -5,7 +5,7 @@ authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
 [dependencies]
-async-std = { version = "~1.6.5", features = ["attributes"] }
+async-std = { version = "~1.7", features = ["attributes"] }
 otto-agent = { path = "../../agent" }
 serde = {version = "~1.0.117", features = ["derive"]}
 surf = { version = "~2.1.0", features = ["h1-client"]}

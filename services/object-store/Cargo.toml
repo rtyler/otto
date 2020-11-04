@@ -14,7 +14,7 @@ path = "src/main.rs"
 
 
 [dependencies]
-async-std = { version = "~1.6.5", features = ["attributes"]}
+async-std = { version = "~1.7", features = ["attributes"]}
 log = "~0.4.11"
 pretty_env_logger = "~0.4.0"
 tide = "~0.14.0"
