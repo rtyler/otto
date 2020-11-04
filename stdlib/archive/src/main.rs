@@ -145,7 +145,8 @@ async fn main() -> std::io::Result<()> {
             }
 
             if file.is_dir() {
-                create_tarball(&name, &artifacts);
+                create_tarball(&name, &artifacts)
+                    .expect("Failed to create tarball for artifact(s)");
             } else {
                 archive(file, &endpoint).await?;
             }
@@ -157,8 +158,8 @@ async fn main() -> std::io::Result<()> {
             };
 
             match create_tarball(&name, &artifacts) {
-                Err(_e) => {
-                    // TODO handle
+                Err(e) => {
+                    panic!("Failed to create tarball for artifacts! {:#?}", e);
                 }
                 Ok(file) => {
                     archive(&file, &endpoint).await?;

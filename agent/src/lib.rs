@@ -2,7 +2,6 @@ use async_std::sync::Receiver;
 use log::*;
 use otto_models::*;
 use serde::Serialize;
-use serde_yaml::Value;
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::{Path, PathBuf};

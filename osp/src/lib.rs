@@ -47,7 +47,8 @@ impl Manifest {
                     false => &include.name,
                 }
             );
-            tar.append_file(archive_path, &mut f);
+            tar.append_file(&archive_path, &mut f)
+                .expect(&format!("Failed to append file: {}", &archive_path));
         }
         Ok(())
     }

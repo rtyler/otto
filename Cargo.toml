@@ -4,11 +4,11 @@ members = [
     "agent",
     "models",
     "osp",
-    "parser",
 
     "services/auctioneer",
     "services/eventbus",
     "services/object-store",
+    "services/parser",
 
     "stdlib/archive",
     "stdlib/dir",

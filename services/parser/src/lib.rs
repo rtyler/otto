@@ -11,6 +11,36 @@ use pest::Parser;
 #[grammar = "pipeline.pest"]
 struct PipelineParser;
 
+/**
+ * This function will attempt to fully parse the buffer as if it were a complete
+ * pipeline file.
+ */
+pub fn parse_pipeline_string(buffer: &str) -> Result<Pipeline, pest::error::Error<Rule>> {
+    let mut parser = PipelineParser::parse(Rule::pipeline, buffer)?;
+    let mut pipeline = Pipeline::default();
+
+    while let Some(parsed) = parser.next() {
+        match parsed.as_rule() {
+            Rule::stages => {
+                let mut stages = parsed.into_inner();
+                while let Some(parsed) = stages.next() {
+                    match parsed.as_rule() {
+                        Rule::stage => {
+                            let (ctx, mut steps) = parse_stage(&mut parsed.into_inner());
+                            pipeline.contexts.push(ctx);
+                            pipeline.steps.append(&mut steps);
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    Ok(pipeline)
+}
+
 fn parse_str(parser: &mut pest::iterators::Pair<Rule>) -> String {
     // TODO: There's got to be a better way than cloning
     let mut parser = parser.clone().into_inner();
@@ -78,32 +108,6 @@ fn parse_stage(parser: &mut Pairs<Rule>) -> (Context, Vec<Step>) {
         }
     }
     (stage, steps)
-}
-
-pub fn parse_pipeline_string(buffer: &str) -> Result<Pipeline, pest::error::Error<Rule>> {
-    let mut parser = PipelineParser::parse(Rule::pipeline, buffer)?;
-    let mut pipeline = Pipeline::default();
-
-    while let Some(parsed) = parser.next() {
-        match parsed.as_rule() {
-            Rule::stages => {
-                let mut stages = parsed.into_inner();
-                while let Some(parsed) = stages.next() {
-                    match parsed.as_rule() {
-                        Rule::stage => {
-                            let (ctx, mut steps) = parse_stage(&mut parsed.into_inner());
-                            pipeline.contexts.push(ctx);
-                            pipeline.steps.append(&mut steps);
-                        }
-                        _ => {}
-                    }
-                }
-            }
-            _ => {}
-        }
-    }
-
-    Ok(pipeline)
 }
 
 #[cfg(test)]
