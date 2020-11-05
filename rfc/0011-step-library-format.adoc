@@ -24,7 +24,7 @@ endif::[]
 | link:https://github.com/rtyler[R Tyler Croy]
 
 | Status
-| Not Submitted :information_source:
+| Draft :speech_balloon:
 
 | Type
 | Standards
@@ -181,13 +181,12 @@ IPC connection for each step. The messages must be JSON structured and steps
 should wait for a response before proceeding to their next operation.
 
 
-Examples of requests are detailed below.
+For the inter-process communication (IPC) between steps and the agent, the agent
+should bind an HTTP service to a local unix socket on platforms which support it.
+All requests should then be formed as JSON over HTTP, which is further described
+in <<./0005-json-over-http.adoc, RFC #5>>.
 
-[CAUTION]
-====
-The exact IPC mechanism between agents and steps has yet to be determined and
-requires some experimentation.
-====
+Examples of requests are detailed below.
 
 .Response
 [source,json]
@@ -267,96 +266,129 @@ drop name: 'color'
 
 == Motivation
 
-[TIP]
-====
-Explain why the existing code base or process is inadequate to address the problem that the RFC solves.
-This section may also contain any historal context such as how things were done before this proposal.
+Otto requires a means of defining pipeline behavior in a customizable fashion.
+This includes a standard set of steps which address common user needs, along
+with a pattern to allow for user-defined steps.
 
-* Do not discuss design choices or alternative designs that were rejected, those belong in the Reasoning section.
-====
 
 == Reasoning
 
-[TIP]
-====
-Explain why particular design decisions were made.
-Describe alternate designs that were considered and related work, e.g. how the feature is supported in other systems.
-Provide evidence of consensus within the community and discuss important objections or concerns raised during discussion.
+The approach defined in this document intends to address some of the goals
+defined at the outset of the Otto project, discussed below.
 
-* Use sub-headings to organize this section for ease of readability.
-* Do not talk about history or why this needs to be done, that is part of Motivation section.
+=== Safe extensibility
+
+[quote]
 ====
+Extensibility must not come at the expense of system integrity. Systems which
+allow for administrator, or user-injected code at runtime cannot avoid system
+reliability and security problems. Extensibility is an important characteristic
+to support, but secondary to system integrity.
+====
+
+The process boundaries required by the design of step libraries is the **key
+feature** of this design. The extensibility of the system is inherently
+process-based which allows for steps to do numerous things which are not
+currently known or defined. 
+
+
+=== User-defined extension
+
+[quote]
+====
+Usage cannot grow across an organization without user-defined extension. The
+operators of the system will not be able to provide for every eventual
+requirement from users. Some mechanism for extending or consolidating aspects
+of a continuous delivery process must exist.
+====
+
+Implied, but not defined by this document is the notion of a "standard library"
+of steps to cover common cases which many users will have in _most_ of their
+pipelines. That said, because step libraries are "just tarballs" that means
+that a user should be able to bring their own step libraries and in some cases
+even override the step libraries defined by the standard library.
+
+Because the step libraries are dumb tarballs, they also don't require any
+specific platform support for users to bring their own implementations of
+steps. An `entrypoint` in the <<manifest-file>> is nothing more than an file
+executable by the agent. This allows users to write their own custom steps in
+Bash, Ruby, Python, Java, C#, etc. So long as the process can read the
+<<invocation-file>> and emit the appropriate outputs, any number of steps
+implemented in different languages should have no problem co-existing within
+the same pipeline.
+
+
+=== Avoid mixing execution contexts
+
+[quote]
+====
+Mixing of management and execution contexts causes a myriad of issues. Many
+tools allow the management/orchestrator process to run user-defined workloads.
+This allows breaches of isolation between user-defined workloads and
+administrator configuration and data.
+====
+
+The step library approach pushes execution of user-defined code solely to the
+agent which is executed the pipeline. In many cases this will be a machine with
+few privileges or an ephemeral cloud/container instance. As such there is zero
+execution of user-defined workloads in the locations where system execution
+occurs, such as in the parser, orchestrator, or other services.
+
+
+=== Deterministic runtime behavior
+
+[quote]
+====
+Non-deterministic runtime behavior adds instability. Without being able to
+"explain" a set of operations which should occur before runtime, it is
+impossible to determine whether or not a given delivery pipeline is correctly
+constructed.
+====
+
+Execution of steps from a step library can and should be done without an
+"interpreter." That is to say the modeling language which sits on top of the
+step libraries doesn't need to be Turing-complete
+footnote:[https://en.wikipedia.org/wiki/Turing_completeness] and can be
+"explained" prior to execution.
+
+This approach _should_ open the door to future enhancements which can perform a
+type of static analysis on pipelines to find redundant steps or performance
+bottlenecks that can be improved upon at a later date.
+
+
 
 == Backwards Compatibility
 
-[TIP]
-====
-Describe any incompatibilities and their severity.
-Describe how the RFC proposes to deal with these incompatibilities.
+Since Otto has no previous step subsystem, no backwards compatibility concerns.
 
-If there are no backwards compatibility concerns, this section may simply say:
-There are no backwards compatibility concerns related to this proposal.
-====
 
 == Security
 
-[TIP]
-====
-Describe the security impact of this proposal.
-Outline what was done to identify and evaluate security issues,
-discuss of potential security issues and how they are mitigated or prevented,
-and how the RFC interacts with existing permissions, authentication, authorization, etc.
+=== Variables
 
-If this proposal will have no impact on security, this section may simply say:
-There are no security risks related to this proposal.
-====
+Variables must be stored within the agent per-pipeline, such that pipelines
+cannot "pollute" the variable namespace of other pipelines. Current test
+implementations require a single agent invocation per pipeline invocation, so
+it's not yet possible to even have an agent run multiple successive or
+concurrent pipelines. Should that ever become the case, it is expected that
+variables will be associated with pipeline which declares them.
+
+=== Credentials
+
+The retrieval and use of credentials by steps is not subject to this document,
+and is at this time still under active deliberation.
 
 
 == Testing
 
-[TIP]
-====
-If the RFC involves any kind of behavioral change to code give a summary of how
-its correctness (and, if applicable, compatibility, security, etc.) can be
-tested.
-
-In the preferred case that automated tests can be developed to cover all
-significant changes, simply give a short summary of the nature of these tests.
-
-If some or all of changes will require human interaction to verify, explain why
-automated tests are considered impractical.  Then summarize what kinds of test
-cases might be required: user scenarios with action steps and expected
-outcomes.  Might behavior vary by platform (operating system, servlet
-container, web browser, etc.)?  Are there foreseeable interactions between
-different permissible versions of components?
-Are any special tools, proprietary software, or online service accounts
-required to exercise a related code path (Active Directory server, GitHub
-login, etc.)?  When will testing take place relative to merging code changes,
-and might retesting be required if other changes are made to this area in the
-future?
-
-If this proposal requires no testing, this section may simply say:
-There are no testing issues related to this proposal.
-====
+Testing of step libraries is covered in the main source repository. This
+includes testing of steps as well, which are generally using
+link:https://github.com/kward/shunit2/[shunit2].
 
 == Prototype Implementation
 
-[TIP]
-====
-Link to any open source reference implementation of code changes for this proposal.
-The implementation need not be completed before the RFC is accepted
-but must be completed before the RFC is given "final" status.
-
-RFCs which will not include code changes may omit this section.
-====
+The prototype implementation is found in the
+link:https://github.com/rtyler/otto[main branch].
 
 == References
-
-[TIP]
-====
-Provide links to any related documents.  This will include links to discussions
-on the mailing list, pull requests, and meeting notes.
-====
-
-
 

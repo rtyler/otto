@@ -14,7 +14,6 @@ Below is the list of RFCs:
 |===
 | Number | Title | Status
 
-
 | 0001
 | link:0001-otto-systems-design.adoc[Otto System Design]
 | Not Submitted :information_source:
@@ -31,17 +30,25 @@ Below is the list of RFCs:
 | link:0005-json-over-http.adoc[JSON over HTTP for data serialization and transport]
 | Draft :speech_balloon:
 
+| 0010
+| link:0010-eventbus.adoc[Eventbus design and implementation]
+| Not Submitted :information_source:
+
+| 0011
+| link:0011-step-library-format.adoc[Step library packaging format]
+| Draft :speech_balloon:
 
 |===
 
 
 == Statuses
 
-* Draft :speech_balloon:
-* Deferred :hourglass:
-* Accepted :ok_hand:
+* Not Submitted :information_source: - Still half-baked.
+* Draft :speech_balloon: - Mostly baked and needing review.
+* Deferred :hourglass: - Put on the back-burner.
+* Accepted :ok_hand: - Officially canon.
 * Rejected :no_entry:
-* Withdrawn :hand:
+* Withdrawn :hand: 
 * Final :lock:
-* Replaced :dagger:
-* Active :smile:
+* Replaced :dagger: - superceded by a later RFC.
+* Active :smile: - Implemented.
