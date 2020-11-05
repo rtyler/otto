@@ -18,9 +18,12 @@ which make CD work for you.
 
 = Status
 
-Otto is currently not usable.
+**Otto is currently not usable.**
 
-The various components are in different states of development, please consult
+There are link:rfc[design documents] in the `rfc/` directory which can help
+describe the state of development for Otto.
+
+The components are in different states of development. Please consult
 the README document in the subfolders for their current purpose and status.
 
 = Development
