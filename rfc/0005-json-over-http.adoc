@@ -34,6 +34,7 @@ endif::[]
 
 |===
 
+[[abstract]]
 == Abstract
 
 Otto is a distributed system in which multiple services need to communicate

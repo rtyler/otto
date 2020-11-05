@@ -34,6 +34,13 @@ endif::[]
 
 |===
 
+
+[WARNING]
+====
+This RFC no longer reflects the current thinking of how agent execution should
+be implemented. It has not yet been updated however.
+====
+
 == Abstract
 
 Otto agents require a well-defined series of operations in order to statelessly

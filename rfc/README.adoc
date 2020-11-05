@@ -16,7 +16,7 @@ Below is the list of RFCs:
 
 | 0001
 | link:0001-otto-systems-design.adoc[Otto System Design]
-| Not Submitted :information_source:
+| Draft :speech_balloon:
 
 | 0002
 | link:0002-execution-manifest.adoc[Execution Manifest]

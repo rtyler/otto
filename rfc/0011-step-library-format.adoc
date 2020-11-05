@@ -184,7 +184,7 @@ should wait for a response before proceeding to their next operation.
 For the inter-process communication (IPC) between steps and the agent, the agent
 should bind an HTTP service to a local unix socket on platforms which support it.
 All requests should then be formed as JSON over HTTP, which is further described
-in <<./0005-json-over-http.adoc, RFC #5>>.
+in <<0005-json-over-http.adoc#abstract, RFC #5>>.
 
 Examples of requests are detailed below.
 
