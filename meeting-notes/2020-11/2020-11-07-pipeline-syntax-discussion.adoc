@@ -1,0 +1,124 @@
+= Pipeline Syntax Discussion
+
+== Overview
+
+The goal of this discussion was to share some ideas that
+link:https://brokenco.de/2020/11/06/pipeline-syntax-for-otto.html[I had shared]
+about Otto Pipeline's syntax with a few colleagues from the Jenkins community.
+Both Steven and Gavin have a fair bit of experience in the CI/CD space and
+can provide valuable for Otto development at this early stage.
+
+== Attendees
+
+* link:https://github.com/rtyler[R Tyler Croy]
+* link:https://github.com/steven-terrana[Steven Terrana]
+* link:https://github.com/halkeye[Gavin Mogan]
+
+== Notes
+
+
+* Jenkins Template Engine
+** covers the use-case similar to standardBuild, etc  Defines the tool agnostic process, templating on the structure of the pipelines (generally).
+** Developers can pull their own tools into the templated pipeline
+** Uses hierarchy of folders to provide a hierarchy of pipeline structure
+** Separate the business logic, the flow of a pipeline, from the step implementations themselves
+** All the groovy stuff is in the plugin
+** Steps are in Scripted Pipeline
+** ~99% of work is configuration parsing, spin up containers, then run stuff
+** JT doesn't prescribe any behavior for consumers of templates
+* Deploy related discussion
+** Previous employeers had a different pipeline for deploy
+** Gavin prefers one
+** Troubles with post-deploy steps
+** Ideally one instance of Jenkins if not one job
+** More open trust model personally, doesn't have a problem exposing credentials to a pipeline that can "do it all"
+** Steven:
+*** JTE exists because couldn't be prescriptive about deployment/etc standards
+*** Primarily microservice applications
+*** Developers don't get access to pipeline, Jenkinsfile doesn't live in their repo
+*** Jenkins is read-only for developers
+*** JTE stuff lives external to app repos
+* Template versioning
+** Folder properties sets the "governance tier" which points to the configuration
+** Admins can set different versions of templates, tag pinning.
+** Users in JTE can technically BYOT
+* Jenkins plugin ecosystem is a reasonable means of sharing re-use
+** Centralizing some tooling is beneficial from business continuity
+** Upstream helm charts are a mess of if statements to try to do everything
+* Declarative pipelines want to just import some specific subsection of a pipeline
+** Trying to extend declarative pipelines with shared libraries is perilous
+** Re-use has the trouble of relying on others to maintain stuff.
+** "Ecosystem is hard"
+** Golang's reliance on "just use master" for versioning bit them hard
+** Sharing helm charts/YAML is really difficult because of the variance of use-cases
+* Benefits to having some opinions to avoid unending complexity
+* Step libraries to allow pull-from-everywhere plus "blessed community"
+** Setting administration level guards to say "these are blessed sources of steps" can be beneficial a la Shared Libraries
+** Marketplace has some connotations of trust relationship with the user's adopting things.
+** Install counts matter as a proxy for quality/value of the package
+** Digital Ocean's marketplace is curated, but the quality is not terribly high. "Met the requirement at submission time" might be out of date when you look it.
+** "17 versions of a `sh` step, which is the one you pick? go by install count"
+* Gates and pipeline flow control
+** Steven tries to avoid gates in a single pipeline
+*** Rather than manual gates, using Git-based flow to drive the pipeline
+*** Event-driven is important
+** Gavin used BuildKite at a previous job
+*** Had a "confirm" step, didn't occupy any resources
+** Start a new job to deploy
+** Previous place used some orchestration through rundeck external to Jenkins pipelines.
+*** Wanted to lock down who could deploy, provided a barrier that made developers don't want to use that.
+* Interact with the CLI tool when possible
+** Reporting plugins are where plugins really shine
+** Worth checking out https://github.com/backstage/backstage
+** Home Assistant is a good example of separation of concerns between the frontend/backend line
+* What about sharing complex data between re-usable components within the same pipeline
+** JTE is using returned data from different parts of the pipeline which can be later accessed.
+** "How does the sonarqube step know what tests have been executed?"
+* Scale out and fan out/fan-in
+** Sauce Labs would do parallelism at the test level
+** Jenkins is a novel use-case where we have more matrix
+** Deploy to an environment, and then parallel run different types of tests against the staging environment
+** depends_on from Terraform could be interesting to import
+** JTE has "lifecycle hooks" for beforestep/afterstep/cleanup/etc, which instructs the engine to run things for you automatically.
+** aspect oriented or graph syntax
+** Argo sync waves are an interesting model to look at
+* Different names for hte behaviors rather than a bunch of options/configurations
+* Is stage an optional construct?
+** Purely aesthetics for wrapping steps
+** Largely to make things look better in the UI in the case of Scripted Pipeline
+
+
+.Exploring syntax for more "root" verbs
+[source]
+----
+pipeline {
+  stage {
+    name = 'Deploy to Stage'
+    steps { }
+  }
+  fanout {
+    stage {
+      name = 'User Acceptance Tests'
+    }
+    stage {
+      name = 'Accessibility Tests'
+    }
+  }
+  wait {
+    // describe a gate type event
+  }
+  pause {
+  }
+  parallel {
+  }
+}
+----
+
+In the above example, rather than trying to model nested stages or different
+incantations of stage-level options, what if Otto just had more verbs at the
+"root" level to define the workflow? The benefit of this approach is that
+`wait` or `pause` can be specifically put external to stages and therefore
+agent allocation, making it a lot more clear that there is some event the
+execution is waiting for.
+
+
