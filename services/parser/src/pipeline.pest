@@ -35,4 +35,4 @@ STRV = @{ "''" | (!"'" ~ ANY)* }
 COMMA = @{ "," }
 
 WHITESPACE = _{ (" " | NEWLINE) }
-COMMENT = _{ "#" }
+COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* }

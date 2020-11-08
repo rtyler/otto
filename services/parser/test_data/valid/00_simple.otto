@@ -1,3 +1,5 @@
+// This is a very simple pipeline
+
 pipeline {
     stage {
         name = 'Build'
