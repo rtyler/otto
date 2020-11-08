@@ -3,30 +3,42 @@
  * readable (YAML) structures which other components in Otto can use.
  */
 
+#[macro_use]
+extern crate serde_json;
+
+use log::*;
 use otto_parser::*;
 use tide::{Request, Response};
 
 async fn parse(mut req: Request<()>) -> tide::Result {
-    let buffer = req.body_string().await?;
+    if let Ok(body) = req.body_string().await {
+        let parsed = parse_pipeline_string(&body);
 
-    let parsed = parse_pipeline_string(&buffer);
-
-    match parsed {
-        Err(e) => {
-            let resp = Response::builder(400)
-                .body("{}")
-                .content_type("application/json")
-                .build();
-            return Ok(resp);
-        },
-        Ok(pipeline) => {
-            let resp = Response::builder(200)
-                        .body(r#"{"meta" : {}}"#)
-                        .content_type("application/json")
-                        .build();
-            return Ok(resp);
+        match parsed {
+            Err(e) => {
+                error!("Failed to parse: {:#?}", e);
+                return Ok(Response::builder(400)
+                    .body(json!({
+                        "variant" : "",
+                        "location" : "",
+                        "line" : 0,
+                        "column" : 0
+                    }))
+                    .content_type("application/json")
+                    .build()
+                );
+            },
+            Ok(pipeline) => {
+                return Ok(Response::builder(200)
+                            .body(json!({"meta": {}}))
+                            .content_type("application/json")
+                            .build());
+            }
         }
     }
+
+    // Setting the content type manually since body_string? won't return one
+    Ok(Response::builder(422).content_type("application/json").build())
 }
 
 

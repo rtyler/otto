@@ -35,12 +35,19 @@ paths:
           text/plain:
             schema:
               type: string
-
             examples:
               success:
                 summary: 'Simple Empty Pipeline'
                 value: |
                   pipeline {
+                      stages {
+                          stage {
+                              name = 'Build'
+                              steps {
+                                  sh 'ls'
+                              }
+                          }
+                      }
                   }
 
       responses:
@@ -56,6 +63,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ParsePipelineFailure'
+        '422':
+          description: Unprocessable data, usually non-UTF-6 encoded
+
 components:
   schemas:
     ParsePipelineResponse:
@@ -71,6 +81,22 @@ components:
 
     ParsePipelineFailure:
       type: object
-      example: {}
-      properties: {}
-
+      example:
+      required:
+        - variant
+        - location
+        - line
+        - column
+      properties:
+        variant:
+          description: Variant of the parser error
+          type: string
+        location:
+          description: The location in the input stream where the error was detected.
+          type: string
+        line:
+          description: The line within the input stream where the error was detected.
+          type: number
+        column:
+          description: The column within the line of the error.
+          type: number
