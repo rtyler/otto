@@ -52,15 +52,13 @@ paths:
                 summary: 'Simple Pipeline'
                 value: |
                   pipeline {
-                      stages {
-                          stage {
-                              name = 'Build'
-                              steps {
-                                  sh 'ls'
-                              }
-                          }
-                      }
-                  }
+                        stage {
+                            name = 'Build'
+                            steps {
+                                sh 'ls'
+                            }
+                        }
+                    }
 
       responses:
         '200':

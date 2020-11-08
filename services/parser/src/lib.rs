@@ -21,22 +21,14 @@ pub fn parse_pipeline_string(buffer: &str) -> Result<Pipeline, pest::error::Erro
 
     while let Some(parsed) = parser.next() {
         match parsed.as_rule() {
-            Rule::stages => {
-                let mut stages = parsed.into_inner();
-                while let Some(parsed) = stages.next() {
-                    match parsed.as_rule() {
-                        Rule::stage => {
-                            let (ctx, mut steps) = parse_stage(&mut parsed.into_inner());
-                            pipeline.contexts.push(ctx);
-                            pipeline.steps.append(&mut steps);
-                        }
-                        _ => {}
-                    }
-                }
+            Rule::stage => {
+                let (ctx, mut steps) = parse_stage(&mut parsed.into_inner());
+                pipeline.contexts.push(ctx);
+                pipeline.steps.append(&mut steps);
             }
             _ => {}
         }
-    }
+    };
 
     Ok(pipeline)
 }
@@ -176,20 +168,18 @@ mod tests {
             Rule::pipeline,
             r#"
             pipeline {
-                stages {
-                    stage {
-                        name = 'Build'
-                        steps {
-                            sh 'ls'
-                            sh 'env'
-                        }
+                stage {
+                    name = 'Build'
+                    steps {
+                        sh 'ls'
+                        sh 'env'
                     }
+                }
 
-                    stage {
-                        name = 'Deploy'
-                        steps {
-                            sh 'make deploy'
-                        }
+                stage {
+                    name = 'Deploy'
+                    steps {
+                        sh 'make deploy'
                     }
                 }
             }
@@ -204,12 +194,10 @@ mod tests {
     fn parse_simple_pipeline() {
         let buf = r#"
             pipeline {
-                stages {
-                    stage {
-                        name = 'Build'
-                        steps {
-                            sh 'ls'
-                        }
+                stage {
+                    name = 'Build'
+                    steps {
+                        sh 'ls'
                     }
                 }
             }"#;
@@ -225,19 +213,17 @@ mod tests {
     fn parse_more_pipeline() {
         let buf = r#"
             pipeline {
-                stages {
-                    stage {
-                        name = 'Build'
-                        steps {
-                            sh 'ls'
-                        }
+                stage {
+                    name = 'Build'
+                    steps {
+                        sh 'ls'
                     }
-                    stage {
-                        name = 'Deploy'
-                        steps {
-                            sh 'ls -lah && touch deploy.lock'
-                            sh 'make depoy'
-                        }
+                }
+                stage {
+                    name = 'Deploy'
+                    steps {
+                        sh 'ls -lah && touch deploy.lock'
+                        sh 'make depoy'
                     }
                 }
             }"#;

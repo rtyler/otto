@@ -1,8 +1,10 @@
 // The pipeline PEG 
 
-pipeline = _{ SOI ~ "pipeline" ~ BLOCK_BEGIN ~ stages+ ~ BLOCK_END ~ EOI }
+pipeline = _{ SOI ~ "pipeline" ~
+                    BLOCK_BEGIN ~
+                    (stage
+                    )* ~ BLOCK_END ~ EOI }
 
-stages = { "stages" ~ BLOCK_BEGIN ~ stage+ ~ BLOCK_END }
 stage = { "stage" ~
         BLOCK_BEGIN ~ 
         (property*) ~

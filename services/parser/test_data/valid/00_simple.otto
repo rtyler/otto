@@ -1,10 +1,8 @@
 pipeline {
-    stages {
-        stage {
-            name = 'Build'
-            steps {
-                sh 'ls'
-            }
+    stage {
+        name = 'Build'
+        steps {
+            sh 'ls'
         }
     }
 }

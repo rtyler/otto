@@ -1,24 +1,21 @@
 pipeline {
-    stages {
-
-        stage {
-            name = 'Build'
-            steps {
-                sh 'ls'
-            }
+    stage {
+        name = 'Build'
+        steps {
+            sh 'ls'
         }
+    }
 
-        stage {
-            name
-            = 
-            'Deploy'
+    stage {
+        name
+        = 
+        'Deploy'
 
-            steps
-            {
-                sh 'ls -lah && touch deploy.lock'
+        steps
+        {
+            sh 'ls -lah && touch deploy.lock'
 
-                sh 'make deploy'
-            }
+            sh 'make deploy'
         }
     }
 }
