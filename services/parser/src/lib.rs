@@ -6,6 +6,7 @@ use log::*;
 use otto_models::*;
 use pest::iterators::Pairs;
 use pest::Parser;
+use uuid::Uuid;
 
 #[derive(Parser)]
 #[grammar = "pipeline.pest"]
@@ -21,11 +22,22 @@ pub fn parse_pipeline_string(buffer: &str) -> Result<Pipeline, pest::error::Erro
 
     while let Some(parsed) = parser.next() {
         match parsed.as_rule() {
-            Rule::stage => {
-                let (ctx, mut steps) = parse_stage(&mut parsed.into_inner());
-                pipeline.contexts.push(ctx);
-                pipeline.steps.append(&mut steps);
-            }
+            Rule::execBlocks => {
+                let mut parsed = parsed.into_inner();
+                while let Some(parsed) = parsed.next() {
+                    match parsed.as_rule() {
+                        Rule::steps => {
+                            pipeline.steps.extend(parse_steps(&mut parsed.into_inner(), pipeline.uuid));
+                        },
+                        Rule::stage => {
+                            let (ctx, mut steps) = parse_stage(&mut parsed.into_inner());
+                            pipeline.contexts.push(ctx);
+                            pipeline.steps.append(&mut steps);
+                        },
+                        _ => {},
+                    }
+                }
+            },
             _ => {}
         }
     };
@@ -47,9 +59,36 @@ fn parse_str(parser: &mut pest::iterators::Pair<Rule>) -> String {
     "".to_string()
 }
 
-fn parse_stage(parser: &mut Pairs<Rule>) -> (Context, Vec<Step>) {
+/**
+ * Parse the steps
+ *
+ * In the case of orphan steps, the uuid should be the pipeline's uuid
+ */
+fn parse_steps(parser: &mut Pairs<Rule>, uuid: Uuid) -> Vec<Step> {
     use pest::iterators::Pair;
 
+    let mut steps = vec![];
+
+    while let Some(parsed) = parser.next() {
+        if Rule::step == parsed.as_rule() {
+            // Grab the step components
+            let mut parts: Vec<Pair<Rule>> = parsed.into_inner().collect();
+            // We need at least two parts here!
+            assert!(parts.len() > 1);
+
+            let symbol = parts[0].as_str().to_string();
+            let command = parse_str(&mut parts.pop().unwrap());
+
+            let parameters = serde_yaml::Value::String(command);
+            let parameters = StepParameters::Positional(vec![parameters]);
+            let step = Step::new(uuid, symbol, parameters);
+            steps.push(step);
+        }
+    }
+    steps
+}
+
+fn parse_stage(parser: &mut Pairs<Rule>) -> (Context, Vec<Step>) {
     let mut stage = Context::default();
     let mut steps: Vec<Step> = vec![];
 
@@ -78,23 +117,7 @@ fn parse_stage(parser: &mut Pairs<Rule>) -> (Context, Vec<Step>) {
             }
             Rule::steps => {
                 let mut inner = parsed.into_inner();
-
-                while let Some(parsed) = inner.next() {
-                    if Rule::step == parsed.as_rule() {
-                        // Grab the step components
-                        let mut parts: Vec<Pair<Rule>> = parsed.into_inner().collect();
-                        // We need at least two parts here!
-                        assert!(parts.len() > 1);
-
-                        let symbol = parts[0].as_str().to_string();
-                        let command = parse_str(&mut parts.pop().unwrap());
-
-                        let parameters = serde_yaml::Value::String(command);
-                        let parameters = StepParameters::Positional(vec![parameters]);
-                        let step = Step::new(stage.uuid, symbol, parameters);
-                        steps.push(step);
-                    }
-                }
+                steps.extend(parse_steps(&mut inner, stage.uuid));
             }
             _ => {}
         }
@@ -232,5 +255,19 @@ mod tests {
         assert!(!pipeline.uuid.is_nil());
         assert_eq!(pipeline.contexts.len(), 2);
         assert_eq!(pipeline.steps.len(), 3);
+    }
+
+    #[test]
+    fn parse_orphan_steps() {
+        let buf = r#"
+            pipeline {
+                steps {
+                    sh 'make all'
+                }
+            }"#;
+        let pipeline = parse_pipeline_string(&buf).expect("Failed to parse");
+        assert!(!pipeline.uuid.is_nil());
+        assert_eq!(pipeline.contexts.len(), 0);
+        assert_eq!(pipeline.steps.len(), 1);
     }
 }

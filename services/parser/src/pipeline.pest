@@ -2,8 +2,10 @@
 
 pipeline = _{ SOI ~ "pipeline" ~
                     BLOCK_BEGIN ~
-                    (stage
-                    )* ~ BLOCK_END ~ EOI }
+                    execBlocks ~
+                    BLOCK_END ~ EOI }
+
+execBlocks = { (stage | steps)* }
 
 stage = { "stage" ~
         BLOCK_BEGIN ~ 

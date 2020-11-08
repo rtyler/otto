@@ -1550,6 +1550,7 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "tide",
+ "uuid",
 ]
 
 [[package]]
