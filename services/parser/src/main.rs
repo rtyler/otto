@@ -11,7 +11,6 @@ use otto_parser::*;
 use tide::{Request, Response};
 
 async fn parse(mut req: Request<()>) -> tide::Result {
-
     if let Ok(body) = req.body_string().await {
         let parsed = parse_pipeline_string(&body);
 
@@ -22,9 +21,10 @@ async fn parse(mut req: Request<()>) -> tide::Result {
 
                 let variant = match e.variant {
                     ErrorVariant::CustomError { message } => message,
-                    ErrorVariant::ParsingError { positives, negatives } => {
-                        format!("{:?}, {:?}", positives, negatives)
-                    },
+                    ErrorVariant::ParsingError {
+                        positives,
+                        negatives,
+                    } => format!("{:?}, {:?}", positives, negatives),
                 };
 
                 let (line, column) = match e.line_col {
@@ -39,28 +39,31 @@ async fn parse(mut req: Request<()>) -> tide::Result {
                         "column" : column
                     }))
                     .content_type("application/json")
-                    .build()
-                );
-            },
+                    .build());
+            }
             Ok(pipeline) => {
                 trace!("pipeline: {:#?}", pipeline);
                 let pipeline = serde_json::to_string(&pipeline)?;
                 return Ok(Response::builder(200)
-                            .body(pipeline)
-                            .content_type("application/json")
-                            .build());
+                    .body(pipeline)
+                    .content_type("application/json")
+                    .build());
             }
         }
     }
 
     // Setting the content type manually since body_string? won't return one
-    Ok(Response::builder(422).content_type("application/json").build())
+    Ok(Response::builder(422)
+        .content_type("application/json")
+        .build())
 }
 
 async fn healthcheck(_req: Request<()>) -> tide::Result {
-    Ok(Response::builder(200).body("{}").content_type("application/json").build())
+    Ok(Response::builder(200)
+        .body("{}")
+        .content_type("application/json")
+        .build())
 }
-
 
 #[async_std::main]
 async fn main() -> Result<(), std::io::Error> {
@@ -72,10 +75,8 @@ async fn main() -> Result<(), std::io::Error> {
 
     if let Some(fd) = env::var("LISTEN_FD").ok().and_then(|fd| fd.parse().ok()) {
         app.listen(unsafe { TcpListener::from_raw_fd(fd) }).await?;
-    }
-    else {
+    } else {
         app.listen("http://localhost:7672").await?;
     }
     Ok(())
 }
-
