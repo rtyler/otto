@@ -1,0 +1,32 @@
+= Parser service
+
+The Otto Parser service is basically a parser engine that speaks HTTP. In the
+`src/` directory you will find the `.pest` grammar definition which outlines
+the Otto Pipeline syntax.
+
+The `apispec.yml` is an link:https://en.wikipedia.org/wiki/Open_API[OpenAPI]
+specification that describes the public HTTP endpoints that the parser service
+provides.
+
+
+== Development
+
+Unit test and integration tests for the parser service are located in the usual
+Rust locations, and can all be run via `cargo test`.
+
+Running the acceptance tests however requires the
+link:https://github.com/schemathesis/schemathesis[schemathesis] tool for
+automating OpenAPI-based acceptance tests. In order to execute acceptance tests, run the parser service in one termainal: `cargo run -p otto-parser` and then in another:
+
+[source,bash]
+----
+schemathesis run ./services/parser/apispec.yml --base-url=http://localhost:7672 --checks all
+----
+
+
+The server can be run in an auto-reloading fashion with link:https://github.com/passcod/cargo-watch[cargo-watch] and link:https://github.com/passcod/catflap[catlap] via:
+
+[source,bash]
+----
+catflap -p 7672 -- cargo watch -x "run -p otto-parser"
+----
