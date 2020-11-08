@@ -21,6 +21,18 @@ servers:
   - url: 'http://localhost:7672'
     description: 'Local dev server'
 paths:
+  '/health':
+    get:
+      operationId: GetHealth
+      description: |
+        The health endpoint helps indicate whether the service is healthy or not.
+        Any non-200 response is unhealthy.
+      responses:
+        '200':
+          description: 'A successful healthcheck'
+          content:
+            application/json: {}
+
   '/v1/parse':
     post:
       operationId: ParsePipeline

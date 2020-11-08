@@ -57,12 +57,17 @@ async fn parse(mut req: Request<()>) -> tide::Result {
     Ok(Response::builder(422).content_type("application/json").build())
 }
 
+async fn healthcheck(_req: Request<()>) -> tide::Result {
+    Ok(Response::builder(200).body("{}").content_type("application/json").build())
+}
+
 
 #[async_std::main]
 async fn main() -> Result<(), std::io::Error> {
     use std::{env, net::TcpListener, os::unix::io::FromRawFd};
     tide::log::start();
     let mut app = tide::new();
+    app.at("/health").get(healthcheck);
     app.at("/v1/parse").post(parse);
 
     if let Some(fd) = env::var("LISTEN_FD").ok().and_then(|fd| fd.parse().ok()) {
