@@ -11,26 +11,42 @@ use otto_parser::*;
 use tide::{Request, Response};
 
 async fn parse(mut req: Request<()>) -> tide::Result {
+
     if let Ok(body) = req.body_string().await {
         let parsed = parse_pipeline_string(&body);
 
         match parsed {
             Err(e) => {
+                use pest::error::*;
                 error!("Failed to parse: {:#?}", e);
+
+                let variant = match e.variant {
+                    ErrorVariant::CustomError { message } => message,
+                    ErrorVariant::ParsingError { positives, negatives } => {
+                        format!("{:?}, {:?}", positives, negatives)
+                    },
+                };
+
+                let (line, column) = match e.line_col {
+                    LineColLocation::Pos(line_col) => line_col,
+                    LineColLocation::Span(line_col_start, _line_col_end) => line_col_start,
+                };
+
                 return Ok(Response::builder(400)
                     .body(json!({
-                        "variant" : "",
-                        "location" : "",
-                        "line" : 0,
-                        "column" : 0
+                        "variant" : variant,
+                        "line" : line,
+                        "column" : column
                     }))
                     .content_type("application/json")
                     .build()
                 );
             },
             Ok(pipeline) => {
+                trace!("pipeline: {:#?}", pipeline);
+                let pipeline = serde_json::to_string(&pipeline)?;
                 return Ok(Response::builder(200)
-                            .body(json!({"meta": {}}))
+                            .body(pipeline)
                             .content_type("application/json")
                             .build());
             }

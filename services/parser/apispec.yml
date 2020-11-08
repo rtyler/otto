@@ -29,7 +29,7 @@ paths:
         Pipeline string and will attempt to parse the pipeline into an intermediate
         representation which other parts of Otto can work with.
       requestBody:
-        description: Pipeline syntax
+        description: 'A string payload in the Otto Pipeline syntax'
         required: true
         content:
           text/plain:
@@ -37,7 +37,7 @@ paths:
               type: string
             examples:
               success:
-                summary: 'Simple Empty Pipeline'
+                summary: 'Simple Pipeline'
                 value: |
                   pipeline {
                       stages {
@@ -52,19 +52,19 @@ paths:
 
       responses:
         '200':
-          description: Successfully parsed
+          description: 'Successfully parsed'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ParsePipelineResponse'
         '400':
-          description: Failed to parse the pipeline for some reason
+          description: 'Failed to parse the pipeline for some reason'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ParsePipelineFailure'
         '422':
-          description: Unprocessable data, usually non-UTF-6 encoded
+          description: 'Unprocessable data, usually non-UTF-6 encoded'
 
 components:
   schemas:
@@ -73,30 +73,46 @@ components:
         This response is passed on a successful parse of the provided pipeline
       type: object
       required:
-        - meta
-      example: {}
+        - uuid
+        - contexts
+        - steps
       properties:
-        meta:
-          type: object
+        uuid:
+          type: string
+          format: uuid
+        contexts:
+          type: array
+        steps:
+          type: array
+      example:
+        summary: 'A simplistic Pipeline'
+        value:
+          uuid: '9edc4483-a78a-480f-8e06-2726db1ddf24'
+          contexts:
+            - uuid: '8109f601-12e8-4621-96c6-11baff409d93'
+              properties:
+                name: 'Build'
+          steps:
+            - uuid: '6193b9b1-c6be-4c18-9bb8-1aeead5e7d14'
+              context: '8109f601-12e8-4621-96c6-11baff409d93'
+              symbol: 'sh'
+              parameters:
+                - 'ls'
 
     ParsePipelineFailure:
       type: object
       example:
       required:
         - variant
-        - location
         - line
         - column
       properties:
         variant:
-          description: Variant of the parser error
-          type: string
-        location:
-          description: The location in the input stream where the error was detected.
+          description: 'Parser error variant'
           type: string
         line:
-          description: The line within the input stream where the error was detected.
+          description: 'The line within the input stream where the error was detected.'
           type: number
         column:
-          description: The column within the line of the error.
+          description: 'The column within the line of the error.'
           type: number
