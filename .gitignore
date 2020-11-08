@@ -7,3 +7,4 @@ build/
 .otto-ebc-history
 *.tar.gz
 tmp*
+.hypothesis/

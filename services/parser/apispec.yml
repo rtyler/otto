@@ -1,0 +1,76 @@
+---
+openapi: 3.0.0
+info:
+  title: Otto Parser Service
+  description: |
+    This specification describes the Otto Parser service which is responsible
+    for ingesting Otto Pipeline syntax (typically .otto files) and outputs
+    the internal Otto intermediate representation.
+  version: '1.0.0'
+  contact:
+    name: R Tyler Croy
+    email: 'rtyler@brokenco.de'
+    x-twitter: agentdero
+  license:
+    name: 'GNU AGPL 3.0'
+    url: 'https://www.gnu.org/licenses/agpl-3.0.en.html'
+externalDocs:
+  description: 'Find out more about Otto'
+  url: 'https://github.com/rtyler/otto'
+servers:
+  - url: 'http://localhost:7672'
+    description: 'Local dev server'
+paths:
+  '/v1/parse':
+    post:
+      operationId: ParsePipeline
+      description: |
+        The primary interface for the parser service which takes an uploaded Otto
+        Pipeline string and will attempt to parse the pipeline into an intermediate
+        representation which other parts of Otto can work with.
+      requestBody:
+        description: Pipeline syntax
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+
+            examples:
+              success:
+                summary: 'Simple Empty Pipeline'
+                value: |
+                  pipeline {
+                  }
+
+      responses:
+        '200':
+          description: Successfully parsed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParsePipelineResponse'
+        '400':
+          description: Failed to parse the pipeline for some reason
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParsePipelineFailure'
+components:
+  schemas:
+    ParsePipelineResponse:
+      description: |
+        This response is passed on a successful parse of the provided pipeline
+      type: object
+      required:
+        - meta
+      example: {}
+      properties:
+        meta:
+          type: object
+
+    ParsePipelineFailure:
+      type: object
+      example: {}
+      properties: {}
+
