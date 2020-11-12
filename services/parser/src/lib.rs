@@ -4,7 +4,8 @@ extern crate pest_derive;
 
 use log::*;
 use otto_models::*;
-use pest::iterators::Pairs;
+use pest::iterators::{Pair, Pairs};
+use pest::error::Error as PestError;
 use pest::Parser;
 use uuid::Uuid;
 
@@ -16,7 +17,7 @@ struct PipelineParser;
  * This function will attempt to fully parse the buffer as if it were a complete
  * pipeline file.
  */
-pub fn parse_pipeline_string(buffer: &str) -> Result<Pipeline, pest::error::Error<Rule>> {
+pub fn parse_pipeline_string(buffer: &str) -> Result<Pipeline, PestError<Rule>> {
     let mut parser = PipelineParser::parse(Rule::pipeline, buffer)?;
     let mut pipeline = Pipeline::default();
 
@@ -65,8 +66,6 @@ fn parse_str(parser: &mut pest::iterators::Pair<Rule>) -> String {
  * In the case of orphan steps, the uuid should be the pipeline's uuid
  */
 fn parse_steps(parser: &mut Pairs<Rule>, uuid: Uuid) -> Vec<Step> {
-    use pest::iterators::Pair;
-
     let mut steps = vec![];
 
     while let Some(parsed) = parser.next() {
