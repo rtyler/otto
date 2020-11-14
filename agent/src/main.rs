@@ -4,7 +4,9 @@
  * Most of the logic _should_ be contained within lib.rs and the surrounding modules
  */
 use async_std::sync::channel;
+use serde::Deserialize;
 use std::fs::File;
+use uuid::Uuid;
 
 use otto_agent::*;
 
@@ -15,6 +17,15 @@ use otto_agent::*;
  * control socket will block until the pending messages are cleared out
  */
 const MAX_CONTROL_MSGS: usize = 64;
+
+/**
+ * The format of the invocation file for the agent
+ */
+#[derive(Clone, Debug, Deserialize)]
+struct Invocation {
+    pipeline: Uuid,
+    steps: Vec<otto_models::Step>,
+}
 
 #[async_std::main]
 async fn main() -> std::io::Result<()> {
@@ -29,7 +40,7 @@ async fn main() -> std::io::Result<()> {
     let file = File::open(&args[1])?;
     let (sender, receiver) = channel(MAX_CONTROL_MSGS);
 
-    match serde_yaml::from_reader::<File, otto_models::Pipeline>(file) {
+    match serde_yaml::from_reader::<File, Invocation>(file) {
         Err(e) => {
             panic!("Failed to parse parameters file: {:#?}", e);
         }
@@ -39,7 +50,8 @@ async fn main() -> std::io::Result<()> {
                 control::run(sender).await.expect("Failed to bind control?");
             });
 
-            run(&steps_dir, &invoke, Some(receiver)).expect("Failed to run pipeline");
+            run(&steps_dir, &invoke.steps, invoke.pipeline, Some(receiver))
+                .expect("Failed to run pipeline");
         }
     };
     Ok(())

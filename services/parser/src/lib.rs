@@ -4,8 +4,8 @@ extern crate pest_derive;
 
 use log::*;
 use otto_models::*;
-use pest::iterators::{Pair, Pairs};
 use pest::error::Error as PestError;
+use pest::iterators::{Pair, Pairs};
 use pest::Parser;
 use uuid::Uuid;
 
@@ -28,20 +28,29 @@ pub fn parse_pipeline_string(buffer: &str) -> Result<Pipeline, PestError<Rule>> 
                 while let Some(parsed) = parsed.next() {
                     match parsed.as_rule() {
                         Rule::steps => {
-                            pipeline.steps.extend(parse_steps(&mut parsed.into_inner(), pipeline.uuid));
-                        },
+                            let mut ctx = Context::default();
+                            ctx.steps
+                                .extend(parse_steps(&mut parsed.into_inner(), pipeline.uuid));
+
+                            pipeline.batches.push(Batch {
+                                mode: BatchMode::Linear,
+                                contexts: vec![ctx],
+                            });
+                        }
                         Rule::stage => {
-                            let (ctx, mut steps) = parse_stage(&mut parsed.into_inner());
-                            pipeline.contexts.push(ctx);
-                            pipeline.steps.append(&mut steps);
-                        },
-                        _ => {},
+                            let ctx = parse_stage(&mut parsed.into_inner());
+                            pipeline.batches.push(Batch {
+                                mode: BatchMode::Linear,
+                                contexts: vec![ctx],
+                            });
+                        }
+                        _ => {}
                     }
                 }
-            },
+            }
             _ => {}
         }
-    };
+    }
 
     Ok(pipeline)
 }
@@ -87,9 +96,8 @@ fn parse_steps(parser: &mut Pairs<Rule>, uuid: Uuid) -> Vec<Step> {
     steps
 }
 
-fn parse_stage(parser: &mut Pairs<Rule>) -> (Context, Vec<Step>) {
+fn parse_stage(parser: &mut Pairs<Rule>) -> Context {
     let mut stage = Context::default();
-    let mut steps: Vec<Step> = vec![];
 
     debug!("stage: {:?}", parser);
 
@@ -116,12 +124,12 @@ fn parse_stage(parser: &mut Pairs<Rule>) -> (Context, Vec<Step>) {
             }
             Rule::steps => {
                 let mut inner = parsed.into_inner();
-                steps.extend(parse_steps(&mut inner, stage.uuid));
+                stage.steps.extend(parse_steps(&mut inner, stage.uuid));
             }
             _ => {}
         }
     }
-    (stage, steps)
+    stage
 }
 
 #[cfg(test)]
@@ -226,9 +234,10 @@ mod tests {
 
         let pipeline = parse_pipeline_string(&buf).expect("Failed to parse");
         assert!(!pipeline.uuid.is_nil());
-        assert_eq!(pipeline.contexts.len(), 1);
-        assert!(pipeline.contexts[0].properties.contains_key("name"));
-        assert_eq!(pipeline.steps.len(), 1);
+        assert_eq!(pipeline.batches.len(), 1);
+        let context = &pipeline.batches[0].contexts[0];
+        assert!(context.properties.contains_key("name"));
+        assert_eq!(context.steps.len(), 1);
     }
 
     #[test]
@@ -252,8 +261,7 @@ mod tests {
 
         let pipeline = parse_pipeline_string(&buf).expect("Failed to parse");
         assert!(!pipeline.uuid.is_nil());
-        assert_eq!(pipeline.contexts.len(), 2);
-        assert_eq!(pipeline.steps.len(), 3);
+        assert_eq!(pipeline.batches.len(), 2);
     }
 
     #[test]
@@ -266,7 +274,6 @@ mod tests {
             }"#;
         let pipeline = parse_pipeline_string(&buf).expect("Failed to parse");
         assert!(!pipeline.uuid.is_nil());
-        assert_eq!(pipeline.contexts.len(), 0);
-        assert_eq!(pipeline.steps.len(), 1);
+        assert_eq!(pipeline.batches.len(), 1);
     }
 }

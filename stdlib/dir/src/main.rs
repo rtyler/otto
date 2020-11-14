@@ -19,14 +19,13 @@ fn main() -> std::io::Result<()> {
     std::env::set_current_dir(&invoke.parameters.directory)
         .expect("Failed to set current directory, perhaps it doesn't exist");
 
-    // Construct a somewhat fabricated pipeline configuration
-    let pipeline = otto_models::Pipeline {
-        uuid: invoke.configuration.pipeline,
-        contexts: vec![],
-        steps: invoke.parameters.block,
-    };
-
-    let status = otto_agent::run(&steps_dir, &pipeline, None).unwrap();
+    let status = otto_agent::run(
+        &steps_dir,
+        &invoke.parameters.block,
+        invoke.configuration.pipeline,
+        None,
+    )
+    .unwrap();
     // Pass our block-scoped status back up to the caller
     std::process::exit(status as i32);
 }

@@ -10,8 +10,7 @@ async fn main() -> std::io::Result<()> {
 
     if let Some(fd) = env::var("LISTEN_FD").ok().and_then(|fd| fd.parse().ok()) {
         app.listen(unsafe { TcpListener::from_raw_fd(fd) }).await?;
-    }
-    else {
+    } else {
         app.listen("http://localhost:7671").await?;
     }
     Ok(())

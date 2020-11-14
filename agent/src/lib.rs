@@ -89,9 +89,9 @@ fn load_manifests_for(
  * This conveninece function will just generate the endpoint with the object store URL for the
  * given pipeline
  */
-fn object_endpoint_for(pipeline: &Pipeline) -> step::Endpoint {
+fn object_endpoint_for(uuid: &Uuid) -> step::Endpoint {
     step::Endpoint {
-        url: url::Url::parse(&format!("http://localhost:7671/{}", pipeline.uuid))
+        url: url::Url::parse(&format!("http://localhost:7671/{}", uuid))
             .expect("Failed for prepare the object endpoint for a pipeline"),
     }
 }
@@ -104,17 +104,18 @@ fn object_endpoint_for(pipeline: &Pipeline) -> step::Endpoint {
  */
 pub fn run(
     steps_dir: &str,
-    pipeline: &Pipeline,
+    steps: &Vec<Step>,
+    pipeline: Uuid,
     controller: Option<Receiver<control::Request>>,
 ) -> std::io::Result<Status> {
-    let manifests = load_manifests_for(steps_dir, &pipeline.steps)?;
+    let manifests = load_manifests_for(steps_dir, steps)?;
 
     // XXX: hacks
     let mut endpoints = HashMap::new();
-    endpoints.insert("objects".to_string(), object_endpoint_for(pipeline));
+    endpoints.insert("objects".to_string(), object_endpoint_for(&pipeline));
 
     // Now that things are valid and collected, let's executed
-    for step in pipeline.steps.iter() {
+    for step in steps.iter() {
         if let Some(ref ctl) = controller {
             while !ctl.is_empty() {
                 if let Ok(msg) = ctl.try_recv() {
@@ -138,7 +139,7 @@ pub fn run(
             // TODO: This is going to be wrong on nested steps
             let sock = control::agent_socket();
             let configuration = step::Configuration {
-                pipeline: pipeline.uuid,
+                pipeline: pipeline,
                 uuid: step.uuid,
                 ipc: sock,
                 endpoints: endpoints.clone(),

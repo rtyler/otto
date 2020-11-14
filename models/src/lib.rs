@@ -10,18 +10,50 @@ use uuid::Uuid;
 pub struct Pipeline {
     #[serde(default = "generate_uuid")]
     pub uuid: Uuid,
-    pub contexts: Vec<Context>,
-    pub steps: Vec<Step>,
+    pub batches: Vec<Batch>,
 }
 
 impl Default for Pipeline {
     fn default() -> Self {
         Self {
             uuid: generate_uuid(),
-            contexts: vec![],
-            steps: vec![],
+            batches: vec![],
         }
     }
+}
+
+/**
+ * A batch is a collection of contexts that should be executed in a given mode.
+ *
+ * This structure basically allows for Otto to execute batches of contexts in parallel, or in various
+ * other flows.
+ */
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Batch {
+    pub mode: BatchMode,
+    pub contexts: Vec<Context>,
+}
+
+impl Default for Batch {
+    fn default() -> Self {
+        Self {
+            mode: BatchMode::Linear,
+            contexts: vec![],
+        }
+    }
+}
+
+/**
+ * The mode in which an orchestrator should execute the batch
+ */
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub enum BatchMode {
+    /// Each context should be executed in order
+    Linear,
+    /// Each context should be executed in parallel completely independent of each other
+    Parallel,
+    /// Each context should be executed in parallel but all should cancel on the first failure
+    Fanout,
 }
 
 /**
@@ -43,7 +75,7 @@ pub enum Status {
 
 /**
  * A context is some bucket of variables and configuration within a pipeline
- * this will most frequently be a "stage" in the conventional sense
+ * this will most frequently be a "stage" in the conventional pipeline
  */
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Context {
@@ -51,6 +83,7 @@ pub struct Context {
     pub uuid: Uuid,
     pub properties: HashMap<String, String>,
     pub environment: Option<HashMap<String, String>>,
+    pub steps: Vec<Step>,
 }
 
 impl Default for Context {
@@ -59,6 +92,7 @@ impl Default for Context {
             uuid: generate_uuid(),
             properties: HashMap::default(),
             environment: None,
+            steps: vec![],
         }
     }
 }
