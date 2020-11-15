@@ -9,28 +9,47 @@ oneTimeTearDown() {
 
 }
 
-test_fail_with_file() {
+test_pass_with_file() {
     cat > $INVOCATION_FILE<<EOF
----
-configuration:
-  ipc: unix:///dev/null
-  endpoints: {}
-parameters:
-  artifacts: Cargo.toml
+    {
+    "configuration" : {
+        "pipeline" : "2265b5d0-1f70-46de-bf50-f1050e9fac9a",
+        "uuid" : "5599cffb-f23a-4e0f-a0b9-f74654641b2b",
+        "ipc" : "unix:///dev/null",
+        "endpoints" : {
+            "objects" : {
+                "url" : "http://example.com"
+            }
+        }
+    },
+    "parameters" : {
+        "artifacts" : "Cargo.toml"
+    }
+}
 EOF
 
-    assertTrue "step should do nothing with a single file" "archive-step $INVOCATION_FILE"
+    output=$(archive-step $INVOCATION_FILE)
+    assertTrue "step should do nothing with a single file: ${output}" "archive-step $INVOCATION_FILE"
 }
 
-test_fail_with_dir() {
+test_pass_with_dir() {
     cat > $INVOCATION_FILE<<EOF
----
-configuration:
-  ipc: unix:///dev/null
-  endpoints: {}
-parameters:
-  artifacts: $(dirname $0)
-  name: ${TAR_NAME}
+    {
+    "configuration" : {
+        "pipeline" : "2265b5d0-1f70-46de-bf50-f1050e9fac9a",
+        "uuid" : "5599cffb-f23a-4e0f-a0b9-f74654641b2b",
+        "ipc" : "unix:///dev/null",
+        "endpoints" : {
+            "objects" : {
+                "url" : "http://example.com"
+            }
+        }
+    },
+    "parameters" : {
+        "artifacts": "$(dirname $0)",
+        "name": "${TAR_NAME}"
+    }
+    }
 EOF
 
     assertTrue "step should create tarball with a directory" "archive-step $INVOCATION_FILE"
