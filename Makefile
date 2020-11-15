@@ -21,6 +21,7 @@ steps: release
 	done;
 
 test: contrib/shunit2/shunit2 ## Run the acceptance tests for steps
+	set -e
 	@for t in $$(find stdlib -iname "tests" -type d); do \
 		echo ">> Running acceptance tests for $$t"; \
 		for f in $$(find $$t -iname "*.sh" -type f); do \
