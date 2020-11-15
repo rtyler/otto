@@ -1,0 +1,10 @@
+[package]
+name = "git-step"
+version = "0.1.0"
+authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
+edition = "2018"
+
+[dependencies]
+git2 = "~0.13.12"
+otto-agent = { path = "../../agent" }
+serde = {version = "~1.0.117", features = ["derive"]}

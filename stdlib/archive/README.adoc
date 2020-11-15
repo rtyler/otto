@@ -3,4 +3,24 @@
 The `archive` step will store files or file patterns associated with the
 running pipeline in the Otto object store.
 
-This can be helpful for persisting logs, or built artifacts.
+This can be helpful for persisting logs or built artifacts.
+
+
+[NOTE]
+====
+File patterns are matched using the link:https://docs.rs/glob/0.3.0[glob]
+crate. For questions about its file pattern syntax, refer to its documentation.
+====
+
+
+.Single archive
+[source]
+----
+archive 'my-release.tar.gz'
+----
+
+.Pattern archive
+[source]
+----
+archive 'target/release/*.tar.gz'
+---

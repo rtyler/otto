@@ -1,0 +1,13 @@
+= git
+
+
+The `git` step provides a simple mechanism for checking out code from a git
+repository.
+
+
+.Simple clone
+[source]
+----
+git url: 'https://github.com/rtyler/otto', ref: 'main'
+----
+

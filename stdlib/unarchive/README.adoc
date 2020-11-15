@@ -1,0 +1,34 @@
+= unarchive
+
+The `unarchive` step can help retrieve archived artifacts into the current
+agent's executing workspace. This pattern allows using one agent for building
+artifacts, and retrieving them on other agents for further use in the pipeline.
+
+
+.Simple archive/unarchive
+[source]
+----
+stage {
+  name = 'Build'
+  steps {
+    sh 'make release'
+    archive 'build/release/hello-world'
+  }
+}
+stage {
+  name = 'Test'
+  steps {
+    unarchive 'hello-world'
+    sh 'chmod +x hello-world && ./hello-world'
+  }
+}
+----
+
+.Unarchiving patterns
+[source]
+----
+archive artifacts: 'target/release/*.tar.gz', name: 'release-builds'
+
+
+unarchive 'release-builds'
+---

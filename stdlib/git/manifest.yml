@@ -1,0 +1,25 @@
+---
+symbol: git
+description: |
+  The `git` step will clone a given url.
+
+includes:
+  - name: target/release/git-step
+    flatten: true
+
+entrypoint:
+  path: git-step
+  multiarch: false
+
+parameters:
+  - name: url
+    required: true
+    type: string
+    description: |
+      The URL to pass to the underlying Git library
+
+  - name: ref
+    required: false
+    type: string
+    description: |
+      A git reference to clone instead of the default.

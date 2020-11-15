@@ -13,6 +13,7 @@ members = [
     "stdlib/archive",
     "stdlib/dir",
     "stdlib/error",
+    "stdlib/git",
     "stdlib/sh",
     "stdlib/unarchive",
 ]
