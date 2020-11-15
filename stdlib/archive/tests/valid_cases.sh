@@ -1,6 +1,6 @@
 #!/bin/sh
 
-INVOCATION_FILE=tmp_archivetest_invocation_file.yml
+INVOCATION_FILE=tmp_archivetest_invocation_file.json
 TAR_NAME=tmp_archivetest_tar
 
 oneTimeTearDown() {
