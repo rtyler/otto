@@ -1487,6 +1487,7 @@ dependencies = [
  "otto-models",
  "pretty_env_logger 0.4.0",
  "serde 1.0.117",
+ "serde_json",
  "serde_yaml",
  "tempfile",
  "tide",
@@ -1523,7 +1524,7 @@ name = "otto-models"
 version = "0.1.0"
 dependencies = [
  "serde 1.0.117",
- "serde_yaml",
+ "serde_json",
  "uuid",
 ]
 
@@ -1548,7 +1549,6 @@ dependencies = [
  "pest_derive",
  "pretty_env_logger 0.4.0",
  "serde_json",
- "serde_yaml",
  "tide",
  "uuid",
 ]

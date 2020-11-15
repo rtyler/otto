@@ -149,7 +149,7 @@ pub fn run(
                 parameters: step.parameters.clone(),
             };
 
-            serde_yaml::to_writer(&mut file, &invocation)
+            serde_json::to_writer(&mut file, &invocation)
                 .expect("Failed to write temporary file for script");
 
             use os_pipe::pipe;
@@ -228,7 +228,7 @@ mod tests {
 
     #[test]
     fn load_manifests_stdlib() {
-        let params = serde_yaml::Value::Null;
+        let params = serde_json::Value::Null;
         let step = Step {
             symbol: "echo".to_string(),
             uuid: otto_models::generate_uuid(),

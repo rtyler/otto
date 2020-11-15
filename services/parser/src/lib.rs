@@ -87,7 +87,7 @@ fn parse_steps(parser: &mut Pairs<Rule>, uuid: Uuid) -> Vec<Step> {
             let symbol = parts[0].as_str().to_string();
             let command = parse_str(&mut parts.pop().unwrap());
 
-            let parameters = serde_yaml::Value::String(command);
+            let parameters = serde_json::Value::String(command);
             let parameters = StepParameters::Positional(vec![parameters]);
             let step = Step::new(uuid, symbol, parameters);
             steps.push(step);

@@ -64,7 +64,7 @@ pub fn invocation_from_args<P: serde::de::DeserializeOwned>(
 
     let file = File::open(&args[1])?;
 
-    match serde_yaml::from_reader::<File, Invocation<P>>(file) {
+    match serde_json::from_reader::<File, Invocation<P>>(file) {
         Err(e) => {
             error!("Failed to deserialize invocation file: {:#?}", e);
             Err(Error::new(ErrorKind::InvalidData, e))

@@ -40,7 +40,7 @@ async fn main() -> std::io::Result<()> {
     let file = File::open(&args[1])?;
     let (sender, receiver) = channel(MAX_CONTROL_MSGS);
 
-    match serde_yaml::from_reader::<File, Invocation>(file) {
+    match serde_json::from_reader::<File, Invocation>(file) {
         Err(e) => {
             panic!("Failed to parse parameters file: {:#?}", e);
         }

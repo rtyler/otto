@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use serde_yaml::Value;
+use serde_json::Value;
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -166,12 +166,13 @@ mod tests {
     #[test]
     fn deserialize_positional() {
         let buf = r#"
-    symbol: sh
-    uuid: '5599cffb-f23a-4e0f-a0b9-f74654641b2b'
-    context: '3ce1f6fb-79ca-4564-a47e-98265f53ef7f'
-    parameters:
-      - 'ls -lah | tail -n 5'"#;
-        let step = serde_yaml::from_str::<Step>(&buf).expect("Failed to deserialize");
+        {"symbol":"sh",
+        "uuid":"5599cffb-f23a-4e0f-a0b9-f74654641b2b",
+        "context":"3ce1f6fb-79ca-4564-a47e-98265f53ef7f",
+        "parameters" : [
+            "ls -lah | tail -n 5"
+        ]}"#;
+        let step = serde_json::from_str::<Step>(&buf).expect("Failed to deserialize");
 
         assert_eq!(step.symbol, "sh");
     }
@@ -179,12 +180,13 @@ mod tests {
     #[test]
     fn deserialize_kwargs() {
         let buf = r#"
-    symbol: sh
-    uuid: '5599cffb-f23a-4e0f-a0b9-f74654641b2b'
-    context: '3ce1f6fb-79ca-4564-a47e-98265f53ef7f'
-    parameters:
-      script: 'ls -lah | tail -n 5'"#;
-        let step = serde_yaml::from_str::<Step>(&buf).expect("Failed to deserialize");
+        {"symbol":"sh",
+        "uuid":"5599cffb-f23a-4e0f-a0b9-f74654641b2b",
+        "context":"3ce1f6fb-79ca-4564-a47e-98265f53ef7f",
+        "parameters" : {
+            "script" : "ls -lah | tail -n 5"
+        }}"#;
+        let step = serde_json::from_str::<Step>(&buf).expect("Failed to deserialize");
 
         assert_eq!(step.symbol, "sh");
     }
