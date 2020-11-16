@@ -2,7 +2,6 @@
  * The git step does simple clones of git repositories
  */
 
-use git2::Repository;
 use otto_agent::step::*;
 use serde::Deserialize;
 use url::Url;
@@ -10,7 +9,7 @@ use url::Url;
 #[derive(Clone, Debug, Deserialize)]
 struct Parameters {
     url: Url,
-    r#ref: Option<String>,
+    branch: Option<String>,
 }
 
 /**
@@ -27,17 +26,24 @@ fn repo_from_url(repo_url: &Url) -> Option<String> {
 }
 
 fn main() -> std::io::Result<()> {
+    use std::path::Path;
+
     let args = std::env::args().collect();
-    let invoke: Invocation<Parameters> = invocation_from_args(&args)
-        .expect("Failed to deserialize the invocation for the step");
+    let invoke: Invocation<Parameters> =
+        invocation_from_args(&args).expect("Failed to deserialize the invocation for the step");
 
     if let Some(path) = repo_from_url(&invoke.parameters.url) {
-        let _repo = match Repository::clone(&invoke.parameters.url.into_string(), path) {
+        println!("Clone!");
+        let mut builder = git2::build::RepoBuilder::new();
+
+        if let Some(branch) = &invoke.parameters.branch {
+            builder.branch(&branch);
+        }
+        let _repo = match builder.clone(&invoke.parameters.url.into_string(), Path::new(&path)) {
             Ok(repo) => repo,
             Err(e) => panic!("failed to clone: {}", e),
         };
-    }
-    else {
+    } else {
         println!("Failed to determine the right local path to clone the repository into");
         std::process::exit(1);
     }

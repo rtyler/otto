@@ -8,6 +8,6 @@ repository.
 .Simple clone
 [source]
 ----
-git url: 'https://github.com/rtyler/otto', ref: 'main'
+git url: 'https://github.com/rtyler/otto', branch: 'main'
 ----
 

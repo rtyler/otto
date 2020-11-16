@@ -18,8 +18,8 @@ parameters:
     description: |
       The URL to pass to the underlying Git library
 
-  - name: ref
+  - name: branch
     required: false
     type: string
     description: |
-      A git reference to clone instead of the default.
+      A git branch to clone instead of the default.
