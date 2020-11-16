@@ -8,3 +8,4 @@ edition = "2018"
 git2 = "~0.13.12"
 otto-agent = { path = "../../agent" }
 serde = {version = "~1.0.117", features = ["derive"]}
+url = "~2.2.0"
