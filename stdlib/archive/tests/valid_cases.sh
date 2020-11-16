@@ -1,12 +1,9 @@
 #!/bin/sh
 
 INVOCATION_FILE=tmp_archivetest_invocation_file.json
-TAR_NAME=tmp_archivetest_tar
 
 oneTimeTearDown() {
     rm -f $INVOCATION_FILE
-    rm -f "${TAR_NAME}.tar.gz"
-
 }
 
 test_pass_with_file() {
@@ -28,11 +25,13 @@ test_pass_with_file() {
 }
 EOF
 
-    output=$(archive-step $INVOCATION_FILE)
-    assertTrue "step should do nothing with a single file: ${output}" "archive-step $INVOCATION_FILE"
+    echo "Hello world" > Cargo.toml
+
+    assertTrue "step should do nothing with a single file" "archive-step $INVOCATION_FILE"
 }
 
 test_pass_with_dir() {
+    TAR_NAME=tmp_archivetest_tar
     cat > $INVOCATION_FILE<<EOF
     {
     "configuration" : {
@@ -46,14 +45,18 @@ test_pass_with_dir() {
         }
     },
     "parameters" : {
-        "artifacts": "$(dirname $0)",
+        "artifacts": "release",
         "name": "${TAR_NAME}"
     }
     }
 EOF
+    mkdir release
+    touch release/one
+    touch release/two
 
     assertTrue "step should create tarball with a directory" "archive-step $INVOCATION_FILE"
     assertTrue "file name ${TAR_NAME}.tar.gz not found" "test -f ${TAR_NAME}.tar.gz"
+    rm -f "${TAR_NAME}.tar.gz"
 }
 
 . $(dirname $0)/../../../contrib/shunit2/shunit2

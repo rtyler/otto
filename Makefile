@@ -22,10 +22,14 @@ steps: release
 
 test: contrib/shunit2/shunit2 ## Run the acceptance tests for steps
 	set -e
-	@for t in $$(find stdlib -iname "tests" -type d); do \
+	@for t in $$(find $(PWD)/stdlib -iname "tests" -type d); do \
 		echo ">> Running acceptance tests for $$t"; \
 		for f in $$(find $$t -iname "*.sh" -type f); do \
-			PATH="target/debug:$(PATH)" "$$f"; \
+			DIR="$(PWD)/tmp/test-run-$${RANDOM}"; \
+			echo ">> Using $${DIR} for $$f"; \
+			mkdir -p $$DIR; \
+			(cd $$DIR && \
+			PATH="$(PWD)/target/debug:$(PATH)" "$$f"); \
 		done; \
 	done;
 
