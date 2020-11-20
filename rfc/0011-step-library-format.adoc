@@ -66,6 +66,14 @@ symbol: sh
 description: |
   The `sh` step executes a shell script within the given execution context
 
+# Instructs the agent to create a local cache for this step, this will default
+# to false as _most_ steps do not need their own caching directory.
+#
+# Agents are expected to construct the caches in their
+# workdir/caches/<step-symbol> and to pass that into the step via the "cache"
+# invocation file parameter
+cache: true
+
 # List all the files/globs to include in the packaged artifact
 includes:
   # Paths are treated as relative from wherever osp is invoked from

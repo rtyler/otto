@@ -35,7 +35,9 @@ fn main() -> std::io::Result<()> {
 
     let clone_path = match invoke.parameters.into {
         Some(into) => into,
-        None => repo_from_url(&invoke.parameters.url).expect("Failed to determine local path to clone"),
+        None => {
+            repo_from_url(&invoke.parameters.url).expect("Failed to determine local path to clone")
+        }
     };
 
     println!("Clone!");

@@ -136,11 +136,23 @@ pub fn run(
 
             let mut file = NamedTempFile::new()?;
 
+            let cache = match runner.manifest.cache {
+                true => {
+                    if let Ok(dir) = std::env::var("CACHES_DIR") {
+                        Some(PathBuf::from(dir))
+                    } else {
+                        None
+                    }
+                }
+                false => None,
+            };
+
             // TODO: This is going to be wrong on nested steps
             let sock = control::agent_socket();
             let configuration = step::Configuration {
                 pipeline: pipeline,
                 uuid: step.uuid,
+                cache: cache,
                 ipc: sock,
                 endpoints: endpoints.clone(),
             };

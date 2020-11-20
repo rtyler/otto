@@ -6,6 +6,7 @@
 use log::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::path::PathBuf;
 use url::Url;
 use uuid::Uuid;
 
@@ -35,7 +36,8 @@ pub struct Configuration {
     pub pipeline: Uuid,
     /// The uuid of this specific step
     pub uuid: Uuid,
-    pub ipc: std::path::PathBuf,
+    pub cache: Option<PathBuf>,
+    pub ipc: PathBuf,
     pub endpoints: HashMap<String, Endpoint>,
 }
 

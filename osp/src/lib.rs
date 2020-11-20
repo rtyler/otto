@@ -7,6 +7,8 @@ use std::path::{Path, PathBuf};
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Manifest {
     pub symbol: String,
+    #[serde(default = "default_false")]
+    pub cache: bool,
     pub description: String,
     pub includes: Vec<Include>,
     pub entrypoint: Entrypoint,

@@ -36,14 +36,25 @@ fn mkdir_if_not_exists(path: &Path) -> std::io::Result<()> {
 
     if path.exists() {
         if path.is_dir() {
-            return Ok(())
+            return Ok(());
         }
-        return Err(Error::new(ErrorKind::AlreadyExists, format!("{:?} exists and is not a directory", path)));
-    }
-    else {
+        return Err(Error::new(
+            ErrorKind::AlreadyExists,
+            format!("{:?} exists and is not a directory", path),
+        ));
+    } else {
         std::fs::create_dir(path)?;
     }
     Ok(())
+}
+
+/**
+ * Set common environment variables for all subprocesses to inherit
+ */
+fn set_common_env_vars() {
+    use std::env::set_var;
+    set_var("OTTO", "true");
+    set_var("CI", "true");
 }
 
 #[async_std::main]
@@ -63,6 +74,7 @@ async fn main() -> std::io::Result<()> {
     mkdir_if_not_exists(&work_dir)?;
     mkdir_if_not_exists(&cache_dir)?;
 
+    std::env::set_var("CACHES_DIR", cache_dir);
     std::env::set_current_dir(work_dir)?;
 
     let (sender, receiver) = channel(MAX_CONTROL_MSGS);
@@ -84,6 +96,8 @@ async fn main() -> std::io::Result<()> {
             let pipeline_dir = Path::new(&pipeline_dir);
             mkdir_if_not_exists(&pipeline_dir)?;
             std::env::set_current_dir(pipeline_dir)?;
+
+            set_common_env_vars();
 
             run(&steps_dir, &invoke.steps, invoke.pipeline, Some(receiver))
                 .expect("Failed to run pipeline");

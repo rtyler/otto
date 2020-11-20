@@ -11,6 +11,8 @@ entrypoint:
   path: git-step
   multiarch: false
 
+cache: true
+
 parameters:
   - name: url
     required: true
