@@ -23,3 +23,10 @@ parameters:
     type: string
     description: |
       A git branch to clone instead of the default.
+
+  - name: into
+    required: false
+    type: string
+    description: |
+      Path into which the clone should be performed, can be used as `.` to
+      clone into the current working directory

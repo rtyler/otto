@@ -10,6 +10,7 @@ use url::Url;
 struct Parameters {
     url: Url,
     branch: Option<String>,
+    into: Option<String>,
 }
 
 /**
@@ -32,21 +33,23 @@ fn main() -> std::io::Result<()> {
     let invoke: Invocation<Parameters> =
         invocation_from_args(&args).expect("Failed to deserialize the invocation for the step");
 
-    if let Some(path) = repo_from_url(&invoke.parameters.url) {
-        println!("Clone!");
-        let mut builder = git2::build::RepoBuilder::new();
+    let clone_path = match invoke.parameters.into {
+        Some(into) => into,
+        None => repo_from_url(&invoke.parameters.url).expect("Failed to determine local path to clone"),
+    };
 
-        if let Some(branch) = &invoke.parameters.branch {
-            builder.branch(&branch);
-        }
-        let _repo = match builder.clone(&invoke.parameters.url.into_string(), Path::new(&path)) {
-            Ok(repo) => repo,
-            Err(e) => panic!("failed to clone: {}", e),
-        };
-    } else {
-        println!("Failed to determine the right local path to clone the repository into");
-        std::process::exit(1);
+    println!("Clone!");
+    let mut builder = git2::build::RepoBuilder::new();
+
+    if let Some(branch) = &invoke.parameters.branch {
+        builder.branch(&branch);
     }
+
+    let _repo = match builder.clone(&invoke.parameters.url.into_string(), Path::new(&clone_path)) {
+        Ok(repo) => repo,
+        Err(e) => panic!("failed to clone: {}", e),
+    };
+
     Ok(())
 }
 
