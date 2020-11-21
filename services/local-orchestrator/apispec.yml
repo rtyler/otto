@@ -1,0 +1,34 @@
+---
+openapi: 3.0.3
+info:
+  title: Otto Orchestrator Service
+  description: |
+    This specification describes the Local Orchestrator which doesn't really do
+    much other than run an `otto-agent` locally.
+  version: '1.0.0'
+  contact:
+    name: R Tyler Croy
+    email: 'rtyler@brokenco.de'
+    x-twitter: agentdero
+  license:
+    name: 'GNU AGPL 3.0'
+    url: 'https://www.gnu.org/licenses/agpl-3.0.en.html'
+externalDocs:
+  description: 'Find out more about Otto'
+  url: 'https://github.com/rtyler/otto'
+servers:
+  - url: 'http://localhost:7673'
+    description: 'Local dev server'
+paths:
+  '/health':
+    get:
+      operationId: GetHealth
+      description: |
+        The health endpoint helps indicate whether the service is healthy or not.
+        Any non-200 response is unhealthy.
+      responses:
+        '200':
+          description: 'A successful healthcheck'
+          content:
+            application/json: {}
+
