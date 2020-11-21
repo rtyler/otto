@@ -20,6 +20,10 @@ steps: release
 		./target/release/osp $$dir; \
 	done;
 
+apispecs:
+	schemathesis run ./services/parser/apispec.yml --base-url=http://localhost:7672 --checks all
+	schemathesis run ./services/local-orchestrator/apispec.yml --base-url=http://localhost:7673 --checks all
+
 test: contrib/shunit2/shunit2 ## Run the acceptance tests for steps
 	set -e
 	@for t in $$(find $(PWD)/stdlib -iname "tests" -type d); do \
@@ -48,4 +52,4 @@ contrib/shunit2/shunit2:
 
 ################################################################################
 
-.PHONY: clean diagram help steps release
+.PHONY: apispecs clean diagram help steps release
