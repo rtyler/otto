@@ -3,5 +3,7 @@
 #
 
 object-store: OTTO_OBJECT_DIR=tmp/objects RUST_LOG=debug ./target/debug/otto-object-store
+orchestrator: RUST_LOG=debug ./target/debug/otto-local-orchestrator
+parser: RUST_LOG=debug ./target/debug/otto-parser
 
 # vim: ft=sh

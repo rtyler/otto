@@ -1,0 +1,11 @@
+[package]
+name = "otto-local-orchestrator"
+version = "0.1.0"
+authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
+edition = "2018"
+
+[dependencies]
+async-std = { version = "~1.7", features = ["attributes"]}
+log = "~0.4.11"
+pretty_env_logger = "~0.4.0"
+tide = "~0.15.0"

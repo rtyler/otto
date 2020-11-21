@@ -7,6 +7,7 @@ members = [
 
     "services/auctioneer",
     "services/eventbus",
+    "services/local-orchestrator",
     "services/object-store",
     "services/parser",
 

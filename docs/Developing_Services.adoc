@@ -23,5 +23,9 @@ This document captures some details around developing these Otto services.
 | Parser
 | Service which parses .otto files and spits out the Otto intermediate execution format.
 
+| 7673
+| Orchestrator
+| Service which can provision environments capable of executing agents.
+
 |===
 

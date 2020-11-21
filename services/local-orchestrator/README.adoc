@@ -1,0 +1,12 @@
+= Local Orchestrator
+
+The Otto Local Orchestrator is the simplest implementation of an orchestrator
+in that it simply receives the orchestration payload and launches the
+`otto-agent` locally.
+
+
+.Environnment Variables
+|===
+| Name | Default | Description
+
+|===
