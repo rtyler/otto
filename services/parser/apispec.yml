@@ -84,8 +84,7 @@ components:
       type: object
       required:
         - uuid
-        - contexts
-        - steps
+        - batches
       properties:
         uuid:
           type: string
@@ -98,16 +97,18 @@ components:
         summary: 'A simplistic Pipeline'
         value:
           uuid: '9edc4483-a78a-480f-8e06-2726db1ddf24'
-          contexts:
-            - uuid: '8109f601-12e8-4621-96c6-11baff409d93'
-              properties:
-                name: 'Build'
-          steps:
-            - uuid: '6193b9b1-c6be-4c18-9bb8-1aeead5e7d14'
-              context: '8109f601-12e8-4621-96c6-11baff409d93'
-              symbol: 'sh'
-              parameters:
-                - 'ls'
+          batches:
+            - mode: Linear
+              contexts:
+                - uuid: '8109f601-12e8-4621-96c6-11baff409d93'
+                  properties:
+                    name: 'Build'
+                  steps:
+                    - uuid: '6193b9b1-c6be-4c18-9bb8-1aeead5e7d14'
+                      context: '8109f601-12e8-4621-96c6-11baff409d93'
+                      symbol: 'sh'
+                      parameters:
+                        - 'ls'
 
     ParsePipelineFailure:
       type: object
