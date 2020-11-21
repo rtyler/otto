@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 INVOCATION_FILE=$PWD/tmp_gittest_invocation_file.json
 

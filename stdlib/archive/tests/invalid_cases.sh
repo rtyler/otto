@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 INVOCATION_FILE=tmp_archivetest_invocation_file.json
 
