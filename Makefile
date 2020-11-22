@@ -21,8 +21,8 @@ steps: release
 	done;
 
 apispecs:
-	schemathesis run ./services/parser/apispec.yml --base-url=http://localhost:7672 --checks all
-	schemathesis run ./services/local-orchestrator/apispec.yml --base-url=http://localhost:7673 --checks all
+	schemathesis run ./services/local-orchestrator/apispec.yml --base-url=http://localhost:7673 --checks all --hypothesis-suppress-health-check too_slow
+	schemathesis run ./services/parser/apispec.yml --base-url=http://localhost:7672 --checks all --hypothesis-suppress-health-check too_slow
 
 test: contrib/shunit2/shunit2 ## Run the acceptance tests for steps
 	set -e

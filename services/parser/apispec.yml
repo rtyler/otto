@@ -31,7 +31,7 @@ paths:
         '200':
           description: 'A successful healthcheck'
           content:
-            application/json: {}
+            'application/json': {}
 
   '/v1/parse':
     post:
@@ -44,7 +44,7 @@ paths:
         description: 'A string payload in the Otto Pipeline syntax'
         required: true
         content:
-          text/plain:
+          'text/plain':
             schema:
               type: string
             examples:
@@ -64,13 +64,13 @@ paths:
         '200':
           description: 'Successfully parsed'
           content:
-            application/json:
+            'application/json':
               schema:
                 $ref: '#/components/schemas/ParsePipelineResponse'
         '400':
           description: 'Failed to parse the pipeline for some reason'
           content:
-            application/json:
+            'application/json':
               schema:
                 $ref: '#/components/schemas/ParsePipelineFailure'
         '422':

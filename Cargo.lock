@@ -1606,8 +1606,12 @@ version = "0.1.0"
 dependencies = [
  "async-std",
  "log",
+ "otto-models",
  "pretty_env_logger 0.4.0",
+ "serde 1.0.117",
+ "serde_json",
  "tide 0.15.0",
+ "uuid",
 ]
 
 [[package]]

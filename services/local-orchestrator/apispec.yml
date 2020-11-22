@@ -30,5 +30,58 @@ paths:
         '200':
           description: 'A successful healthcheck'
           content:
-            application/json: {}
+            'application/json': {}
+  '/v1/run':
+    post:
+      operationId: RunWorkload
+      description: |
+        The primary interface for the orchestrator which allows external services to
+        provision an agent to run the specified workload.
 
+        This endpoint is not _synchronous_ insofar that it will enqueue the
+        workload. It will not block until the workload has completed execution
+        for hopefully obvious reasons.
+      requestBody:
+        required: true
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/RunWorkloadRequest'
+      responses:
+        '200':
+          description: 'Successfully enqueued the workload with the orchestrator'
+
+        '422':
+          description: 'Unprocessable data, usually not JSON or not UTF-6 encoded'
+
+components:
+  schemas:
+    RunWorkloadRequest:
+      description: |
+        The primary APi payload for the orchestrator, which includes the workloads
+        that should be provisioned and executed by the orchestrator.
+
+        THe list of contexts should _only_ those that can be safely executed by one
+        agent in sequence.
+      type: object
+      required:
+        - pipeline
+        - contexts
+      properties:
+        pipeline:
+          type: string
+          format: uuid
+        contexts:
+          type: array
+      example:
+        pipeline: '9edc4483-a78a-480f-8e06-2726db1ddf24'
+        contexts:
+          - uuid: '8109f601-12e8-4621-96c6-11baff409d93'
+            properties:
+              name: 'Build'
+            steps:
+              - uuid: '6193b9b1-c6be-4c18-9bb8-1aeead5e7d14'
+                context: '8109f601-12e8-4621-96c6-11baff409d93'
+                symbol: 'sh'
+                parameters:
+                  - 'ls'
