@@ -17,7 +17,7 @@ async fn parse(mut req: Request<()>) -> tide::Result {
         match parsed {
             Err(e) => {
                 use pest::error::*;
-                error!("Failed to parse: {:#?}", e);
+                error!("Failed to parse: {:?}", e);
 
                 let variant = match e.variant {
                     ErrorVariant::CustomError { message } => message,
