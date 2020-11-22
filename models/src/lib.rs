@@ -140,12 +140,6 @@ pub enum StepParameters {
     Keyword(HashMap<String, Value>),
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-struct MockStep {
-    symbol: String,
-    parameters: StepParameters,
-}
-
 /**
  * Generate a UUID v4 for use in structs, etc
  *

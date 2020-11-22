@@ -1,6 +1,7 @@
 /*
  * The local orchestrator doesn't do much
  */
+use async_std::task;
 use log::*;
 use serde::Deserialize;
 use tide::Request;
@@ -12,6 +13,40 @@ struct RunWorkload {
     contexts: Vec<otto_models::Context>,
 }
 
+/**
+ * This function is the core of the local-orchestrator in that it takes a
+ * context and will spawn an agent to run it.
+ *
+ */
+fn run_context(pipeline: &Uuid, ctx: &otto_models::Context) -> std::io::Result<()> {
+    use std::io::{Error, ErrorKind};
+    use std::process::Command;
+    use tempfile::NamedTempFile;
+
+    let mut file = NamedTempFile::new()?;
+    let invocation = otto_agent::Invocation {
+        pipeline: *pipeline,
+        steps: ctx.steps.clone(),
+    };
+
+    if let Err(failure) = serde_json::to_writer(&mut file, &invocation) {
+        error!("Failed to write temporary file for agent: {:#?}", failure);
+        return Err(Error::new(
+            ErrorKind::InvalidData,
+            "Could not write temporary file",
+        ));
+    }
+
+    if let Ok(output) = Command::new("otto-agent").arg(file.path()).output() {
+        info!("output: {:?}", output);
+    } else {
+        // TODO
+        error!("Failed to run agent");
+    }
+
+    Ok(())
+}
+
 async fn healthcheck(_req: Request<()>) -> tide::Result {
     Ok(tide::Response::builder(200)
         .body("{}")
@@ -20,10 +55,15 @@ async fn healthcheck(_req: Request<()>) -> tide::Result {
 }
 
 async fn run_workload(mut req: Request<()>) -> tide::Result {
-    let run: RunWorkload =  req.body_json().await?;
+    let run: RunWorkload = req.body_json().await?;
     debug!("Received RunWorkload: {:#?}", run);
 
-    // TODO: do something actually useful :D
+    task::spawn(async move {
+        println!("Running workload: {:#?}", run);
+        for ctx in run.contexts.iter() {
+            run_context(&run.pipeline, ctx);
+        }
+    });
 
     Ok(tide::Response::builder(200)
         .body("{}")
@@ -47,3 +87,6 @@ async fn main() -> std::io::Result<()> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {}

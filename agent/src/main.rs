@@ -4,10 +4,8 @@
  * Most of the logic _should_ be contained within lib.rs and the surrounding modules
  */
 use async_std::sync::channel;
-use serde::Deserialize;
 use std::fs::File;
 use std::path::Path;
-use uuid::Uuid;
 
 use otto_agent::*;
 
@@ -18,15 +16,6 @@ use otto_agent::*;
  * control socket will block until the pending messages are cleared out
  */
 const MAX_CONTROL_MSGS: usize = 64;
-
-/**
- * The format of the invocation file for the agent
- */
-#[derive(Clone, Debug, Deserialize)]
-struct Invocation {
-    pipeline: Uuid,
-    steps: Vec<otto_models::Step>,
-}
 
 /**
  * Ensure the directory exists by making it or panicking

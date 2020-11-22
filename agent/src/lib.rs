@@ -1,7 +1,7 @@
 use async_std::sync::Receiver;
 use log::*;
 use otto_models::*;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::{Path, PathBuf};
@@ -11,6 +11,15 @@ use uuid::Uuid;
 
 pub mod control;
 pub mod step;
+
+/**
+ * The format of the invocation file for the agent
+ */
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Invocation {
+    pub pipeline: Uuid,
+    pub steps: Vec<otto_models::Step>,
+}
 
 /**
  * Log is a data structure which captures the necessary metadata for logging a single line
