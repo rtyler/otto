@@ -8,19 +8,23 @@
 
 ################################################################################
 ## Phony targets
+.PHONY: apispecs clean diagram help steps release run
 
-release:
+run: ## Convenience target for running services
+	./scripts/shoreman
+
+release: ## Build release binaries of everything
 	cargo build --release
 	# Strip all the executables for size, does impact debug symbols
 	find target/release -type f -executable -exec strip {} \;
 
-steps: release
+steps: release ## Package up all the stdlib steps as tarballs with osp
 	for dir in $$(find stdlib -maxdepth 1 -type d | tail -n +2); do \
 		echo ">> Packaging $$dir"; \
 		./target/release/osp $$dir; \
 	done;
 
-apispecs:
+apispecs: ## Run the OpenAPI-based specification tests, requires servers to be running already
 	schemathesis run ./services/local-orchestrator/apispec.yml --base-url=http://localhost:7673 --checks all --hypothesis-suppress-health-check too_slow
 	schemathesis run ./services/parser/apispec.yml --base-url=http://localhost:7672 --checks all --hypothesis-suppress-health-check too_slow
 
@@ -47,9 +51,11 @@ clean: ## Clean all temporary/working files
 diagram: system.png system.dot ## Generate the diagrams describing otto
 	dot -Tpng -o system.png system.dot
 
+################################################################################
+
+
+################################################################################
 contrib/shunit2/shunit2:
 	git submodule update --init
 
 ################################################################################
-
-.PHONY: apispecs clean diagram help steps release
