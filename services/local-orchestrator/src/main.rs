@@ -18,7 +18,7 @@ struct RunWorkload {
  * context and will spawn an agent to run it.
  *
  */
-fn run_context(pipeline: &Uuid, ctx: &otto_models::Context) -> std::io::Result<()> {
+fn run_context(pipeline: &Uuid, ctx: &otto_models::Context) -> std::io::Result<bool> {
     use std::io::{Error, ErrorKind};
     use std::process::Command;
     use tempfile::NamedTempFile;
@@ -38,13 +38,16 @@ fn run_context(pipeline: &Uuid, ctx: &otto_models::Context) -> std::io::Result<(
     }
 
     if let Ok(output) = Command::new("otto-agent").arg(file.path()).output() {
-        info!("output: {:?}", output);
+        use std::io::{stdout, Write};
+        stdout().write(&output.stdout);
+
+        return Ok(output.status.success());
     } else {
         // TODO
         error!("Failed to run agent");
     }
 
-    Ok(())
+    Ok(false)
 }
 
 async fn healthcheck(_req: Request<()>) -> tide::Result {
@@ -59,9 +62,19 @@ async fn run_workload(mut req: Request<()>) -> tide::Result {
     debug!("Received RunWorkload: {:#?}", run);
 
     task::spawn(async move {
-        println!("Running workload: {:#?}", run);
+        debug!("Running workload: {:#?}", run);
         for ctx in run.contexts.iter() {
-            run_context(&run.pipeline, ctx);
+            match run_context(&run.pipeline, ctx) {
+                Ok(success) => {
+                    if ! success {
+                        return;
+                    }
+                    debug!("Context succeeded, continuing");
+                },
+                Err(_) => {
+                    return;
+                }
+            }
         }
     });
 
@@ -74,7 +87,7 @@ async fn run_workload(mut req: Request<()>) -> tide::Result {
 #[async_std::main]
 async fn main() -> std::io::Result<()> {
     use std::{env, net::TcpListener, os::unix::io::FromRawFd};
-    tide::log::start();
+    pretty_env_logger::init();
 
     let mut app = tide::new();
     app.at("/health").get(healthcheck);
