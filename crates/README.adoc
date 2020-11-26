@@ -1,0 +1,5 @@
+= Crates
+
+This directory contains the various internally re-usable crates for Otto. These
+are intended to be for sharing code or object definitions across multiple
+services or between command lines and services.

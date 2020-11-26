@@ -1,0 +1,5 @@
+= Command Line Interfaces
+
+This directory contains the various command-line interfaces used for different
+aspects of Otto.
+
