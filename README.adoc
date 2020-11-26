@@ -38,6 +38,36 @@ The service-to-service communication is all done with JSON over HTTP.
 In order to contribute to the project, please join us on IRC or open pull
 requests and issues.
 
+== Subdirectories
+
+Each subdirectory should have its own README with a little more information,
+but at a glance:
+
+=== `cli/`
+
+This directory contains all the command-line interfaces for Otto.
+
+=== `crates/`
+
+This directory contains the various pieces of shared code
+
+=== `rfcs/`
+
+RFCs (Request for Comment) are design documents for different patterns or
+subcomponents within Otto.
+
+=== `services/`
+
+Projects in this directory are Otto's mesh of services, which speak HTTP to
+provide different aspects of functionality for the Otto project.
+
+=== `stdlib/`
+
+The Otto step "Standard Library." In essence, these are all the step libraries
+that are assumed to be installed by default with Otto.
+
+
+
 == Problems to Solve
 
 Below is an incomplete listing of the problems Otto aims to solve for:
