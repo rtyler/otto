@@ -72,11 +72,11 @@ pub struct Entrypoint {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Parameter {
-    name: String,
-    required: bool,
+    pub name: String,
+    pub required: bool,
     #[serde(rename = "type")]
-    p_type: ParameterType,
-    description: String,
+    pub p_type: ParameterType,
+    pub description: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

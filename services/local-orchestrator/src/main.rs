@@ -29,6 +29,8 @@ fn run_context(pipeline: &Uuid, ctx: &otto_models::Context) -> std::io::Result<b
         steps: ctx.steps.clone(),
     };
 
+    println!("{}", serde_json::to_string(&invocation).unwrap());
+
     if let Err(failure) = serde_json::to_writer(&mut file, &invocation) {
         error!("Failed to write temporary file for agent: {:#?}", failure);
         return Err(Error::new(
@@ -59,18 +61,17 @@ async fn healthcheck(_req: Request<()>) -> tide::Result {
 
 async fn run_workload(mut req: Request<()>) -> tide::Result {
     let run: RunWorkload = req.body_json().await?;
-    debug!("Received RunWorkload: {:#?}", run);
+    debug!("Received RunWorkload: {:?}", run);
 
     task::spawn(async move {
-        debug!("Running workload: {:#?}", run);
         for ctx in run.contexts.iter() {
             match run_context(&run.pipeline, ctx) {
                 Ok(success) => {
-                    if ! success {
+                    if !success {
                         return;
                     }
                     debug!("Context succeeded, continuing");
-                },
+                }
                 Err(_) => {
                     return;
                 }

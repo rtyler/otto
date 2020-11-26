@@ -171,6 +171,22 @@ mod tests {
         assert_eq!(step.symbol, "sh");
     }
 
+    /*
+     * https://github.com/rtyler/otto/issues/42
+     */
+    #[test]
+    fn deserialize_positional_issue_42() {
+        #[derive(Clone, Debug, Deserialize, Serialize)]
+        struct Pipeline {
+            pipeline: String,
+            steps: Vec<Step>,
+        }
+        let buf = r#"{"pipeline":"fdbebdcf-ad5c-49e5-890f-aef294b476c5","steps":[{"uuid":"f619073f-4129-4d30-a94f-f61af164a6d8","context":"fdbebdcf-ad5c-49e5-890f-aef294b476c5","symbol":"sh","parameters":["pwd"]}]}"#;
+        let pipeline = serde_json::from_str::<Pipeline>(&buf).expect("Failed to deserialize");
+
+        assert_eq!(pipeline.steps[0].symbol, "sh");
+    }
+
     #[test]
     fn deserialize_kwargs() {
         let buf = r#"

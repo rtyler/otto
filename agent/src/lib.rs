@@ -53,9 +53,10 @@ struct LoadedManifest {
     manifest: osp::Manifest,
     path: PathBuf,
 }
-fn load_manifests_for(
+
+fn load_manifests_for_symbols(
     steps_dir: &str,
-    steps: &Vec<Step>,
+    symbols: Vec<String>,
 ) -> std::io::Result<HashMap<String, LoadedManifest>> {
     use std::io::{Error, ErrorKind};
 
@@ -72,26 +73,30 @@ fn load_manifests_for(
 
     let mut manifests = HashMap::new();
 
-    for step in steps.iter() {
-        let manifest_file = dir.join(&step.symbol).join("manifest.yml");
+    for step in symbols.iter() {
+        let manifest_file = dir.join(step).join("manifest.yml");
 
         if manifest_file.is_file() {
             let file = File::open(manifest_file)?;
             if let Ok(manifest) = serde_yaml::from_reader::<File, osp::Manifest>(file) {
                 let manifest = LoadedManifest {
                     manifest,
-                    path: dir.join(&step.symbol).to_path_buf(),
+                    path: dir.join(step).to_path_buf(),
                 };
-                manifests.insert(step.symbol.clone(), manifest);
+                manifests.insert(step.clone(), manifest);
             }
         } else {
-            warn!(
-                "{}/manifest.yml does not exist, step cannot execute",
-                step.symbol
-            );
+            warn!("{}/manifest.yml does not exist, step cannot execute", step);
         }
     }
     Ok(manifests)
+}
+
+fn load_manifests_for(
+    steps_dir: &str,
+    steps: &Vec<Step>,
+) -> std::io::Result<HashMap<String, LoadedManifest>> {
+    load_manifests_for_symbols(steps_dir, steps.iter().map(|s| s.symbol.clone()).collect())
 }
 
 /**
@@ -102,6 +107,32 @@ fn object_endpoint_for(uuid: &Uuid) -> step::Endpoint {
     step::Endpoint {
         url: url::Url::parse(&format!("http://localhost:7671/{}", uuid))
             .expect("Failed for prepare the object endpoint for a pipeline"),
+    }
+}
+
+/**
+ * Convert positional StepParameters to keywords based on the manifest for the step
+ *
+ * This function will clone the parameters
+ */
+fn positional_to_keyword(args: &StepParameters, manifest: &osp::Manifest) -> StepParameters {
+    match args {
+        StepParameters::Keyword(_) => args.clone(),
+        StepParameters::Positional(args) => {
+            let mut kwargs = HashMap::new();
+            for (i, arg) in args.iter().enumerate() {
+                if i >= manifest.parameters.len() {
+                    error!(
+                        "Too many positional parameters for the step! ({})",
+                        manifest.symbol
+                    );
+                    break;
+                }
+                let key = manifest.parameters[i].name.clone();
+                kwargs.insert(key, arg.clone());
+            }
+            StepParameters::Keyword(kwargs)
+        }
     }
 }
 
@@ -167,7 +198,7 @@ pub fn run(
             };
             let invocation: step::Invocation<StepParameters> = step::Invocation {
                 configuration,
-                parameters: step.parameters.clone(),
+                parameters: positional_to_keyword(&step.parameters, &runner.manifest),
             };
 
             serde_json::to_writer(&mut file, &invocation)
@@ -259,5 +290,41 @@ mod tests {
         let manifests =
             load_manifests_for("../stdlib", &vec![step]).expect("Failed to look into stdlib?");
         assert!(manifests.len() > 0);
+    }
+
+    #[test]
+    fn pos_to_keyword() {
+        use serde_json::Value;
+        let arg = Value::String("ps".to_string());
+        let parameters = StepParameters::Positional(vec![arg.clone()]);
+        let manifests = load_manifests_for_symbols("../stdlib", vec!["sh".to_string()])
+            .expect("Failed to look into stdlib?");
+        let loaded = manifests.get("sh").expect("Must have a `sh` manifest");
+
+        let kwargs = positional_to_keyword(&parameters, &loaded.manifest);
+        match kwargs {
+            StepParameters::Positional(_) => assert!(false),
+            StepParameters::Keyword(kw) => {
+                assert_eq!(kw.get("script"), Some(&arg));
+            }
+        }
+    }
+
+    #[test]
+    fn too_many_pos_to_keyword() {
+        use serde_json::Value;
+        let arg = Value::String("hi".to_string());
+        let parameters = StepParameters::Positional(vec![arg.clone(), arg.clone()]);
+        let manifests = load_manifests_for_symbols("../stdlib", vec!["echo".to_string()])
+            .expect("Failed to look into stdlib?");
+        let loaded = manifests.get("echo").expect("Must have a `echo` manifest");
+
+        let kwargs = positional_to_keyword(&parameters, &loaded.manifest);
+        match kwargs {
+            StepParameters::Positional(_) => assert!(false),
+            StepParameters::Keyword(kw) => {
+                assert_eq!(kw.get("message"), Some(&arg));
+            }
+        }
     }
 }
