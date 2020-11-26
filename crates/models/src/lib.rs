@@ -3,6 +3,8 @@ use serde_json::Value;
 use std::collections::HashMap;
 use uuid::Uuid;
 
+pub mod osp;
+
 /**
  * A Pipeline contains the total configuration and steps for a single pipeline run
  */

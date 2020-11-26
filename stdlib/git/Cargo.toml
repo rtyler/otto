@@ -6,6 +6,6 @@ edition = "2018"
 
 [dependencies]
 git2 = "~0.13.12"
-otto-agent = { path = "../../agent" }
+otto-agent = { path = "../../crates/agent" }
 serde = {version = "~1.0.117", features = ["derive"]}
 url = "~2.2.0"

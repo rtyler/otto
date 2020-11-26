@@ -288,7 +288,7 @@ mod tests {
             parameters: StepParameters::Positional(vec![params]),
         };
         let manifests =
-            load_manifests_for("../stdlib", &vec![step]).expect("Failed to look into stdlib?");
+            load_manifests_for("../../stdlib", &vec![step]).expect("Failed to look into stdlib?");
         assert!(manifests.len() > 0);
     }
 
@@ -297,7 +297,7 @@ mod tests {
         use serde_json::Value;
         let arg = Value::String("ps".to_string());
         let parameters = StepParameters::Positional(vec![arg.clone()]);
-        let manifests = load_manifests_for_symbols("../stdlib", vec!["sh".to_string()])
+        let manifests = load_manifests_for_symbols("../../stdlib", vec!["sh".to_string()])
             .expect("Failed to look into stdlib?");
         let loaded = manifests.get("sh").expect("Must have a `sh` manifest");
 
@@ -315,7 +315,7 @@ mod tests {
         use serde_json::Value;
         let arg = Value::String("hi".to_string());
         let parameters = StepParameters::Positional(vec![arg.clone(), arg.clone()]);
-        let manifests = load_manifests_for_symbols("../stdlib", vec!["echo".to_string()])
+        let manifests = load_manifests_for_symbols("../../stdlib", vec!["echo".to_string()])
             .expect("Failed to look into stdlib?");
         let loaded = manifests.get("echo").expect("Must have a `echo` manifest");
 

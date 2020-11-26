@@ -4,10 +4,6 @@ version = "0.1.0"
 authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
-[lib]
-name = "osp"
-path = "src/lib.rs"
-
 [[bin]]
 name = "osp"
 path = "src/main.rs"
@@ -15,6 +11,7 @@ path = "src/main.rs"
 [dependencies]
 flate2 = "~1.0.18"
 gumdrop = "~0.8.0"
+otto-models = { path = "../../crates/models" }
 serde_yaml = "~0.8.13"
 serde = {version = "~1.0.117", features = ["rc", "derive"]}
 tar = "~0.4.30"

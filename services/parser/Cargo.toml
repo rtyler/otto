@@ -15,7 +15,7 @@ path = "src/main.rs"
 [dependencies]
 async-std = { version = "1.6.5", features = ["attributes"]}
 log = "~0.4.11"
-otto-models = { path = "../../models" }
+otto-models = { path = "../../crates/models" }
 pest = "~2.1.3"
 pest_derive = "~2.1.0"
 pretty_env_logger = "~0.4.0"

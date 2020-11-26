@@ -1,9 +1,11 @@
 [workspace]
 
 members = [
-    "agent",
-    "models",
-    "osp",
+    "cli/agent",
+    "cli/osp",
+
+    "crates/agent",
+    "crates/models",
 
     "services/auctioneer",
     "services/eventbus",

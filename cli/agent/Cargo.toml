@@ -1,0 +1,19 @@
+[package]
+name = "otto-agent-cli"
+version = "0.1.0"
+authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
+edition = "2018"
+
+[[bin]]
+name = "otto-agent"
+path = "src/main.rs"
+
+[dependencies]
+async-std = { version = "~1.7", features = ["attributes"]}
+log = "~0.4.8"
+otto-agent= { path = "../../crates/agent" }
+pretty_env_logger = "~0.4.0"
+serde_json = "~1.0.59"
+# Needed for reading manifest yamls
+serde_yaml = "~0.8.13"
+serde = {version = "~1.0.117", features = ["rc", "derive"]}

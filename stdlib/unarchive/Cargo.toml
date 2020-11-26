@@ -6,6 +6,6 @@ edition = "2018"
 
 [dependencies]
 async-std = { version = "~1.7", features = ["attributes"] }
-otto-agent = { path = "../../agent" }
+otto-agent = { path = "../../crates/agent" }
 serde = {version = "~1.0.117", features = ["derive"]}
 surf = { version = "~2.1.0", features = ["h1-client"]}
