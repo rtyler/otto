@@ -1008,6 +1008,7 @@ dependencies = [
  "git2",
  "otto-agent",
  "serde 1.0.117",
+ "sha2",
  "url",
 ]
 
