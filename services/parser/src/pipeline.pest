@@ -21,9 +21,9 @@ step = { IDENT ~ (
                     )
         }
 
-args = _{ (STR ~ COMMA?)+ }
+args = { (STR ~ COMMA?)+ }
 kwargs = _{ (kwarg ~ COMMA?)+ }
-kwarg = _{ IDENT~ ":" ~ STR }
+kwarg = { IDENT~ ":" ~ STR }
 property = { IDENT ~ "=" ~ STR }
 
 

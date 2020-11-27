@@ -70,27 +70,85 @@ fn parse_str(parser: &mut pest::iterators::Pair<Rule>) -> String {
 }
 
 /**
+ * Parse a pair of keyword arguments (kwarg rule) into a tuple
+ * of the string and value
+ */
+fn parse_kwarg(parser: &mut Pairs<Rule>) -> Option<(String, Value)> {
+    let mut key: Option<String> = None;
+    let mut value: Option<Value> = None;
+
+    while let Some(mut parsed) = parser.next() {
+        match parsed.as_rule() {
+            Rule::IDENT => {
+                key = Some(parsed.as_str().to_string());
+            },
+            Rule::STR => {
+                value = Some(Value::String(parse_str(&mut parsed)));
+            },
+            _ => {},
+        }
+    }
+
+    if key.is_some() && value.is_some() {
+        return Some((key.unwrap(), value.unwrap()));
+    }
+    None
+}
+
+/**
  * Parse the steps
  *
  * In the case of orphan steps, the uuid should be the pipeline's uuid
  */
 fn parse_steps(parser: &mut Pairs<Rule>, uuid: Uuid) -> Vec<Step> {
+    use std::collections::HashMap;
+
     let mut steps = vec![];
 
     while let Some(parsed) = parser.next() {
         if Rule::step == parsed.as_rule() {
+            let mut symbol: Option<String> = None;
+            let mut kwargs: HashMap<String, Value> = HashMap::new();
+            let mut args: Vec<Value> = vec![];
+
             // Grab the step components
-            let mut parts: Vec<Pair<Rule>> = parsed.into_inner().collect();
-            // We need at least two parts here!
-            assert!(parts.len() > 1);
+            for part in parsed.into_inner() {
+                match part.as_rule() {
+                    Rule::IDENT => {
+                        symbol = Some(part.as_str().to_string());
+                    },
+                    Rule::kwarg => {
+                        if let Some((key, value)) = parse_kwarg(&mut part.into_inner()) {
+                            kwargs.insert(key, value);
+                        }
+                    },
+                    Rule::args => {
+                        let mut pairs: Vec<Pair<Rule>> = part.into_inner().collect();
+                        for mut pair in pairs.iter_mut() {
+                            if Rule::STR == pair.as_rule() {
+                                args.push(Value::String(parse_str(&mut pair)));
+                            }
+                        }
+                    },
+                    _ => {},
+                }
+            }
 
-            let symbol = parts[0].as_str().to_string();
-            let command = parse_str(&mut parts.pop().unwrap());
-
-            let parameters = serde_json::Value::String(command);
-            let parameters = StepParameters::Positional(vec![parameters]);
-            let step = Step::new(uuid, symbol, parameters);
-            steps.push(step);
+            if let Some(symbol) = symbol {
+                if kwargs.len() > 0 {
+                    if args.len() > 0 {
+                        error!("Parsed keyword and positional arguments out, discarding positionals");
+                    }
+                    let parameters = StepParameters::Keyword(kwargs);
+                    let step = Step::new(uuid, symbol, parameters);
+                    steps.push(step);
+                }
+                else {
+                    let parameters = StepParameters::Positional(args);
+                    let step = Step::new(uuid, symbol, parameters);
+                    steps.push(step);
+                }
+            }
         }
     }
     steps
@@ -275,5 +333,59 @@ mod tests {
         let pipeline = parse_pipeline_string(&buf).expect("Failed to parse");
         assert!(!pipeline.uuid.is_nil());
         assert_eq!(pipeline.batches.len(), 1);
+    }
+
+    #[test]
+    fn parse_kwargs() {
+        let buf = r#"
+            pipeline {
+                steps {
+                    git url: 'https://example.com', branch: 'main'
+                }
+            }"#;
+        let pipeline = parse_pipeline_string(&buf).expect("Failed to parse");
+        assert!(!pipeline.uuid.is_nil());
+        assert_eq!(pipeline.batches.len(), 1);
+
+        let context = &pipeline.batches[0].contexts[0];
+        assert_eq!(context.steps.len(), 1);
+        let step = &context.steps[0];
+        assert_eq!(step.symbol, "git");
+
+        match &step.parameters {
+            StepParameters::Positional(_args) => assert!(false, "Shouldn't have positional arguments"),
+            StepParameters::Keyword(kwargs) => {
+                assert_eq!(kwargs.get("url").unwrap(), "https://example.com");
+                assert_eq!(kwargs.get("branch").unwrap(), "main");
+            }
+        }
+    }
+
+    #[test]
+    fn parse_multiple_pos_args() {
+        let buf = r#"
+            pipeline {
+                steps {
+                    git 'https://example.com', 'main'
+                }
+            }"#;
+        let pipeline = parse_pipeline_string(&buf).expect("Failed to parse");
+        assert!(!pipeline.uuid.is_nil());
+        assert_eq!(pipeline.batches.len(), 1);
+
+        let context = &pipeline.batches[0].contexts[0];
+        assert_eq!(context.steps.len(), 1);
+        let step = &context.steps[0];
+        assert_eq!(step.symbol, "git");
+        match &step.parameters {
+            StepParameters::Positional(args) => {
+                assert_eq!(args.len(), 2);
+                assert_eq!(args[0], "https://example.com");
+                assert_eq!(args[1], "main");
+            },
+            StepParameters::Keyword(_kwargs) => {
+                assert!(false, "Not expecting keyword arguments for this step");
+            },
+        }
     }
 }
