@@ -1,0 +1,21 @@
+= Writing steps for Otto
+
+
+
+== Caching
+
+If the manifest contains `cache: true`, the agent will create a cache directory
+for this step to be used by all invocations. The location of the step's caching
+directory will be available in the invocation file:
+
+.Example invocation file snippet for the `git` step
+[source,yaml]
+----
+configuration:
+  cache: '/home/otto/caches/git'
+parameters:
+----
+
+The location of this caching directory should **not** be treated as
+deterministic, and can change at any time. Steps should always rely on the
+`cache` key in the invocation file's `configuration` block.
