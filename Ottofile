@@ -1,0 +1,18 @@
+
+pipeline {
+  steps {
+    sh 'pwd'
+    // branch needed until #45 is addressed
+    git url: 'https://git.brokenco.de/rtyler/otto', branch: 'main', into: '.'
+  }
+
+  stage {
+    name = 'Build'
+    steps {
+      sh 'cargo test'
+    }
+  }
+}
+
+
+// vim: sw=2 et ts=2 ft=groovy

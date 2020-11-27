@@ -1,0 +1,41 @@
+#!/usr/bin/env ruby
+
+require 'json'
+require 'net/http'
+
+pipeline = nil
+
+# Parse it
+Net::HTTP.start('localhost', 7672) do |http|
+    otto = File.read('Ottofile')
+    response = http.post('/v1/parse', otto)
+
+    if response.code.to_i != 200
+        puts 'Failed to parse file'
+        exit 1
+    end
+
+    pipeline = JSON.parse(response.read_body)
+end
+
+# Hit the local-orchestrator
+Net::HTTP.start('localhost', 7673) do |http|
+    contexts = []
+    pipeline['batches'].each do |batch|
+        contexts += (batch['contexts'])
+    end
+
+    payload = JSON.dump({
+        :pipeline => pipeline['uuid'],
+        :contexts => contexts,
+    })
+
+    puts payload
+    res = http.post('/v1/run', payload)
+
+    if res.code.to_i != 200
+        puts "Failed to orchestrate! #{res.code} #{res.read_body}"
+        exit 1
+    end
+    puts 'Enqueued'
+end
