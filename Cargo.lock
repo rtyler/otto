@@ -1618,6 +1618,7 @@ version = "0.1.0"
 dependencies = [
  "async-std",
  "log",
+ "os_pipe",
  "otto-agent",
  "otto-models",
  "pretty_env_logger 0.4.0",

@@ -19,6 +19,8 @@ struct RunWorkload {
  *
  */
 fn run_context(pipeline: &Uuid, ctx: &otto_models::Context) -> std::io::Result<bool> {
+    use os_pipe::pipe;
+    use std::io::{BufRead, BufReader};
     use std::io::{Error, ErrorKind};
     use std::process::Command;
     use tempfile::NamedTempFile;
@@ -39,17 +41,26 @@ fn run_context(pipeline: &Uuid, ctx: &otto_models::Context) -> std::io::Result<b
         ));
     }
 
-    if let Ok(output) = Command::new("otto-agent").arg(file.path()).output() {
-        use std::io::{stdout, Write};
-        stdout().write(&output.stdout);
+    let mut cmd = Command::new("otto-agent");
+    cmd.arg(file.path());
 
-        return Ok(output.status.success());
-    } else {
-        // TODO
-        error!("Failed to run agent");
+    let (reader, writer) = pipe().unwrap();
+    let writer_clone = writer.try_clone().unwrap();
+    cmd.stdout(writer);
+    cmd.stderr(writer_clone);
+
+    let mut handle = cmd.spawn()?;
+    drop(cmd);
+
+    let bufr = BufReader::new(reader);
+    for line in bufr.lines() {
+        if let Ok(buffer) = line {
+            println!("{}", buffer);
+        }
     }
 
-    Ok(false)
+    let status = handle.wait()?;
+    return Ok(status.success());
 }
 
 async fn healthcheck(_req: Request<()>) -> tide::Result {
