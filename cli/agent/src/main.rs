@@ -93,9 +93,12 @@ async fn main() -> std::io::Result<()> {
 
             set_common_env_vars();
 
-            run(&steps_dir, &invoke.steps, invoke.pipeline, Some(receiver))
+            let status = run(&steps_dir, &invoke.steps, invoke.pipeline, Some(receiver))
                 .expect("Failed to run pipeline");
+
+            println!("Agent exiting {:?}", status);
+
+            std::process::exit(status as i32);
         }
     };
-    Ok(())
 }
