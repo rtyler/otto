@@ -5,6 +5,7 @@
 use async_std::sync::Sender;
 use log::*;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(tag = "type")]
@@ -27,9 +28,9 @@ async fn handle_request(mut req: tide::Request<State>) -> tide::Result {
     Ok("{}".into())
 }
 
-pub async fn run(sender: Sender<Request>) -> tide::Result<()> {
+pub async fn run(pipeline: Uuid, sender: Sender<Request>) -> tide::Result<()> {
     info!("Starting the agent control server");
-    let sock = agent_socket();
+    let sock = agent_socket(&pipeline);
     let state = State { sender };
     let mut app = tide::with_state(state);
 
@@ -53,9 +54,11 @@ pub async fn run(sender: Sender<Request>) -> tide::Result<()> {
 /**
  * Return a string representing the absolute path of this agent's control socket
  */
-pub fn agent_socket() -> std::path::PathBuf {
-    let path = std::env::current_dir().expect("Failed to get current directory");
-    path.join("agent.sock").to_path_buf()
+pub fn agent_socket(pipeline: &Uuid) -> std::path::PathBuf {
+    let uuid = pipeline.to_hyphenated().to_string();
+    std::env::temp_dir()
+        .join(format!("{}-agent.sock", uuid))
+        .to_path_buf()
 }
 
 #[cfg(test)]
@@ -64,7 +67,8 @@ mod tests {
 
     #[test]
     fn test_agent_sock() {
-        let buf = agent_socket();
+        let uuid = uuid::Uuid::new_v4();
+        let buf = agent_socket(&uuid);
         assert!(buf.to_string_lossy().ends_with("agent.sock"));
     }
 }

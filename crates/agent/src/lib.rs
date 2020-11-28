@@ -188,7 +188,7 @@ pub fn run(
             };
 
             // TODO: This is going to be wrong on nested steps
-            let sock = control::agent_socket();
+            let sock = control::agent_socket(&pipeline);
             let configuration = step::Configuration {
                 pipeline: pipeline,
                 uuid: step.uuid,

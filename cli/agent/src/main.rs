@@ -78,9 +78,12 @@ async fn main() -> std::io::Result<()> {
             panic!("Failed to parse parameters file: {:#?}", e);
         }
         Ok(invoke) => {
-            async_std::task::spawn(async {
+            let pipeline_uuid = invoke.pipeline.clone();
+            async_std::task::spawn(async move {
                 // TODO better error handling and behavior
-                control::run(sender).await.expect("Failed to bind control?");
+                control::run(pipeline_uuid, sender)
+                    .await
+                    .expect("Failed to bind control?");
             });
 
             /*
