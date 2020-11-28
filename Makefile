@@ -10,6 +10,11 @@
 ## Phony targets
 .PHONY: apispecs clean diagram help steps release run
 
+# Cute hack thanks to:
+# https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
+help: ## Display this help text
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
 run: ## Convenience target for running services
 	./scripts/shoreman
 
@@ -40,11 +45,6 @@ test: contrib/shunit2/shunit2 ## Run the acceptance tests for steps
 			PATH="$(PWD)/target/debug:$(PATH)" "$$f"); \
 		done; \
 	done;
-
-# Cute hack thanks to:
-# https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
-help: ## Display this help text
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 clean: ## Clean all temporary/working files
 
