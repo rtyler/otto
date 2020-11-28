@@ -2121,6 +2121,7 @@ dependencies = [
 name = "sh-step"
 version = "0.1.0"
 dependencies = [
+ "os_pipe",
  "otto-agent",
  "serde 1.0.117",
  "tempfile",

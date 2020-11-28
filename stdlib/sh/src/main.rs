@@ -2,8 +2,9 @@
  * A very simple step which just invokes a shell script with some flags
  */
 
+use os_pipe::pipe;
 use serde::Deserialize;
-use std::io::{stderr, stdout, Write};
+use std::io::{BufRead, BufReader, Write};
 use std::process::Command;
 use tempfile::NamedTempFile;
 
@@ -29,19 +30,30 @@ fn main() -> std::io::Result<()> {
     writeln!(file, "{}", invoke.parameters.script)
         .expect("Failed to write temporary file for script");
 
-    let output = Command::new("/bin/sh")
-        .arg("-xe")
-        .arg(file.path())
-        .output()
-        .expect("Failed to invoke the script");
+    let mut cmd = Command::new("/bin/sh");
+    cmd.arg("-xe");
+    cmd.arg(file.path());
 
-    stdout().write_all(&output.stdout).unwrap();
-    stderr().write_all(&output.stderr).unwrap();
+    let (reader, writer) = pipe().unwrap();
+    let writer_clone = writer.try_clone().unwrap();
+    cmd.stdout(writer);
+    cmd.stderr(writer_clone);
+
+    let mut handle = cmd.spawn()?;
+    drop(cmd);
+
+    let bufr = BufReader::new(reader);
+    for line in bufr.lines() {
+        if let Ok(buffer) = line {
+            println!("{}", buffer);
+        }
+    }
+
+    let status = handle.wait()?;
 
     std::process::exit(
-        output
-            .status
+        status
             .code()
-            .expect("Failed to get status code of script"),
+            .expect("Could not get exit code from subprocess"),
     );
 }

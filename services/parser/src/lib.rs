@@ -81,11 +81,11 @@ fn parse_kwarg(parser: &mut Pairs<Rule>) -> Option<(String, Value)> {
         match parsed.as_rule() {
             Rule::IDENT => {
                 key = Some(parsed.as_str().to_string());
-            },
+            }
             Rule::STR => {
                 value = Some(Value::String(parse_str(&mut parsed)));
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 
@@ -116,12 +116,12 @@ fn parse_steps(parser: &mut Pairs<Rule>, uuid: Uuid) -> Vec<Step> {
                 match part.as_rule() {
                     Rule::IDENT => {
                         symbol = Some(part.as_str().to_string());
-                    },
+                    }
                     Rule::kwarg => {
                         if let Some((key, value)) = parse_kwarg(&mut part.into_inner()) {
                             kwargs.insert(key, value);
                         }
-                    },
+                    }
                     Rule::args => {
                         let mut pairs: Vec<Pair<Rule>> = part.into_inner().collect();
                         for mut pair in pairs.iter_mut() {
@@ -129,21 +129,22 @@ fn parse_steps(parser: &mut Pairs<Rule>, uuid: Uuid) -> Vec<Step> {
                                 args.push(Value::String(parse_str(&mut pair)));
                             }
                         }
-                    },
-                    _ => {},
+                    }
+                    _ => {}
                 }
             }
 
             if let Some(symbol) = symbol {
                 if kwargs.len() > 0 {
                     if args.len() > 0 {
-                        error!("Parsed keyword and positional arguments out, discarding positionals");
+                        error!(
+                            "Parsed keyword and positional arguments out, discarding positionals"
+                        );
                     }
                     let parameters = StepParameters::Keyword(kwargs);
                     let step = Step::new(uuid, symbol, parameters);
                     steps.push(step);
-                }
-                else {
+                } else {
                     let parameters = StepParameters::Positional(args);
                     let step = Step::new(uuid, symbol, parameters);
                     steps.push(step);
@@ -353,7 +354,9 @@ mod tests {
         assert_eq!(step.symbol, "git");
 
         match &step.parameters {
-            StepParameters::Positional(_args) => assert!(false, "Shouldn't have positional arguments"),
+            StepParameters::Positional(_args) => {
+                assert!(false, "Shouldn't have positional arguments")
+            }
             StepParameters::Keyword(kwargs) => {
                 assert_eq!(kwargs.get("url").unwrap(), "https://example.com");
                 assert_eq!(kwargs.get("branch").unwrap(), "main");
@@ -382,10 +385,10 @@ mod tests {
                 assert_eq!(args.len(), 2);
                 assert_eq!(args[0], "https://example.com");
                 assert_eq!(args[1], "main");
-            },
+            }
             StepParameters::Keyword(_kwargs) => {
                 assert!(false, "Not expecting keyword arguments for this step");
-            },
+            }
         }
     }
 }

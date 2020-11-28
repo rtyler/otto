@@ -63,7 +63,12 @@ async fn main() -> std::io::Result<()> {
     mkdir_if_not_exists(&work_dir)?;
     mkdir_if_not_exists(&cache_dir)?;
 
-    std::env::set_var("CACHES_DIR", cache_dir.canonicalize().expect("Failed to canonicalize cache directory"));
+    std::env::set_var(
+        "CACHES_DIR",
+        cache_dir
+            .canonicalize()
+            .expect("Failed to canonicalize cache directory"),
+    );
     std::env::set_current_dir(work_dir)?;
 
     let (sender, receiver) = channel(MAX_CONTROL_MSGS);
