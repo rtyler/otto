@@ -47,6 +47,12 @@ pub fn parse_pipeline_string(buffer: &str) -> Result<Pipeline, PestError<Rule>> 
                                 contexts: vec![ctx],
                             });
                         }
+                        Rule::parallel => {
+                            pipeline.batches.push(Batch {
+                                mode: BatchMode::Parallel,
+                                contexts: parse_parallel(&mut parsed.into_inner()),
+                            });
+                        }
                         _ => {}
                     }
                 }
@@ -58,7 +64,21 @@ pub fn parse_pipeline_string(buffer: &str) -> Result<Pipeline, PestError<Rule>> 
     Ok(pipeline)
 }
 
-fn parse_str(parser: &mut pest::iterators::Pair<Rule>) -> String {
+fn parse_parallel(parser: &mut Pairs<Rule>) -> Vec<Context> {
+    let mut contexts = vec![];
+    while let Some(parsed) = parser.next() {
+        match parsed.as_rule() {
+            Rule::stage => {
+                let ctx = parse_stage(&mut parsed.into_inner());
+                contexts.push(ctx);
+            }
+            _ => {}
+        }
+    }
+    contexts
+}
+
+fn parse_str(parser: &mut Pair<Rule>) -> String {
     // TODO: There's got to be a better way than cloning
     let mut parser = parser.clone().into_inner();
     while let Some(parsed) = parser.next() {
@@ -393,5 +413,28 @@ mod tests {
                 assert!(false, "Not expecting keyword arguments for this step");
             }
         }
+    }
+
+    #[test]
+    fn parse_parallel() {
+        let buf = r#"
+            pipeline {
+                parallel {
+                    stage {
+                        name = 'Test'
+                        steps { sh 'ls' }
+                    }
+                    stage {
+                        name = 'UAT'
+                        steps { sh 'pwd' }
+                    }
+                }
+            }"#;
+        let pipeline = parse_pipeline_string(&buf).expect("Failed to parse");
+        assert!(!pipeline.uuid.is_nil());
+        assert_eq!(pipeline.batches.len(), 1);
+
+        let batch = &pipeline.batches[0];
+        assert_eq!(batch.contexts.len(), 2);
     }
 }

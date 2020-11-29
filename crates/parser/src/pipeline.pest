@@ -1,18 +1,27 @@
-// The pipeline PEG 
+// The pipeline PEG
 
 pipeline = _{ SOI ~ "pipeline" ~
                     BLOCK_BEGIN ~
                     execBlocks ~
                     BLOCK_END ~ EOI }
 
-execBlocks = { (stage | steps)* }
+execBlocks = { (stage
+                | steps
+                | parallel)* }
 
 stage = { "stage" ~
-        BLOCK_BEGIN ~ 
+        BLOCK_BEGIN ~
         (property*) ~
         steps ~
         BLOCK_END }
 
+// The parallel block can contain multiple stages which run in parallel
+//
+// inside the parser this should result in multiple contexts in the same batch
+parallel = { "parallel" ~
+        BLOCK_BEGIN ~
+        (stage)* ~
+        BLOCK_END }
 
 steps = { "steps" ~ BLOCK_BEGIN ~ step+ ~ BLOCK_END }
 step = { IDENT ~ (
