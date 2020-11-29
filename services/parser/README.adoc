@@ -1,8 +1,6 @@
 = Parser service
 
-The Otto Parser service is basically a parser engine that speaks HTTP. In the
-`src/` directory you will find the `.pest` grammar definition which outlines
-the Otto Pipeline syntax.
+The Otto Parser Service presents the parser crate as an HTTP service.
 
 The `apispec.yml` is an link:https://en.wikipedia.org/wiki/Open_API[OpenAPI]
 specification that describes the public HTTP endpoints that the parser service

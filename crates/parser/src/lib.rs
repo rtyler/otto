@@ -9,6 +9,9 @@ use pest::iterators::{Pair, Pairs};
 use pest::Parser;
 use uuid::Uuid;
 
+pub use pest::error::ErrorVariant;
+pub use pest::error::LineColLocation;
+
 #[derive(Parser)]
 #[grammar = "pipeline.pest"]
 struct PipelineParser;

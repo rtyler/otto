@@ -1,0 +1,6 @@
+= Otto Parser
+
+The Otto Parser service is basically a parser engine that speaks HTTP. In the
+`src/` directory you will find the `.pest` grammar definition which outlines
+the Otto Pipeline syntax.
+
