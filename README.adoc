@@ -31,12 +31,40 @@ the README document in the subfolders for their current purpose and status.
 
 = Development
 
-Much of Otto is built in
-link:https://www.rust-lang.org/[Rust].
-The service-to-service communication is all done with JSON over HTTP.
+Much of Otto is built in link:https://www.rust-lang.org/[Rust]. The project is
+a "cargo workspace" which means that there are multiple binaries and libraries
+defined in the source tree, which can all be built together via the root
+`Cargo.toml`. Much can be accomplished with `cargo build` and `cargo test`,
+which is easily scoped to a single project via the `-p` flag, for example
+`cargo test -p otto-parser`. There is also a `Makefile` which drives some
+higher-level build system behavior.
 
-In order to contribute to the project, please join us on IRC or open pull
-requests and issues.
+Otto is composed of many different services, which communicate via JSON over HTTP.
+
+== Make targets
+
+Running `make` in the root directory will list some brief help output, but some useful make targets to be aware of are documented below:
+
+=== `release`
+
+Build and strip release binaries to prepare for packaging. Most developers
+won't need to execute this target.
+
+=== `run`
+
+Launch the services defined in the `Procfile`. This requires a `cargo build`
+ahead of time, and is really only useful for manual integration testing.
+
+=== `steps`
+
+This target will build and package all the steps defined in `stdlib/`
+
+=== `test`
+
+Runs all the acceptance tests, typically implemented with
+link:https://github.com/kward/shunit2/[shunit2]. This target will *not* run
+`cargo build` or `cargo test`. From a fresh clone, running the acceptance tests
+will require an initial build, for example `cargo build && make test`.
 
 == Subdirectories
 
