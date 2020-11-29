@@ -1,6 +1,19 @@
 = Otto Parser
 
-The Otto Parser service is basically a parser engine that speaks HTTP. In the
-`src/` directory you will find the `.pest` grammar definition which outlines
-the Otto Pipeline syntax.
+**Issue label:** `components/parser`
 
+The Otto Parser is a link:https://pest.rs/[Pest] based parser which takes the
+Otto pipeline syntax and converts it into the Otto intermediate pipeline
+representation.
+
+In the `src/` directory you will find the `.pest` grammar definition which
+outlines the currently supported Otto Pipeline syntax.
+
+== Tests
+
+There are unit tests defined in `.rs` files inside of `src/`.
+
+The `test_data/` directory has two directories: `invalid` and `valid`. These
+files are used to validate basic parsing of the Otto pipeline syntax. No other
+validation is done on these files other than ensuring that they parse
+(`valid/`) or that they do not parse (`invalid/`).

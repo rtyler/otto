@@ -1,0 +1,5 @@
+= Otto Models
+
+This crate is intended to contain very little actual logic, and instead
+contains the definitions for data models which must be serialized and
+deserialized between services in Otto.

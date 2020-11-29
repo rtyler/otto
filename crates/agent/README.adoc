@@ -1,0 +1,7 @@
+= Otto Agent
+
+**Issue label:** `component/agent`
+
+This directory contains the re-usable code for implementing agents or
+block-scoped steps, essentially all the code necessary for invoking an Otto
+Step Library.
