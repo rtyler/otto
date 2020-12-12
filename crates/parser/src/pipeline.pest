@@ -44,4 +44,5 @@ STRV = @{ "''" | (!"'" ~ ANY)* }
 COMMA = @{ "," }
 
 WHITESPACE = _{ (" " | NEWLINE) }
-COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* }
+BLOCK_COMMENT = _{ "/*" ~ (BLOCK_COMMENT | !"*/" ~ ANY)* ~ "*/" }
+COMMENT    = _{ BLOCK_COMMENT | ("//" ~ (!NEWLINE ~ ANY)*) }
