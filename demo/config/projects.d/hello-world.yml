@@ -1,0 +1,34 @@
+# This is an example project configuration for Otto
+#
+# This is not a replacement for the Ottofile, but rather the binding to make
+# sure that Otto knows where to find the Ottofile for the repository
+---
+title: 'Hello World'
+description: |
+  The Hello World project exists as a simple demonstrate loading a project into Otto
+source:
+  # This repository does not have an Ottofile!
+  url: 'https://github.com/rtyler/hello-gem.git'
+  # The refspec defaults to wildcard, if the refspec is specified, only changes
+  # on that refspec will be executed
+  refspec: '*'
+
+# Optional override of what the default source of the pipeline should be.
+#
+# This can be helpful for describing a specific file, e.g. `./deploy/Ottofile`
+# or even overwriting what is defined in the repository with a server-side
+# override.
+#
+# If the `pipeline` key is present, either path or inline *must* be defined
+pipeline:
+
+  #path: './deploy/Ottofile'
+
+  # Since the project doesn't have an Ottofile, injecting one for it
+  inline: |
+    pipeline {
+      steps {
+        sh 'pwd'
+        sh 'ls -lah'
+      }
+    }

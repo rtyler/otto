@@ -1,0 +1,16 @@
+# This is the root and shared configuration across all otto services.
+#
+---
+services:
+  dashboard:
+    host: 'localhost'
+    port: 7670
+  objects:
+    host: 'localhost'
+    port: 7671
+  parser:
+    host: 'localhost'
+    port: 7672
+  orchestrator:
+    host: 'localhost'
+    port: 7673

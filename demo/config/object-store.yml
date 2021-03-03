@@ -1,0 +1,5 @@
+# Local demo configuration for the object store
+#
+---
+object_dir: 'tmp/objects'
+
