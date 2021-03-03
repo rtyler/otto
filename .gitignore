@@ -8,4 +8,4 @@ build/
 *.tar.gz
 tmp*
 .hypothesis/
-otto.db
+otto.db*

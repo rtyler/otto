@@ -5,7 +5,7 @@ authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
 [dependencies]
-async-graphql = "2.0"
+async-graphql = { version = "2.0", features = ["chrono", "dataloader", "log", "uuid"] }
 async-graphql-tide = "2.0"
 async-trait = "0.1"
 async-std = { version = "1", features = ["attributes"]}
@@ -16,3 +16,4 @@ otto-models = { path = "../../crates/models" }
 pretty_env_logger = "~0.4.0"
 sqlx = { version = "~0.5.1", features = ["runtime-async-std-rustls", "postgres", "tls", "json", "sqlite", "chrono", "macros", "uuid"]}
 tide = "0.16"
+uuid = { version = "0.8", features = ["serde", "v4"]}
