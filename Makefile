@@ -8,7 +8,8 @@
 
 ################################################################################
 ## Phony targets
-.PHONY: apispecs clean diagram help steps release run
+.PHONY: apispecs clean clean-db diagram help steps release run
+SQLITE_DB=otto.db
 
 # Cute hack thanks to:
 # https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
@@ -46,7 +47,16 @@ test: contrib/shunit2/shunit2 ## Run the acceptance tests for steps
 		done; \
 	done;
 
-clean: ## Clean all temporary/working files
+migrate: $(SQLITE_DB) ## Run the local SQLite migrations
+	sqlx migrate --source migrations/sqlite run
+
+$(SQLITE_DB): ## Create an empty SQLite database
+	sqlx database create
+
+clean-db: ## Remove the SQLite database for local development
+	rm -f $(SQLITE_DB)
+
+clean: clean-db ## Clean all temporary/working files
 
 diagram: system.png system.dot ## Generate the diagrams describing otto
 	dot -Tpng -o system.png system.dot
