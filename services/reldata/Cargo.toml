@@ -1,12 +1,15 @@
 [package]
-name = "reldata"
+name = "otto-reldata"
 version = "0.1.0"
 authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
 [dependencies]
-async-std = { version = "~1.7", features = ["attributes"]}
+async-graphql = "2.0"
+async-graphql-tide = "2.0"
+async-std = { version = "1", features = ["attributes"]}
 log = "~0.4.11"
 otto-models = { path = "../../crates/models" }
 pretty_env_logger = "~0.4.0"
+sqlx = { version = "~0.5.1", features = ["runtime-async-std-rustls", "postgres", "tls", "json", "sqlite", "chrono", "macros"]}
 tide = "~0.15.0"
