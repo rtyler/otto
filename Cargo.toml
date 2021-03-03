@@ -13,6 +13,7 @@ members = [
     "services/local-orchestrator",
     "services/object-store",
     "services/parser",
+    "services/reldata",
 
     "stdlib/archive",
     "stdlib/dir",

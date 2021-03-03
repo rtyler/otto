@@ -1,0 +1,12 @@
+= Relational Data
+
+The relational data service provides a centralized location for project,
+pipeline, and more data to be stored. This is in contrast to the object store
+which is expected to store large files/objects.
+
+
+.Environnment Variables
+|===
+| Name | Default | Description
+
+|===

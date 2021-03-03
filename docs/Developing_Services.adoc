@@ -9,7 +9,6 @@ This document captures some details around developing these Otto services.
 |===
 | Port | Service Name | Notes
 
-
 | 7670
 | Dashboard
 | Placeholder for the web dashboard
@@ -26,6 +25,10 @@ This document captures some details around developing these Otto services.
 | 7673
 | Orchestrator
 | Service which can provision environments capable of executing agents.
+
+| 7674
+| Relational Data
+| Service which provides relational data services to clients.
 
 |===
 
