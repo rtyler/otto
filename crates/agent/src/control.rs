@@ -2,7 +2,7 @@
  * The control module handles all the agent<->step control messages
  */
 
-use async_std::sync::Sender;
+use async_std::channel::Sender;
 use log::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

@@ -3,7 +3,7 @@
  *
  * Most of the logic _should_ be contained within lib.rs and the surrounding modules
  */
-use async_std::sync::channel;
+use async_std::channel::bounded;
 use std::fs::File;
 use std::path::Path;
 
@@ -71,7 +71,7 @@ async fn main() -> std::io::Result<()> {
     );
     std::env::set_current_dir(work_dir)?;
 
-    let (sender, receiver) = channel(MAX_CONTROL_MSGS);
+    let (sender, receiver) = bounded(MAX_CONTROL_MSGS);
 
     match serde_json::from_reader::<File, Invocation>(file) {
         Err(e) => {

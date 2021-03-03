@@ -1,4 +1,4 @@
-use async_std::sync::Receiver;
+use async_std::channel::Receiver;
 use log::*;
 use otto_models::*;
 use serde::{Deserialize, Serialize};

@@ -9,7 +9,7 @@ name = "otto-parser"
 path = "src/main.rs"
 
 [dependencies]
-async-std = { version = "1.6.5", features = ["attributes"]}
+async-std = { version = "1", features = ["attributes"]}
 log = "~0.4.11"
 otto-models = { path = "../../crates/models" }
 otto-parser = { path = "../../crates/parser" }
