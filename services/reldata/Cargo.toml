@@ -7,9 +7,12 @@ edition = "2018"
 [dependencies]
 async-graphql = "2.0"
 async-graphql-tide = "2.0"
+async-trait = "0.1"
 async-std = { version = "1", features = ["attributes"]}
+dotenv = "0.15"
+itertools = "0.10"
 log = "~0.4.11"
 otto-models = { path = "../../crates/models" }
 pretty_env_logger = "~0.4.0"
 sqlx = { version = "~0.5.1", features = ["runtime-async-std-rustls", "postgres", "tls", "json", "sqlite", "chrono", "macros", "uuid"]}
-tide = "~0.15.0"
+tide = "0.16"

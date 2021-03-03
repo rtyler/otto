@@ -276,7 +276,7 @@ dependencies = [
  "async-trait",
  "futures-util",
  "serde_json",
- "tide 0.16.0",
+ "tide",
  "tide-websockets",
 ]
 
@@ -2063,7 +2063,7 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "tempfile",
- "tide 0.14.0",
+ "tide",
  "url",
  "uuid",
 ]
@@ -2118,7 +2118,7 @@ dependencies = [
  "serde 1.0.123",
  "serde_json",
  "tempfile",
- "tide 0.15.1",
+ "tide",
  "uuid",
 ]
 
@@ -2139,7 +2139,7 @@ dependencies = [
  "async-std",
  "log",
  "pretty_env_logger 0.4.0",
- "tide 0.15.1",
+ "tide",
 ]
 
 [[package]]
@@ -2164,7 +2164,7 @@ dependencies = [
  "otto-parser",
  "pretty_env_logger 0.4.0",
  "serde_json",
- "tide 0.15.1",
+ "tide",
  "uuid",
 ]
 
@@ -2175,11 +2175,14 @@ dependencies = [
  "async-graphql",
  "async-graphql-tide",
  "async-std",
+ "async-trait",
+ "dotenv",
+ "itertools",
  "log",
  "otto-models",
  "pretty_env_logger 0.4.0",
  "sqlx",
- "tide 0.15.1",
+ "tide",
 ]
 
 [[package]]
@@ -3190,60 +3193,16 @@ dependencies = [
 
 [[package]]
 name = "tide"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "457aa92965e7219a7444b2891ba970136cdf07217cea5591c15f981635800336"
-dependencies = [
- "async-h1",
- "async-session",
- "async-sse",
- "async-std",
- "async-trait",
- "femme",
- "futures-util",
- "http-client",
- "http-types",
- "kv-log-macro",
- "log",
- "pin-project-lite 0.1.12",
- "route-recognizer",
- "serde 1.0.123",
- "serde_json",
-]
-
-[[package]]
-name = "tide"
-version = "0.15.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8889753e7e7b9d1ceb7a67e7df8c3994b4657082219d78eb379f71fe2934e66b"
-dependencies = [
- "async-h1",
- "async-session",
- "async-sse",
- "async-std",
- "async-trait",
- "femme",
- "futures-util",
- "http-client",
- "http-types",
- "kv-log-macro",
- "log",
- "pin-project-lite 0.1.12",
- "route-recognizer",
- "serde 1.0.123",
- "serde_json",
-]
-
-[[package]]
-name = "tide"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c459573f0dd2cc734b539047f57489ea875af8ee950860ded20cf93a79a1dee0"
 dependencies = [
  "async-h1",
+ "async-session",
  "async-sse",
  "async-std",
  "async-trait",
+ "femme",
  "futures-util",
  "http-client",
  "http-types",
@@ -3270,7 +3229,7 @@ dependencies = [
  "serde 1.0.123",
  "serde_json",
  "sha-1 0.9.4",
- "tide 0.16.0",
+ "tide",
 ]
 
 [[package]]
