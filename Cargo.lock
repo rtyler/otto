@@ -2937,6 +2937,7 @@ dependencies = [
  "stringprep",
  "thiserror",
  "url",
+ "uuid",
  "webpki",
  "webpki-roots",
  "whoami",
