@@ -1670,6 +1670,7 @@ version = "0.1.0"
 dependencies = [
  "serde 1.0.123",
  "serde_json",
+ "serde_yaml",
  "uuid",
 ]
 

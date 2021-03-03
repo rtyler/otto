@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 pub use serde_json::Value;
+pub mod config;
 pub mod osp;
 
 /**
