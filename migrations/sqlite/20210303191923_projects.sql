@@ -5,7 +5,7 @@
 
 CREATE TABLE IF NOT EXISTS projects
 (
-    uuid TEXT PRIMARY KEY NOT NULL,
+    uuid BLOB PRIMARY KEY NOT NULL,
     path TEXT UNIQUE NOT NULL,
     title TEXT NOT NULL,
     description TEXT,
