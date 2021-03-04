@@ -5,7 +5,7 @@ authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
 [dependencies]
-serde = {version = "~1.0.117", features = ["rc", "derive"]}
-serde_json = "~1.0.59"
-serde_yaml = "~0.8.17"
-uuid = { version = "~0.8.1", features = ["v4", "serde"]}
+serde = {version = "1", features = ["rc", "derive"]}
+serde_json = "1"
+serde_yaml = "0.8"
+uuid = { version = "0.8", features = ["v4", "serde"]}

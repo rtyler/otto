@@ -6,4 +6,4 @@ edition = "2018"
 
 [dependencies]
 otto-agent = { path = "../../crates/agent" }
-serde = {version = "~1.0.117", features = ["derive"]}
+serde = {version = "1", features = ["derive"]}

@@ -9,9 +9,9 @@ name = "osp"
 path = "src/main.rs"
 
 [dependencies]
-flate2 = "~1.0.18"
-gumdrop = "~0.8.0"
+flate2 = "1"
+gumdrop = "0.8"
 otto-models = { path = "../../crates/models" }
-serde_yaml = "~0.8.13"
-serde = {version = "~1.0.117", features = ["rc", "derive"]}
-tar = "~0.4.30"
+serde_yaml = "0.8"
+serde = {version = "1", features = ["rc", "derive"]}
+tar = "0.4"

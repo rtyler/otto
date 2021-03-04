@@ -11,9 +11,9 @@ async-trait = "0.1"
 async-std = { version = "1", features = ["attributes"]}
 dotenv = "0.15"
 itertools = "0.10"
-log = "~0.4.11"
+log = "0.4"
 otto-models = { path = "../../crates/models" }
-pretty_env_logger = "~0.4.0"
-sqlx = { version = "~0.5.1", features = ["runtime-async-std-rustls", "postgres", "tls", "json", "sqlite", "chrono", "macros", "uuid"]}
+pretty_env_logger = "0.4"
+sqlx = { version = "0.5", features = ["runtime-async-std-rustls", "postgres", "tls", "json", "sqlite", "chrono", "macros", "uuid"]}
 tide = "0.16"
 uuid = { version = "0.8", features = ["serde", "v4"]}
