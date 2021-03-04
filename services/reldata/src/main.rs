@@ -97,15 +97,27 @@ impl Loader<Uuid> for ProjectLoader {
     type Error = FieldError;
 
     async fn load(&self, keys: &[Uuid]) -> Result<HashMap<Uuid, Self::Value>, Self::Error> {
+        use std::str::FromStr;
+        use sqlx::Row;
+
         let uuids = keys.iter().map(|u| u.to_string()).collect::<Vec<String>>();
-        Ok(
-            sqlx::query_as::<sqlx::Sqlite, Self::Value>("SELECT * FROM projects WHERE uuid IN (?)")
-                .bind(&uuids.join(","))
-                .fetch(&self.0)
-                .map_ok(|p: Project| (p.uuid, p))
-                .try_collect()
-                .await?,
-        )
+        // Doing awful things to allow the bulk query with the Uuid since sqlx cannot map a
+        // hyphenated string back out to a normal Uuid
+        let mut records = sqlx::query("SELECT * FROM projects WHERE uuid IN ($1)")
+                .bind(uuids.join(","))
+                .fetch(&self.0);
+
+        let mut out = HashMap::new();
+        while let Some(row) = records.try_next().await? {
+            let project = Project {
+                uuid: Uuid::from_str(row.get("uuid"))?,
+                title: row.get("title"),
+                path: row.get("path"),
+            };
+            out.insert(project.uuid, project);
+        }
+
+        Ok(out)
     }
 }
 
