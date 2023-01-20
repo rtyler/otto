@@ -5,7 +5,7 @@ authors = ["R. Tyler Croy <rtyler@brokenco.de>"]
 edition = "2018"
 
 [dependencies]
-git2 = "0.13"
+git2 = "0.16"
 otto-agent = { path = "../../crates/agent" }
 serde = {version = "1", features = ["derive"]}
 url = "2"
